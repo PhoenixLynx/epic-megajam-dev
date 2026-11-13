@@ -154,6 +154,17 @@ Left deliberately unresolved. **Draft: refine during storyboard / as it unfolds.
 2. **Key 2:** target hidden on campus, running result hidden, Sight check available.
 3. **Key 3:** target scattered across Fear zones, with decoy clues.
 
+## Music and audio: composed during the jam, generated at runtime
+
+- **All music is composed fresh during the jam** by me (SkyYamaha). Pre-jam tracks would have to be declared as "sourced assets," which aren't scored, and would break this project's own made-during-the-jam rule.
+- **Composed as stems and fragments, not finished songs:** short loops, drones, pads, rhythmic cells, melodic phrases, and stingers, each exportable as a .wav.
+- **Assembled live in Unreal with MetaSounds** (Unreal's built-in node-based audio system, which can play, layer, pitch and randomize sounds with logic):
+  - The run seed picks which fragments play and in what order, so the soundtrack never repeats exactly.
+  - **The Fear value drives the mix:** campus = clean corporate muzak; creeping Fear = detune, low-pass, slowed tempo, layers drop out; chase = percussion and pulse stems slam in.
+  - **Soul Sight** adds a shimmering, luminous layer on top.
+  - **Time loops:** the music literally loops a few bars and stutters when you're trapped.
+- **Ending party:** a cheerful corporate anthem built from the same fragments, with one stem left slightly out of tune.
+
 ## Every run is unique
 
 - Seed from high-res clock ticks; never shown or saved.
@@ -193,7 +204,8 @@ Left deliberately unresolved. **Draft: refine during storyboard / as it unfolds.
 
 ## Open questions
 
-- [ ] Jam theme. The concept bends to fit it.
+- [ ] Jam theme. A participant's devlog says it's **"Director's Cut"**. Needs confirming from the official page.
+- [ ] Old tracks: compose everything fresh (recommended), or use some and declare them as sourced assets?
 - [x] Combat: yes, fight back with improvised objects; only soul bits truly end a gatekeeper.
 - [x] "Antics" = the malware's tricks: loops, illusions, agents among the NPCs.
 - [x] Ending: Yes/No choice; "No" → taken anyway. Details refined as it unfolds.

@@ -39,6 +39,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:30 | Claude (Anthropic) | CONCEPT.md v0.4 from my direction: NPCs as seeded malware agents with false clues; party ending with the Collector, broken into beats. |
 | 2026-11-12 19:36 | Claude (Anthropic) | CONCEPT.md v0.5 from my direction: improvised combat (objects, fire extinguisher, path-blocking debris) with Unreal implementation notes; ending offer + Yes/No choice. |
 | 2026-11-12 19:37 | Claude (Anthropic) | CONCEPT.md v0.6 from my direction: coffee burn + more office weapons; "astral logic" powers tiered by soul bits, with Unreal implementation notes. |
+| 2026-11-12 19:40 | Claude (Anthropic) | Web-searched the jam rules on pre-made assets and the theme. Added the music plan (stems composed during the jam + MetaSounds runtime generation) to CONCEPT.md; added rule items to the checklist. |
 
 ---
 
@@ -160,3 +161,18 @@ A running record of every AI tool used and what it did.
 - **Problems:** Theme still unknown.
 - **AI tools used:** Claude (concept update, implementation notes).
 - **Next:** Theme → close Concept stage → storyboard.
+
+### Session 8: Thu Nov 12, 2026, 19:40 MST: Music plan + rules check
+
+- **Goal:** Decide how music works and whether my existing tracks can be used.
+- **Done:**
+  - I'm a musician (SkyYamaha). I offered some of my tracks to build on, but I also want the music to be somewhat generated and non-repeatable.
+  - Checked the jam rules: pre-jam assets are allowed only if declared as sourced assets, and those **aren't scored**. Also conflicts with this project's own rule that every asset is made during the jam.
+  - Plan: compose new stems during the jam; assemble and vary them live with MetaSounds, driven by the run seed and the Fear value.
+  - The same search turned up the likely theme: **"Director's Cut"** (from another participant's devlog; to confirm).
+- **Decisions & why:**
+  - **Stems and fragments over finished songs:** they're what generative assembly needs, and they're faster to make.
+  - **Fear value drives the music mix**, the same single value as visuals, so audio and visuals creep in sync.
+- **Problems:** Old tracks would cost scoring; theme still unconfirmed.
+- **AI tools used:** Claude (web search on rules, music system design).
+- **Next:** Confirm theme → fit concept to it → storyboard.
