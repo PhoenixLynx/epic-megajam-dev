@@ -16,7 +16,7 @@ Every asset and line of gameplay code in this project is made during the jam win
 | # | Stage | Status | Started | Finished |
 |---|-------|--------|---------|----------|
 | 1 | Concept | ✅ Done | Nov 12 19:19 | Nov 12 19:54 |
-| 2 | Storyboard | ⏳ Next | | |
+| 2 | Storyboard | 🔄 In progress | Nov 12 19:59 | |
 | 3 | Prototype | ⬜ | | |
 | 4 | Art | ⬜ | | |
 | 5 | Audio | ⬜ | | |
@@ -45,6 +45,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:48 | Claude (Anthropic) | CONCEPT.md v0.7: folded in the theme. "Orchestrated movie" spine, the Chairman with a 7-step foreshadowing list, movie motifs, wrap-party ending, theatrical vs. director's cut. |
 | 2026-11-12 19:52 | Claude (Anthropic) | CONCEPT.md v0.8: workday activity table (email, compliance training, video calls, meetings, NPCs, team building) and day structure (3 acts = 3 keys). |
 | 2026-11-12 19:54 | Claude (Anthropic) | Read Epic's partner-perks email I shared; confirmed the theme; sorted perks into use / maybe / skip for this game in docs/RESOURCES.md (codes and links left out of the repo). |
+| 2026-11-12 19:59 | Claude (Anthropic) | Drafted storyboard/STORYBOARD.md v0.1 from the concept: campus map, beat tables for Acts 1–3 and the ending, MVP/stretch tags, screenshot markers, scope fallback. Added SourceArt/ folders + LFS/ignore rules for Blender and Ableton files. |
 
 ---
 
@@ -244,3 +245,18 @@ A running record of every AI tool used and what it did.
 - **Concept stage: ✅ complete.**
 - **AI tools used:** Claude (email review, resource sorting).
 - **Next:** Claim time-limited perks → create the Unreal project + GitHub repo → storyboard.
+
+### Session 14: Thu Nov 12, 2026, 19:59 MST: Storyboard v0.1
+
+- **Goal:** Turn the concept into scenes.
+- **Done:**
+  - `storyboard/STORYBOARD.md` v0.1: campus map (one floor: lobby, open office, conference room, break room, Corridor B, supply closet, Wellness Center, elevator), Act 1 (10 beats), Act 2 (9), Act 3 (6), ending (8).
+  - Added `SourceArt/Blender`, `SourceArt/Ableton`, `SourceArt/Textures` with Git LFS for `.als .aif .aiff .flac .jpg .psd .exr`; ignored Ableton `Backup/` and `.asd` analysis files.
+  - In parallel: I'm setting up the Unreal project, an Ableton project, and a Blender area.
+- **Decisions & why:**
+  - **One floor, reused by every act.** The same rooms get stranger instead of building new levels. Biggest scope saver.
+  - **Act 1 order: Fear before the Key.** The flicker → energy → first chase comes before Compliance Training, so the scare lands in the first five minutes.
+  - **Video-call captions show glyphs** instead of animating mouthed words: cheaper, still creepy.
+  - **Source files committed in SourceArt/** so git history timestamps prove assets were made during the jam.
+- **AI tools used:** Claude (storyboard draft, repo folders).
+- **Next:** My review of the storyboard → finalize → prototype: player, grab, Fear value, loop corridor.
