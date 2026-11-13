@@ -260,3 +260,4 @@ A running record of every AI tool used and what it did.
   - **Source files committed in SourceArt/** so git history timestamps prove assets were made during the jam.
 - **AI tools used:** Claude (storyboard draft, repo folders).
 - **Next:** My review of the storyboard → finalize → prototype: player, grab, Fear value, loop corridor.
+- **Review (20:05):** Approved the whole storyboard, mannequin coworkers included. Added: more hallways if there's time; keep it simple for now (stretch).

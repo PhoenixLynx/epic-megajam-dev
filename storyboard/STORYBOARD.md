@@ -32,6 +32,7 @@ Legend: **[MVP]** must ship · **[STRETCH]** if time allows · 📸 capture a sc
 ```
 
 **[MVP]** all rooms above. Reused by every act: the same rooms get stranger as the day goes on.
+**[STRETCH]** extra hallways connecting the rooms: more space to get lost, stalked and looped in. Keep it simple first.
 
 ---
 
