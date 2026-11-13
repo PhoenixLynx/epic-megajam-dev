@@ -1,0 +1,48 @@
+# ---- Unreal Engine generated folders ----
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+Build/
+**/Plugins/*/Binaries/
+**/Plugins/*/Intermediate/
+
+# ---- IDE / tooling ----
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj
+*.xcworkspace
+
+# ---- Compiled / build artifacts ----
+*.pdb
+*.dll
+*.exe
+*.lib
+*.obj
+*.o
+*.so
+*.dylib
+*.target
+*.modules
+
+# ---- Packaged builds (zip these for itch, don't commit) ----
+Packaged/
+Windows/
+WindowsNoEditor/
+*.pak
+
+# ---- Blender autosave/backup ----
+*.blend1
+*.blend2
+
+# ---- OS clutter ----
+Thumbs.db
+Desktop.ini
+.DS_Store
