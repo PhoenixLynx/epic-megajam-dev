@@ -269,5 +269,18 @@ A running record of every AI tool used and what it did.
 - **Problems:** Push blocked: Claude's workspace isn't linked to my GitHub account yet ("link your GitHub account to let Claude access repositories"). Commits are safe locally until linked.
 - **Fixed (23:28):** Linked GitHub at claude.ai/customize/connectors and enabled the Claude GitHub app for this repo. **First push succeeded: all commits are on `main`.**
 - **Next:** Create the Unreal project → connect its folder → move this repo into it → prototype (grey-box Corridor B, Fear value).
+
+### Session 16: Thu Nov 12, 2026, 23:46 MST: Unreal projects created
+
+- **Done:**
+  - Created two Unreal projects:
+    - `DirectorsCut_58`: **Unreal Engine 5.8.4, the main jam project** (5.8 is required for Epic's official Unreal MCP plugin).
+    - `DirectorsCut`: UE 5.5.1, kept as a backup in case we need to mix versions.
+  - Connected `DirectorsCut_58` to Claude; copied the repo docs (devlog, docs, storyboard, SourceArt) into it.
+- **Decisions & why:**
+  - **5.8 is the one we build in.** Unreal assets saved in a newer engine version can't be opened in an older one, so anything made in 5.8 stays in 5.8. The 5.5 project is for reference only.
+- **Problems:** The shell on my PC has git but not Git LFS, so the full git setup on the PC is still to do. Claude's cloud copy of the repo stays the one that pushes for now.
+- **AI tools used:** Claude (folder access, file copy, devlog).
+- **Next:** Unreal MCP setup → git sync plan for Unreal assets → grey-box Corridor B + Fear value.
 - **Review (20:05):** Approved the whole storyboard, mannequin coworkers included. Added: more hallways if there's time; keep it simple for now (stretch).
 - **Additions (20:06):** Don't forget security guards and custodians. Turn recovered keys into cool-looking access passes. Claude folded these in: passes as the progression gates (closet → Wellness Center → "C"), guard and custodian behaviors, custodian props as debris. CONCEPT.md + STORYBOARD.md updated.
