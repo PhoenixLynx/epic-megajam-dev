@@ -46,3 +46,9 @@ WindowsNoEditor/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# ---- Ableton (keep the .als + recorded/exported audio, skip caches) ----
+SourceArt/Ableton/**/Backup/
+*.asd
+
+# ---- Blender autosaves are already covered above (*.blend1) ----
