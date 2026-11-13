@@ -49,6 +49,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 20:06 | Claude (Anthropic) | Added access passes, security guards and custodians to CONCEPT.md and STORYBOARD.md from my direction. |
 | 2026-11-13 12:50 | Claude (Anthropic) | While I was at work: wrote the grey-box campus builder (Unreal Python), the XOR Key Lock generator + tests + Blueprint port spec, and the first game text tables (emails, PA lines, compliance training, NPC lines, script pages). |
 | 2026-11-13 13:00 | Claude (Anthropic) | Glyph alphabet (8 glyphs × lit/unlit + hidden), UI mockups (Key Lock, inbox, HUD badge), Blueprint recipes, grey-box additions (throwables, loop, Hospital, nav mesh), Fear materials script, 11 synthesized placeholder SFX. |
+| 2026-11-13 15:27 | Claude (Anthropic) | Enabled the Python, Editor Scripting, Unreal MCP and All Toolsets plugins in the .uproject (exact names read from my UE 5.8 install); wrote preflight_check.py, init_unreal.py (auto-starts MCP) and docs/TONIGHT.md. |
 
 ---
 
@@ -329,3 +330,18 @@ A running record of every AI tool used and what it did.
   - Small generated assets (UI textures, mockups, placeholder audio) are stored as normal git files, not LFS, because Claude's cloud workspace can't upload LFS.
 - **AI tools used:** Claude (everything above; glyphs, mockups and SFX generated from code it wrote).
 - **Next (tonight):** run both scripts → Fear Director recipe → 📸 Fear 0 / 0.5 / 1 screenshots.
+
+### Session 19: Fri Nov 13, 2026, 15:27 MST: Getting ready to test tonight
+
+- **Goal:** Remove as many manual steps as possible before I get home.
+- **Done:**
+  - Confirmed the project's default game mode is already `BP_FirstPersonGameMode`, so no World Settings step.
+  - Read the plugin folder names in my UE 5.8 install and **enabled the plugins directly in `DirectorsCut_58.uproject`**: `PythonScriptPlugin`, `EditorScriptingUtilities`, `ModelContextProtocol` (Unreal MCP), `AllToolsets`. Old file backed up.
+  - **`Scripts/Editor/preflight_check.py`:** checks all 40-ish Unreal features the builders depend on, starts the MCP server, generates `.mcp.json`, and writes `Saved/Take4471_preflight.txt` so Claude can read the results remotely.
+  - **`Content/Python/init_unreal.py`:** starts the Unreal MCP server automatically whenever the editor opens.
+  - **`docs/TONIGHT.md`:** the step-by-step for tonight, including how to connect Claude to the editor (Claude desktop app via an `mcp-remote` bridge, or Claude Code with the generated `.mcp.json`).
+- **Decisions & why:**
+  - **Preflight before building**, because the builder scripts were only tested against a stand-in for Unreal's API. The report pinpoints anything missing.
+  - **Reports and logs land inside the project folder** (`Saved/`), which Claude can read, so debugging doesn't need me to copy and paste.
+- **AI tools used:** Claude (plugin setup, scripts, runbook).
+- **Next:** TONIGHT.md, steps 1–7.

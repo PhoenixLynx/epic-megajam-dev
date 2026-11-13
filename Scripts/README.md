@@ -1,6 +1,10 @@
 # Scripts
 
-## Tonight: build the grey-box campus (about 2 minutes)
+## Tonight
+
+Follow **`docs/TONIGHT.md`**: preflight → grey-box → Fear materials → connect MCP.
+
+## Build the grey-box campus (about 2 minutes)
 
 1. Open `DirectorsCut_58` in Unreal 5.8.
 2. **Edit → Plugins** → search **Python Editor Script Plugin** → enable → restart if asked.
