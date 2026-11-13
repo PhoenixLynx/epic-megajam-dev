@@ -1,6 +1,6 @@
 # Concept (v0.8): working title "SOULHASH"
 
-> **Theme: "Director's Cut"** (to confirm on the official jam page). Brainstorm: [THEME_BRAINSTORM.md](THEME_BRAINSTORM.md).
+> **Theme: "Director's Cut"**, confirmed by Epic's jammer email (Nov 12). Epic's framing: "Your vision, your edits, your final cut": the feature that didn't make it. Our game is about the scenes cut from your life. Brainstorm: [THEME_BRAINSTORM.md](THEME_BRAINSTORM.md).
 > **Spine:** the whole thing is an orchestrated movie. Your soul bits are the scenes cut from your life. A Director, the Chairman, is behind it all and is never fully seen.
 
 **Genre:** first-person cryptographic horror, explore / stalk-and-chase / puzzle
@@ -258,7 +258,7 @@ Left deliberately unresolved. **Draft: refine during storyboard / as it unfolds.
 
 ## Open questions
 
-- [ ] Jam theme. A participant's devlog says it's **"Director's Cut"**. Needs confirming from the official page.
+- [x] Jam theme: **"Director's Cut"** (confirmed).
 - [x] Old tracks: compose everything fresh; motifs from older work may be re-recorded and noted in the devlog.
 - [x] Combat: yes, fight back with improvised objects; only soul bits truly end a gatekeeper.
 - [x] "Antics" = the malware's tricks: loops, illusions, agents among the NPCs.

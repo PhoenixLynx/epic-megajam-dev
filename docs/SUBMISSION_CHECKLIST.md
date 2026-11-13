@@ -24,6 +24,7 @@
 - [ ] Short gameplay clip/GIF
 - [ ] Controls listed on the page
 - [ ] AI tool usage summarized on the page (pulled from the devlog ledger)
+- [ ] "Tools you used" field filled in at submission (some partner prizes, e.g. Hyper3D Rodin's pool, depend on it)
 
 ## Status log
 

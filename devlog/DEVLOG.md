@@ -4,7 +4,7 @@
 **Engine:** Unreal Engine
 **Jam dates:** Thu Nov 12 – Sun Nov 15, 2026
 **Deadline:** Sun Nov 15, 2026, 6:59 PM Phoenix time (MST, UTC-7)
-**Theme:** [THEME]
+**Theme:** DIRECTOR'S CUT
 **Log started:** Thu Nov 12, 2026
 
 Every asset and line of gameplay code in this project is made during the jam window.
@@ -15,8 +15,8 @@ Every asset and line of gameplay code in this project is made during the jam win
 
 | # | Stage | Status | Started | Finished |
 |---|-------|--------|---------|----------|
-| 1 | Concept | 🔄 In progress | Nov 12 19:19 | |
-| 2 | Storyboard | ⬜ | | |
+| 1 | Concept | ✅ Done | Nov 12 19:19 | Nov 12 19:54 |
+| 2 | Storyboard | ⏳ Next | | |
 | 3 | Prototype | ⬜ | | |
 | 4 | Art | ⬜ | | |
 | 5 | Audio | ⬜ | | |
@@ -44,6 +44,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:46 | Claude (Anthropic) | Brainstormed "Director's Cut" theme tie-ins → docs/THEME_BRAINSTORM.md (core reframe, mechanics, ending, titles). Web-searched to try to confirm the theme officially (not confirmed yet). |
 | 2026-11-12 19:48 | Claude (Anthropic) | CONCEPT.md v0.7: folded in the theme. "Orchestrated movie" spine, the Chairman with a 7-step foreshadowing list, movie motifs, wrap-party ending, theatrical vs. director's cut. |
 | 2026-11-12 19:52 | Claude (Anthropic) | CONCEPT.md v0.8: workday activity table (email, compliance training, video calls, meetings, NPCs, team building) and day structure (3 acts = 3 keys). |
+| 2026-11-12 19:54 | Claude (Anthropic) | Read Epic's partner-perks email I shared; confirmed the theme; sorted perks into use / maybe / skip for this game in docs/RESOURCES.md (codes and links left out of the repo). |
 
 ---
 
@@ -226,3 +227,20 @@ A running record of every AI tool used and what it did.
   - MVP keeps the inbox, training and one meeting or call; team building as its own sequence is a stretch goal.
 - **AI tools used:** Claude (concept update, act structure).
 - **Next:** Create the Unreal project + GitHub repo → storyboard.
+
+### Session 13: Thu Nov 12, 2026, 19:54 MST: Theme confirmed + resources
+
+- **Goal:** Lock the theme and gather free resources.
+- **Done:**
+  - **Theme confirmed: DIRECTOR'S CUT** (Epic's jammer email). Epic frames it as the feature that didn't make the cut. Our game is about the scenes cut from your life.
+  - Favorites confirmed: the Chairman's camera always off in meetings, playing with time, and the morning / midday / overtime structure.
+  - Sorted the partner perks in `docs/RESOURCES.md`.
+- **Decisions & why:**
+  - **Use:** PBRgen (materials, expires Nov 15), Hyper3D Rodin (3D props; redeem by Nov 16), fal (2D posters/portrait), Anthropic credits (claim, optional use).
+  - **One 3D generator only** for consistent style.
+  - **Skip WeLoveIndies music**: pre-made = unscored, and I'm composing everything.
+  - **Diversion as a backup** if GitHub's free LFS storage runs out.
+  - Codes and claim links kept out of the repo (Epic asked jammers not to share them).
+- **Concept stage: ✅ complete.**
+- **AI tools used:** Claude (email review, resource sorting).
+- **Next:** Claim time-limited perks → create the Unreal project + GitHub repo → storyboard.
