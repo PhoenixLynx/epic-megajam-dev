@@ -267,6 +267,7 @@ A running record of every AI tool used and what it did.
 - **Goal:** Connect the remote and push.
 - **Done:** Created private repo `PhoenixLynx/epic-megajam-dev` (will go public before submission). Remote `origin` added.
 - **Problems:** Push blocked: Claude's workspace isn't linked to my GitHub account yet ("link your GitHub account to let Claude access repositories"). Commits are safe locally until linked.
-- **Next:** Link GitHub to Claude from the web/desktop app (or push from my PC) → push all commits.
+- **Fixed (23:28):** Linked GitHub at claude.ai/customize/connectors and enabled the Claude GitHub app for this repo. **First push succeeded: all commits are on `main`.**
+- **Next:** Create the Unreal project → connect its folder → move this repo into it → prototype (grey-box Corridor B, Fear value).
 - **Review (20:05):** Approved the whole storyboard, mannequin coworkers included. Added: more hallways if there's time; keep it simple for now (stretch).
 - **Additions (20:06):** Don't forget security guards and custodians. Turn recovered keys into cool-looking access passes. Claude folded these in: passes as the progression gates (closet → Wellness Center → "C"), guard and custodian behaviors, custodian props as debris. CONCEPT.md + STORYBOARD.md updated.
