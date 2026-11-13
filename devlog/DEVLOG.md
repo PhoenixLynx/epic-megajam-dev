@@ -41,6 +41,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:37 | Claude (Anthropic) | CONCEPT.md v0.6 from my direction: coffee burn + more office weapons; "astral logic" powers tiered by soul bits, with Unreal implementation notes. |
 | 2026-11-12 19:40 | Claude (Anthropic) | Web-searched the jam rules on pre-made assets and the theme. Added the music plan (stems composed during the jam + MetaSounds runtime generation) to CONCEPT.md; added rule items to the checklist. |
 | 2026-11-12 19:42 | Claude (Anthropic) | Wrote docs/AUDIO_PLAN.md: bright/dark ambient palettes, 7 generative techniques, recording list. I compose all the music; Claude designed the generative system. |
+| 2026-11-12 19:46 | Claude (Anthropic) | Brainstormed "Director's Cut" theme tie-ins → docs/THEME_BRAINSTORM.md (core reframe, mechanics, ending, titles). Web-searched to try to confirm the theme officially (not confirmed yet). |
 
 ---
 
@@ -192,3 +193,10 @@ A running record of every AI tool used and what it did.
   - Motifs from my older albums may be re-recorded as new material and noted in the devlog; old audio files aren't used.
 - **AI tools used:** Claude (generative audio design, recording list).
 - **Next:** Confirm theme → storyboard. Start recording audio stems in parallel when I'm away from the PC.
+
+### Session 10: Thu Nov 12, 2026, 19:46 MST: Theme brainstorm
+
+- **Goal:** Brainstorm how "Director's Cut" fits the game.
+- **Done:** Brainstorm written to `docs/THEME_BRAINSTORM.md`. Picks pending.
+- **AI tools used:** Claude (brainstorm, theme search).
+- **Next:** Pick theme ideas → fold into CONCEPT.md → storyboard.
