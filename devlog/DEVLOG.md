@@ -43,6 +43,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:42 | Claude (Anthropic) | Wrote docs/AUDIO_PLAN.md: bright/dark ambient palettes, 7 generative techniques, recording list. I compose all the music; Claude designed the generative system. |
 | 2026-11-12 19:46 | Claude (Anthropic) | Brainstormed "Director's Cut" theme tie-ins → docs/THEME_BRAINSTORM.md (core reframe, mechanics, ending, titles). Web-searched to try to confirm the theme officially (not confirmed yet). |
 | 2026-11-12 19:48 | Claude (Anthropic) | CONCEPT.md v0.7: folded in the theme. "Orchestrated movie" spine, the Chairman with a 7-step foreshadowing list, movie motifs, wrap-party ending, theatrical vs. director's cut. |
+| 2026-11-12 19:52 | Claude (Anthropic) | CONCEPT.md v0.8: workday activity table (email, compliance training, video calls, meetings, NPCs, team building) and day structure (3 acts = 3 keys). |
 
 ---
 
@@ -210,3 +211,18 @@ A running record of every AI tool used and what it did.
   - Concept doc updated to v0.7. **Concept stage nearly closed**; only official theme confirmation is left.
 - **AI tools used:** Claude (brainstorm, concept update).
 - **Next:** Storyboard: campus map, opening scene, first Fear episode, ending beats.
+
+### Session 12: Thu Nov 12, 2026, 19:52 MST: The workday
+
+- **Goal:** Give the player a daily structure and a reason to move around.
+- **Done:**
+  - Messages signed "The Chairman" confirmed as a favorite.
+  - **During the workday you check emails, do mandatory compliance training and team-building exercises, join video calls, walk around to talk to people, and attend meetings, and the puzzles appear as you do these activities.**
+  - Setup progress: GitHub account is PhoenixLynx; Unreal project not created yet. Claude has no GitHub access from its workspace, so pushing waits on either connecting GitHub to Claude or pushing from my PC.
+- **Decisions & why:**
+  - **The day = 3 acts = 3 keys** (morning / midday / overtime). One structure gives pacing, escalation and a clear objective at every moment.
+  - **Compliance Training is the Key 1 tutorial in disguise.** Teaching the XOR rule as a corporate training module is on-theme and solves onboarding.
+  - **Phishing emails = false bits.** Cryptographic horror meets office life.
+  - MVP keeps the inbox, training and one meeting or call; team building as its own sequence is a stretch goal.
+- **AI tools used:** Claude (concept update, act structure).
+- **Next:** Create the Unreal project + GitHub repo → storyboard.

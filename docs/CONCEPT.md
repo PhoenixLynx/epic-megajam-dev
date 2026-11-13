@@ -1,4 +1,4 @@
-# Concept (v0.7): working title "SOULHASH"
+# Concept (v0.8): working title "SOULHASH"
 
 > **Theme: "Director's Cut"** (to confirm on the official jam page). Brainstorm: [THEME_BRAINSTORM.md](THEME_BRAINSTORM.md).
 > **Spine:** the whole thing is an orchestrated movie. Your soul bits are the scenes cut from your life. A Director, the Chairman, is behind it all and is never fully seen.
@@ -78,6 +78,33 @@ Fear zones should make you feel there's no way out, in both space and time.
 | 2 → 3 | Hospital / Wellness Center; Fear barely lifts | Nested loops, rewind on capture, fake clues for the key | Fast, relentless, may be more than one |
 
 Also scales with **distance to Source**: the closer you are, the less the campus pretends to be normal.
+
+## The workday: where the puzzles hide
+
+You're an employee with a job to do. Everyday office tasks are the objectives, and **the puzzles appear inside them.** The mundane is the cover; the conspiracy leaks through it.
+
+**Daily Task List** (HR to-do on your badge/HUD) gives direction: check email, finish compliance training, join the 10:00 call, attend the meeting, talk to a coworker, team building at 4.
+
+| Activity | Normal surface | Where the puzzle/horror leaks in |
+|----------|---------------|----------------------------------|
+| **Email inbox** (at your desk) | Cheerful company news, memos signed "The Chairman" | Key target glyphs hidden in signature lines and footers. **Phishing emails = malware agents' false bits.** Some emails describe things you haven't done yet. |
+| **Mandatory Compliance Training** | Corporate slideshow + quiz | **Key 1 tutorial in disguise:** "Data Integrity Module 1" teaches the XOR rule. Later modules ask stranger questions ("Do you consent to your next take?"). |
+| **Video calls** (Zoom-style grid) | Coworkers on camera, small talk | One tile is frozen or looping. One camera shows the room *behind you*. The Chairman's tile is always camera-off: just "C". A muted coworker mouths a glyph sequence. |
+| **Meetings** (conference room) | Slides, whiteboard, agenda | Whiteboard glyphs = clues. The meeting repeats word for word (time loop). The agenda lists you as "Item 4: Retake." |
+| **Talking to people** (walking the floor) | Friendly coworkers | Honest NPCs give real clues; agents give false ones. |
+| **Team building** | Icebreakers, a trust exercise | Starts the deepest Fear episode. |
+
+### The day = three takes = three keys
+
+| Act | Time | Activities | Key | Fear |
+|-----|------|-----------|-----|------|
+| **1: Morning** | 9:00–12:00 | Onboarding emails, Compliance Training | **Key 1** (tutorial, shown) | First slip, single loop corridor |
+| **2: Midday** | 12:00–3:00 | Video call, meeting, talking to people | **Key 2** (target hidden in emails/meeting) | Frozen clocks, mannequins move |
+| **3: Overtime** | 4:00–? | Team building → Wellness Center / Hospital | **Key 3** (scattered, decoys) | Fear barely lifts; rewinds |
+
+Then: elevator "C" → wrap party.
+
+**Scope:** MVP = task list, email inbox, Compliance Training (Key 1), one meeting or video call. Stretch = team building as its own sequence, more modules.
 
 ## The Chairman (the Director)
 
@@ -213,6 +240,7 @@ Left deliberately unresolved. **Draft: refine during storyboard / as it unfolds.
 - Rewind on capture
 - Soul Sight bleed tied to soul bits
 - XOR Key Lock, generated
+- Workday: task list, email inbox, Compliance Training (Key 1 tutorial), one meeting or video call
 - 1 stalker gatekeeper with chase + damage
 - Improvised combat: grab/throw objects, hot coffee burn, fire extinguisher, knock-over debris that slows enemies
 - Astral logic tier 1: short-range telekinesis (reuses grab)
