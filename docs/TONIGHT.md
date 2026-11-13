@@ -44,7 +44,7 @@ The MCP server runs inside the editor at `http://127.0.0.1:8000/mcp`. Two ways t
      }
    }
    ```
-   (`mcp-remote` is a small bridge that turns the editor's web address into something the desktop app can launch. It needs **Node.js** installed on Windows: nodejs.org, LTS.)
+   (`mcp-remote` is a small bridge that turns the editor's web address into something the desktop app can launch. It needs Node.js. **Already installed** on this PC (`C:\Program Files\nodejs`). Check the version in a terminal with `node -v`: 18 or newer is fine; if older, update from nodejs.org, LTS.)
 3. Fully quit and reopen the Claude desktop app, with the Unreal editor already open.
 4. Tell Claude "check the Unreal connection". It checks whether `unreal-mcp` shows up.
 
@@ -57,4 +57,4 @@ Fear Director, from `docs/BLUEPRINT_RECIPES.md` #1. With MCP connected, Claude b
 📸 **Screenshots #2–4: the same hallway at Fear 0, 0.5 and 1.**
 
 ## 7. Git on the PC (before bed, 5 min)
-Install **GitHub Desktop** → File → Clone `PhoenixLynx/epic-megajam-dev` into a temp folder → Claude moves the `.git` folder into `DirectorsCut_58` → commit the Unreal files → **Push**. From then on, Unreal assets push from the PC (Git LFS included).
+**Git for Windows is already installed** (`C:\Program Files\Git`, usually includes Git LFS; check with `git lfs version`). Install **GitHub Desktop** for easy pushing → File → Clone `PhoenixLynx/epic-megajam-dev` into a temp folder → Claude moves the `.git` folder into `DirectorsCut_58` → commit the Unreal files → **Push**. From then on, Unreal assets push from the PC (Git LFS included).
