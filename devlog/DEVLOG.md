@@ -35,6 +35,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:17 | Claude (Anthropic) | Set up repo scaffold: git on `main`, Unreal .gitignore, Git LFS tracking, folder layout, this devlog, submission checklist. |
 | 2026-11-12 19:19 | Claude (Anthropic) | Turned my raw concept notes into docs/CONCEPT.md: layer structure, core loop, XOR Key Lock puzzle design, seed approach, MVP scope, Real World options. Ideas and direction are mine; Claude structured and scoped them. |
 | 2026-11-12 19:26 | Claude (Anthropic) | Updated CONCEPT.md to v0.2 from my direction: corporate campus start, Soul Sight "slip" progression, Augmented Fear layer + creep stages, Wellness Center → Hospital, Unreal techniques for the transition, revised MVP/stretch list. |
+| 2026-11-12 19:27 | Claude (Anthropic) | CONCEPT.md v0.3 from my direction: escalation table, "trapped in time and space" mechanics (loops, frozen time, rewind on capture), subtle Key Lock with a 3-key difficulty ramp. |
 
 ---
 
@@ -92,3 +93,19 @@ A running record of every AI tool used and what it did.
 - **Problems:** Theme still unknown.
 - **AI tools used:** Claude (concept doc update, scoping, Unreal technique suggestions).
 - **Next:** Theme → storyboard (campus layout + first Fear episode beat by beat).
+
+### Session 4: Thu Nov 12, 2026, 19:27 MST: Escalation, entrapment, subtle puzzles
+
+- **Goal:** Make the Fear zones scale and make puzzles harder to brute-force.
+- **Done:**
+  - The malware's tricks and Fear zones escalate as you get better (more soul bits) and closer to Source.
+  - Fear zones should make you feel **trapped in time and space**: looping corridors, doors back to the same room, frozen clocks, repeating announcements, rewind on capture.
+  - **Puzzles and solutions should be subtle and not easy to check:** target hidden in the environment, no running result, no partial feedback, wrong answers raise Fear; Soul Sight is a costly way to check.
+  - Concept doc updated to v0.3.
+- **Decisions & why:**
+  - **3-key difficulty ramp.** A fully subtle first key risks jam players quitting before they learn the rule; key 1 teaches, keys 2–3 hide.
+  - **Rewind on capture instead of game over.** Fits "trapped in time," and avoids a restart screen.
+  - **Loop corridor via invisible teleport.** Cheapest convincing space trap in Unreal; MVP includes one.
+- **Problems:** Theme still unknown. Combat style undecided.
+- **AI tools used:** Claude (concept update, mechanic suggestions).
+- **Next:** Theme + combat decision → storyboard.

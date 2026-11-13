@@ -1,4 +1,4 @@
-# Concept (v0.2): working title "SOULHASH"
+# Concept (v0.3): working title "SOULHASH"
 
 **Genre:** first-person cryptographic horror, explore / stalk-and-chase / puzzle
 **Status:** core direction locked. Waiting on jam theme.
@@ -50,6 +50,32 @@ The player shouldn't know exactly when it starts. No siren, no hard cut. It cree
 
 **Soul Sight pierces Fear:** using it during Fear shows what's real (true exits, fake enemies, the stalker's code signature). But it drains fast, so it's a tense resource.
 
+## Trapped in time and space
+
+Fear zones should make you feel there's no way out, in both space and time.
+
+**Space:**
+- **Looping corridors:** walk to the end and you're back at the start, with one small detail changed. (Unreal: a trigger volume teleports the player by a fixed offset into an identical section, so the jump is invisible.)
+- **Doors that lead back:** the exit opens into the room you just left.
+- **Stretching halls:** a corridor gets longer each time you look away.
+
+**Time:**
+- **Frozen clocks:** every clock on campus stops at the same minute.
+- **Repeating announcements:** the same PA message, word for word, again and again.
+- **Rewind on capture:** if the stalker catches you, you wake back at your desk at the same minute, still hurt, and something is different. (Death costs you, but feels like being stuck in time instead of a game-over screen.)
+
+**The way out is always real but always hidden:** a looped corridor has one detail that differs per loop, and following it breaks the loop. Soul Sight shows it more clearly.
+
+## Escalation: Fear and illusions scale with progress
+
+| Soul bits | Fear episodes | Traps | Stalker |
+|-----------|--------------|-------|---------|
+| 0 → 1 | Short, slow creep, one area | One looping corridor | Slow, stalks more than chases |
+| 1 → 2 | Longer, faster creep | Frozen clocks, repeating announcements, doors that lead back | Faster; mannequins move when unseen |
+| 2 → 3 | Hospital / Wellness Center; Fear barely lifts | Nested loops, rewind on capture, fake clues for the key | Fast, relentless, may be more than one |
+
+Also scales with **distance to Source**: the closer you are, the less the campus pretends to be normal.
+
 ## Core loop
 
 1. Work your day on the Campus. Small objectives, notice what's wrong.
@@ -60,13 +86,21 @@ The player shouldn't know exactly when it starts. No siren, no hard cut. It cree
 6. Each bit makes the next Fear episode harder and deeper (Hospital wing).
 7. 3 bits → Source.
 
-## Puzzle: XOR Key Lock (locked in)
+## Puzzle: XOR Key Lock (locked in, now subtle)
 
-- Target signature: a row of glyph-bits. Key fragments: rows of glyph-bits. Toggle fragments; active ones combine by XOR. Match the target.
-- Generated backwards from a secret answer subset → always solvable, never the same.
-- **False bits:** malware decoy fragments, revealed only at Soul Sight 2+.
-- Low sight shows some glyphs as `?`.
-- Scaling: more bits, more fragments, more decoys, solving while stalked.
+**Base rule:** target signature = a row of glyph-bits. Key fragments = rows of glyph-bits. Toggle fragments; active ones combine by XOR. Match the target. Generated backwards from a secret answer subset, so it's always solvable and never the same.
+
+**Subtle, not easy to check:**
+- **The target isn't shown at the lock.** It's hidden in the campus: glyphs on badges, poster borders, clock positions, room numbers. You find it and write it down yourself.
+- **No running result.** The lock doesn't show your XOR total; you work it out.
+- **No partial feedback.** A wrong submission doesn't say how close you were. It raises Fear.
+- **False bits:** malware decoy fragments and fake target clues planted in the environment. Revealed only at Soul Sight 2+.
+- **Soul Sight as the check:** holding Sight on the lock briefly shows which glyphs of your result are right. It costs Sight, so checking is never free.
+
+**Difficulty ramp (so jam players don't bounce off):**
+1. **Key 1 (tutorial-ish):** target shown at the lock, running result visible. Teaches the XOR rule.
+2. **Key 2:** target hidden on campus, running result hidden, Sight check available.
+3. **Key 3:** target scattered across Fear zones, with decoy clues.
 
 ## Every run is unique
 
@@ -86,6 +120,8 @@ The player shouldn't know exactly when it starts. No siren, no hard cut. It cree
 **Must:**
 - Campus level (lobby, office floor, corridor, Wellness Center), built once
 - Augmented Fear as a state on the same level (post-process + materials + audio + swaps)
+- One looping corridor + frozen clocks (cheapest "trapped" effects)
+- Rewind on capture
 - Soul Sight bleed tied to soul bits
 - XOR Key Lock, generated
 - 1 stalker gatekeeper with chase + damage
@@ -101,4 +137,5 @@ The player shouldn't know exactly when it starts. No siren, no hard cut. It cree
 
 - [ ] Jam theme. The concept bends to fit it.
 - [ ] Combat: can the player fight back, or only evade until Dissolve/Patch?
+- [ ] "Antics": does this mean the malware's tricks and illusions (fake doors, moving mannequins), or something else?
 - [ ] Final title.
