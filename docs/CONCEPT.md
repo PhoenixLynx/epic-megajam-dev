@@ -127,6 +127,22 @@ Head of the corporation, and the director of your life's production. **Hinted at
 - **Letterbox bars** close in as Fear rises, with film grain. Soul Sight pushes them back.
 - **Astral logic = editing reality:** telekinesis moves props; float is wire work. Stretch: short rewind, freeze frame.
 
+## Access passes: soul bits made visible
+
+Each recovered key becomes a **cool-looking access pass**: a holographic keycard on your badge lanyard, etched with its key glyphs, glowing brighter in Soul Sight.
+
+- **Passes are the progression gates.** Pass 1 opens the Supply Closet (Key Lock 2). Pass 2 opens the Wellness Center (Act 3). Pass 3 lights elevator button **"C"**.
+- Swipe readers beep green, but in Fear they sometimes beep red for no reason.
+- **Ending:** the Collector asks you to hand over your passes.
+
+## Staff roles
+
+| Role | Normal | In Fear / as agents |
+|------|--------|---------------------|
+| **Coworkers** | Small talk, clues | Agents give false clues; mannequins move when unseen |
+| **Security guards** | Patrol, check badges at restricted doors, wave you through once you have the right pass | Agent guards confiscate, lie about access, or radio your position to the stalker. In deep Fear they stand perfectly still at doorways and turn their heads to follow you. |
+| **Custodians** | Mop, empty bins; quiet, overlooked | Often the honest ones: they know the hidden routes and leave subtle hints. **Wet Floor signs and mop buckets** are throwable debris that slow enemies. Their carts can be pushed into a hallway as a barrier. |
+
 ## NPCs: anyone could be malware
 
 - The friendly coworkers, receptionist and wellness staff you meet can be **agents of the malware**.

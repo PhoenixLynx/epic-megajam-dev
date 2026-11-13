@@ -104,6 +104,12 @@ Legend: **[MVP]** must ship · **[STRETCH]** if time allows · 📸 capture a sc
 
 ---
 
+## Additions (v0.2)
+
+- **Access passes:** each soul bit appears as a holographic keycard on your lanyard. Beat 1.10 → Pass 1 (opens Supply Closet). 2.9 → Pass 2 (opens Wellness Center). 3.5 → Pass 3 (lights "C"). E.5 → the Collector asks for your passes. 📸 each new pass.
+- **Security guards [MVP: 1 patrol + 1 at a restricted door]:** check your badge; agent guards radio the stalker.
+- **Custodians [MVP: 1]:** honest-leaning hint-givers; Wet Floor signs, buckets and carts as combat debris.
+
 ## Scope fallback, if we're short on time
 
 1. Drop the meeting (keep the video call).
