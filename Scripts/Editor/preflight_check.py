@@ -51,13 +51,17 @@ for cls in ("MaterialParameterCollection", "MaterialParameterCollectionFactoryNe
             "MaterialExpressionSubtract", "MaterialExpressionSaturate", "MaterialExpressionLinearInterpolate",
             "MaterialExpressionDesaturation"):
     check(f"class unreal.{cls}", lambda c=cls: has(unreal, c))
+check("MaterialEditingLibrary.set_material_instance_texture_parameter_value",
+      lambda: has(unreal.MaterialEditingLibrary, "set_material_instance_texture_parameter_value"))
+check("PlayerStart has player_start_tag", lambda: unreal.PlayerStart.get_default_object().get_editor_property("player_start_tag") is not None)
 for fn in ("create_material_expression", "connect_material_expressions", "connect_material_property",
            "delete_all_material_expressions", "layout_material_expressions", "recompile_material",
            "set_material_instance_parent", "set_material_instance_vector_parameter_value"):
     check(f"MaterialEditingLibrary.{fn}", lambda f=fn: has(unreal.MaterialEditingLibrary, f))
 
 # --- Asset importer ----------------------------------------------------------
-for cls in ("AssetImportTask", "FbxImportUI", "TextureCompressionSettings", "TextureGroup"):
+for cls in ("AssetImportTask", "FbxImportUI", "TextureCompressionSettings", "TextureGroup",
+            "MaterialExpressionTextureSampleParameter2D", "MaterialExpressionConstant", "Texture2D"):
     check(f"class unreal.{cls}", lambda c=cls: has(unreal, c))
 
 # --- Unreal MCP ----------------------------------------------------------------

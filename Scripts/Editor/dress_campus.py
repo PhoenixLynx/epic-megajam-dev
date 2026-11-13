@@ -201,6 +201,15 @@ def main():
             a.set_editor_property("tags", [unreal.Name(t) for t in all_tags])
         placed += 1
 
+    # Textures onto the grey-box boards. Posters 0-2 repeat as 3-5 so the loop looks identical.
+    boards = {"GB_Poster_0": "MI_Poster_Energy", "GB_Poster_1": "MI_Poster_Present", "GB_Poster_2": "MI_Poster_CorridorB",
+              "GB_Poster_3": "MI_Poster_Energy", "GB_Poster_4": "MI_Poster_Present", "GB_Poster_5": "MI_Poster_CorridorB",
+              "GB_ChairmanPortrait": "MI_ChairmanPortrait", "GB_BulletinBoard": "MI_CallSheet"}
+    for a in actor_sys.get_all_level_actors():
+        mi_name = boards.get(a.get_actor_label())
+        if mi_name and asset_lib.does_asset_exist(f"/Game/Props/Materials/{mi_name}"):
+            a.static_mesh_component.set_material(0, asset_lib.load_asset(f"/Game/Props/Materials/{mi_name}"))
+
     unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
     unreal.log(f"[TAKE 4471] Dressed campus: placed {placed}, removed {removed} old actors")
     if missing:

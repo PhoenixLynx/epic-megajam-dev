@@ -54,6 +54,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-13 15:39 | Claude (Anthropic) | Wrote the rest of the game text (Act 2–3 NPC lines, prop text incl. call sheet, the full ending with both branches, credits); designed the title, TAKE slate and loading screens; generated 6 HALCYON posters (+ loop twins) and the Chairman portrait from code. |
 | 2026-11-13 15:45 | Claude (Anthropic) | Wrote a Blender 5.2 script that builds 16 office props and exports FBX (ran it in its own workspace with the bpy module and rendered a preview); generated the call sheet + 4 chart textures; wrote an Unreal import script for all generated assets. |
 | 2026-11-13 16:03 | Claude (Anthropic) | Added 33 props (supplies, plants, lobby, kitchen, mannequins, stalker) to the Blender script, wrote dress_campus.py (furnishes every room, adds a kitchen), assembled the dressed campus in Blender to check the layout, wrote docs/ART_DIRECTION.md. |
+| 2026-11-13 16:19 | Claude (Anthropic) | Wrote the C++ gameplay module (Fear Director, grab/throw/telekinesis, Corridor B loop, stalker, rewind, Key Lock library, game instance + console commands), ported and tested the Key Lock core with g++, added auto-wiring, poster materials, place_cpp_actors.py and docs/CPP_SYSTEMS.md. |
 
 ---
 
@@ -415,3 +416,25 @@ A running record of every AI tool used and what it did.
   - **YAW_FIX / SCALE_FIX knobs** in the dressing script, because how Blender's axes map into Unreal is only confirmed once imported.
 - **AI tools used:** Claude (props script, dressing script, Blender layout check renders, art direction).
 - **Next:** tonight: preflight → grey-box → Fear materials → import → **dress** → MCP.
+
+### Session 24: Fri Nov 13, 2026, 16:19 MST: Gameplay core in C++
+
+- **Goal:** Get gameplay first (art and design refine later). Build as much real gameplay as possible before I'm home.
+- **Done:**
+  - Checked the PC: **Visual Studio 2022 Community with MSVC 14.44** is installed, so the project can go C++.
+  - **C++ module `DirectorsCut_58`** (~1,400 lines) staged in `Source_Pending/` so the Blueprint project keeps working until we switch it on:
+    - `ATakeFearDirector`: one Fear value → MPC, post-process, fog, light flicker, letterbox; stage events; enables the loop at 0.5; wakes the stalker at stage 4; **previews in the editor**; auto-wires itself and **adds the grab component to the player**.
+    - `UTakeGrabComponent`: E grab/drop, Right Mouse throw, telekinesis reach with a soul bit, heavy props need 3.
+    - `ATakeLoopTrigger`: silent teleport loop, one poster swapped to its `_Changed` twin per loop, break by interacting with it.
+    - `ATakeStalker`: Dormant → Stalk → Chase → Stunned; stunned by thrown props; catch triggers the rewind; speed scales with soul bits; `Slow()` for the extinguisher.
+    - `UTakeRewindSubsystem`: "CUT. AGAIN.": fade, take +1, reset, back to desk #4471, one object changed.
+    - `UTakeKeyLockLibrary` + engine-free `TakeKeyLockCore.h`: **tested here with g++ on 60,000 locks** (same results as the Python version).
+    - `UTakeGameInstance`: run seed, take, soul bits/passes, and **console commands** (`TakeFear`, `TakeCreep`, `TakeStalker`, `TakeRewind`, `TakeLoop`, `TakeSoulBits`, `TakeSeed`) so everything can be tested before any UI exists.
+  - Python updates: posters tagged `LoopPoster`, room lights tagged `FearLight`, PlayerStart tagged `Desk4471`; the importer now makes material instances for every poster/portrait/paper texture and dressing applies them; new `place_cpp_actors.py` spawns the C++ actors after compiling.
+  - `docs/CPP_SYSTEMS.md` (what each class does, console commands, log lines) and TONIGHT.md step 6 (switch on C++, with instant undo).
+- **Decisions & why:**
+  - **C++ over Blueprint for the core:** Claude can write and partly test text code from the cloud; Blueprints can only be made in the editor. Blueprints are still how we'll do UI, tuning and one-off level scripting.
+  - **Staged in `Source_Pending/`:** the first compile happens tonight; if it fails, nothing else is blocked.
+  - **Auto-wiring everywhere:** fewer editor steps tonight = more time playing.
+- **AI tools used:** Claude (C++ module, g++ tests, Python updates, docs).
+- **Next:** TONIGHT.md: scripts → switch on C++ → first chase. 📸

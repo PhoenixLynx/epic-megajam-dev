@@ -57,6 +57,45 @@ for path in unreal.EditorAssetLibrary.list_assets("/Game/UI/Glyphs", recursive=F
         tex.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_UI)
         unreal.EditorAssetLibrary.save_loaded_asset(tex)
 
+# Prop materials: one simple textured material + an instance per texture
+# (MI_Poster_Energy, MI_Poster_Energy_Changed, MI_ChairmanPortrait, MI_CallSheet, MI_ScriptPage_01 ...)
+MAT_DIR = "/Game/Props/Materials"
+mel = unreal.MaterialEditingLibrary
+tools = unreal.AssetToolsHelpers.get_asset_tools()
+
+
+def get_or_create(name, folder, cls, factory):
+    path = f"{folder}/{name}"
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        return unreal.EditorAssetLibrary.load_asset(path)
+    return tools.create_asset(name, folder, cls, factory)
+
+
+base = get_or_create("M_PropTexture", MAT_DIR, unreal.Material, unreal.MaterialFactoryNew())
+mel.delete_all_material_expressions(base)
+tex_param = mel.create_material_expression(base, unreal.MaterialExpressionTextureSampleParameter2D, -400, 0)
+tex_param.set_editor_property("parameter_name", "Tex")
+mel.connect_material_property(tex_param, "RGB", unreal.MaterialProperty.MP_BASE_COLOR)
+rough = mel.create_material_expression(base, unreal.MaterialExpressionConstant, -400, 250)
+rough.set_editor_property("r", 0.65)
+mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+mel.recompile_material(base)
+unreal.EditorAssetLibrary.save_loaded_asset(base)
+
+made = 0
+for path in unreal.EditorAssetLibrary.list_assets("/Game/Props/Textures", recursive=False):
+    tex = unreal.EditorAssetLibrary.load_asset(path)
+    if not isinstance(tex, unreal.Texture2D):
+        continue
+    name = tex.get_name()                       # T_Poster_Energy_Changed
+    mi_name = "MI_" + name[2:] if name.startswith("T_") else "MI_" + name
+    mi = get_or_create(mi_name, MAT_DIR, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+    mel.set_material_instance_parent(mi, base)
+    mel.set_material_instance_texture_parameter_value(mi, "Tex", tex)
+    unreal.EditorAssetLibrary.save_loaded_asset(mi)
+    made += 1
+unreal.log(f"[TAKE 4471] Made {made} prop material instances in {MAT_DIR}")
+
 done = sum(1 for t in tasks if t.get_editor_property("imported_object_paths"))
 unreal.log(f"[TAKE 4471] Imported {done}/{len(tasks)} files")
 if done < len(tasks):

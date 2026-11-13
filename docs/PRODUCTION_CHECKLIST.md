@@ -36,15 +36,22 @@ Claude updates this every session. `[x]` = done · **MVP** = must ship · *Stret
 ## B. Core systems (prototype). MVP
 - [ ] Grey-box campus built (`build_greybox_campus.py`): 🎬 runs. **Fri** · Done: walk every room in Play.
 - [ ] Fear materials (`build_fear_assets.py`): 🎬 runs. **Fri**
-- [ ] **Fear Director** (one 0→1 value → materials, post-process, fog, letterbox): 🤝. **Fri** · Done: slider rots the campus; keys 1–4 set stages.
-- [ ] **Grab / throw** (+ telekinesis reach at 1 soul bit): 🤝. **Fri** · Done: throw the mug across the office.
-- [ ] **Corridor B loop** (teleport + changed poster + break the loop): 🤝. **Sat AM** · Done: can't tell you looped; using the odd poster frees you.
-- [ ] **Stalker** (stalk → chase → stun when hit; speed scales with soul bits): 🤝. **Sat AM** · Done: it hunts you; a thrown chair stuns it.
-- [ ] **Rewind on capture** ("CUT. AGAIN." slate, take number, something changed): 🤝. **Sat AM**
-- [ ] **Key Lock** in Blueprint (port of `keylock.py`) + terminal UI: 🤝. **Sat AM** · Done: Key 1 tutorial solvable; decoys corrupt.
-- [ ] **Run seed** (clock-based, dev override): 🤖 spec ✔ → 🤝 build. **Sat**
+- [x] **Fear Director** written in C++ (auto-wired, editor preview, stages, lights, letterbox amount): 🤖
+- [ ] Fear Director compiled + tested in level: 🎬. **Fri** · Done: slider rots the campus.
+- [x] **Grab / throw / telekinesis** in C++, auto-added to the player: 🤖
+- [ ] Tested: 🎬. **Fri** · Done: throw the mug across the office.
+- [x] **Corridor B loop** in C++ (teleport, poster swap, break): 🤖
+- [ ] Interact-to-break wired + tested: 🤝. **Sat AM** · Done: can't tell you looped; using the odd poster frees you.
+- [x] **Stalker** in C++ (stalk/chase/stun/catch, scaling, slow): 🤖
+- [ ] Tested + tuned: 🤝. **Sat AM** · Done: it hunts you; a thrown chair stuns it.
+- [x] **Rewind** in C++ (fade, take +1, reset, back to desk, something changed): 🤖
+- [ ] Slate widget on `OnRewind`: 🤝. **Sat AM**
+- [x] **Key Lock** logic in C++ + Blueprint nodes (tested 60,000 locks): 🤖
+- [ ] Terminal UI widget: 🤝. **Sat AM** · Done: Key 1 tutorial solvable; decoys corrupt.
+- [x] **Run seed** (clock-based, dev override) in the game instance: 🤖
 - [ ] **Soul Sight** (meter, flicker at 0 bits, hold-to-see, check on locks): 🤝. **Sat**
-- [ ] **Access passes** (badge slots; doors check passes): 🤝. **Sat**
+- [x] Soul bits → passes (`HasPass`) in the game instance: 🤖
+- [ ] Badge slots UI + doors check passes: 🤝. **Sat**
 - [ ] Health + damage (stalker grab hurts; rewind keeps damage): 🤝. **Sat**
 - [ ] *Stretch:* fire extinguisher, hot-coffee burn, float, Dissolve/Patch
 

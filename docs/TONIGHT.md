@@ -34,7 +34,7 @@ Press **Play**: you spawn behind desk #4471 facing your monitor. 📸 **Screensh
 Then **Tools → Execute Python Script…** → `Scripts/Editor/dress_campus.py`: furnishes every room with the real props (208 placed, 111 throwable), turns the break room into a kitchen, places the mannequins.
 **Check:** your desk's monitor should face your chair. If **all** props face the wrong way, open `dress_campus.py`, set `YAW_FIX = 180` (or 90 / -90) at the top, and run it again. If they're tiny or huge, change `SCALE_FIX`. 📸 **Screenshot: the dressed office.**
 
-## 5. Connect Claude to the editor (5–10 min)
+## 5. Connect Claude to the editor (5–10 min, optional tonight)
 The MCP server runs inside the editor at `http://127.0.0.1:8000/mcp`. Two ways to connect:
 
 **A. This chat (Claude desktop app)** so you can keep messaging from your phone:
@@ -58,9 +58,18 @@ The MCP server runs inside the editor at `http://127.0.0.1:8000/mcp`. Two ways t
 
 Try A first. If A doesn't connect, B is the reliable fallback.
 
-## 6. First real build (the fun part)
+## 6. Switch on C++ gameplay (10 min, mostly compile time)
+The gameplay core is written in C++ (`docs/CPP_SYSTEMS.md`): Fear Director, grab/throw, the loop, the stalker, rewind, Key Lock.
+1. **Close the Unreal editor.** Tell Claude "switch on C++". Claude moves `Source_Pending` → `Source`, adds the module to the `.uproject`, and sets the Game Instance + start map in `Config/DefaultEngine.ini` (backups kept).
+2. Double-click `DirectorsCut_58.uproject`. It says modules are missing / out of date → **Yes, rebuild**. First compile takes a few minutes.
+3. **If it fails:** tell Claude "check the build". The error log is in `Saved/Logs`. Undo is instant: Claude restores the `.uproject` backup and you're back to Blueprint-only.
+4. In the editor: **Tools → Execute Python Script…** → `Scripts/Editor/place_cpp_actors.py` (Fear Director, fog, loop trigger, stalker).
+5. Select `CPP_FearDirector` → drag **Fear** from 0 to 1 in Details: the campus rots in the viewport. 📸 **Screenshots: Fear 0 / 0.5 / 1.**
+6. **Play.** Press **E** on an orange prop, **Right Mouse** to throw it. Press **`** and try `TakeCreep 1 20`, walk into Corridor B, `TakeStalker`, throw a chair at it. 📸 **Clip: first chase.**
+
+## 7. First real build (the fun part)
 Fear Director, from `docs/BLUEPRINT_RECIPES.md` #1. With MCP connected, Claude builds it with you.
 📸 **Screenshots #2–4: the same hallway at Fear 0, 0.5 and 1.**
 
-## 7. Git on the PC (before bed, 5 min)
+## 8. Git on the PC (before bed, 5 min)
 **Git for Windows is already installed** (`C:\Program Files\Git`, usually includes Git LFS; check with `git lfs version`). Install **GitHub Desktop** for easy pushing → File → Clone `PhoenixLynx/epic-megajam-dev` into a temp folder → Claude moves the `.git` folder into `DirectorsCut_58` → commit the Unreal files → **Push**. From then on, Unreal assets push from the PC (Git LFS included).

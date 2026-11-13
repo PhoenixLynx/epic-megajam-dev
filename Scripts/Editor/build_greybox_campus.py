@@ -263,7 +263,8 @@ def build():
 
         task.enter_progress_frame(1, "Corridor B loop")
         for label, x, y in POSTERS:
-            spawn_box(label, x, y, 160, 4, 60, 90, "CorridorB_Loop")
+            poster = spawn_box(label, x, y, 160, 4, 60, 90, "CorridorB_Loop")
+            poster.set_editor_property("tags", [unreal.Name("LoopPoster")])   # found by ATakeLoopTrigger
         trig = spawn_simple(unreal.TriggerBox, "LoopTrigger", 1400, LOOP_TRIGGER_Y, 150, "CorridorB_Loop")
         trig.set_actor_scale3d(unreal.Vector(380 / 64.0, 40 / 64.0, 300 / 64.0))  # TriggerBox is 64 cm by default
 
@@ -286,6 +287,7 @@ def build():
                                  x + w / 2, y + d / 2, WALL_HEIGHT - 30, "Lights")
             light.point_light_component.set_intensity(5000.0)
             light.point_light_component.set_attenuation_radius(max(w, d))
+            light.set_editor_property("tags", [unreal.Name("FearLight")])   # dims/flickers with Fear
         spawn_simple(unreal.SkyLight, "SkyLight", 2000, 3000, 1000, "Lights")
         for label, x, y in MARKERS:
             spawn_simple(unreal.TargetPoint, label, x, y, 50, "Markers")
@@ -297,7 +299,8 @@ def build():
         # Covers the whole campus (and the Hospital). Press P in the viewport to see the walkable area.
         nav.set_actor_scale3d(unreal.Vector(44, 76, (abs(HOSPITAL_Z) + 600) / 200 if BUILD_HOSPITAL else 4))
         px, py, pyaw = PLAYER_START
-        spawn_simple(unreal.PlayerStart, "PlayerStart_Desk4471", px, py, 100, "Systems", yaw=-90)
+        ps = spawn_simple(unreal.PlayerStart, "PlayerStart_Desk4471", px, py, 100, "Systems", yaw=-90)
+        ps.set_editor_property("player_start_tag", unreal.Name("Desk4471"))   # rewind returns here
 
     level_sys.save_current_level()
     unreal.log(f"[TAKE 4471] Grey-box campus built and saved to {LEVEL_PATH}")
