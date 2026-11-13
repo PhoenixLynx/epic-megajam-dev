@@ -184,6 +184,7 @@ A running record of every AI tool used and what it did.
 - **Done:**
   - Direction: something really eerie, dark ambient, plus brighter ambient. I'll compose new material, and we'll build generative algorithms to expand on it.
   - Wrote `docs/AUDIO_PLAN.md`.
+  - Shared a YouTube reference for the spacing of the music and the mood (to be inspired by, not to copy): https://youtu.be/Jli-cviuC2c
 - **Decisions & why:**
   - **Bright ambient = campus, dark ambient = Fear/Astral,** crossfaded by the Fear value, so the music tracks the slip.
   - **Phasing loops of odd lengths** as the base layer: the simplest way to get endlessly non-repeating ambience.

@@ -3,6 +3,10 @@
 **Composer:** me (SkyYamaha). All recordings made during the jam.
 **Engine side:** Unreal MetaSounds, driven by the run seed, the Fear value, and Soul Sight.
 
+## References (inspiration only, nothing copied)
+
+- Spacing / mood reference I picked: https://youtu.be/Jli-cviuC2c
+
 ## Two palettes
 
 | Palette | Where | Feel | Suggested scales |
