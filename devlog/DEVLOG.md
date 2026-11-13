@@ -38,6 +38,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:27 | Claude (Anthropic) | CONCEPT.md v0.3 from my direction: escalation table, "trapped in time and space" mechanics (loops, frozen time, rewind on capture), subtle Key Lock with a 3-key difficulty ramp. |
 | 2026-11-12 19:30 | Claude (Anthropic) | CONCEPT.md v0.4 from my direction: NPCs as seeded malware agents with false clues; party ending with the Collector, broken into beats. |
 | 2026-11-12 19:36 | Claude (Anthropic) | CONCEPT.md v0.5 from my direction: improvised combat (objects, fire extinguisher, path-blocking debris) with Unreal implementation notes; ending offer + Yes/No choice. |
+| 2026-11-12 19:37 | Claude (Anthropic) | CONCEPT.md v0.6 from my direction: coffee burn + more office weapons; "astral logic" powers tiered by soul bits, with Unreal implementation notes. |
 
 ---
 
@@ -142,4 +143,20 @@ A running record of every AI tool used and what it did.
   - **Fire extinguisher** as the signature tool: limited charge, blinds and slows.
 - **Problems:** Theme still unknown.
 - **AI tools used:** Claude (concept update, combat implementation notes).
+- **Next:** Theme → close Concept stage → storyboard.
+
+### Session 7: Thu Nov 12, 2026, 19:37 MST: Astral logic
+
+- **Goal:** Expand improvised combat and connect it to astral progress.
+- **Done:**
+  - More improvised weapons: burn enemies with coffee; throw reams of printer paper, keyboards, cabinets.
+  - **Astral logic:** the more you can be in the astral realm, the more you can bend physics: short flight, telekinesis with objects, a certain amount of impossible physics. Nothing too crazy.
+  - Concept doc updated to v0.6.
+- **Decisions & why:**
+  - **Powers tiered by soul bits** (telekinesis → float → heavy throw), so progress is felt in your hands, not just in what you see.
+  - **Telekinesis reuses the grab system** with longer reach, so it's nearly free to build.
+  - **All astral powers drain Soul Sight**: one resource for seeing truth, piercing Fear, checking locks, and bending physics. Every use is a choice.
+  - Tier 1 telekinesis in MVP; float and heavy throw are stretch.
+- **Problems:** Theme still unknown.
+- **AI tools used:** Claude (concept update, implementation notes).
 - **Next:** Theme → close Concept stage → storyboard.
