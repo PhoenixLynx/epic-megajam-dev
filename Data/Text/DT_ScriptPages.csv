@@ -1,0 +1,9 @@
+"Name","Act","Scene","Text","HasGlyphClue","IsFake"
+"S_01","3","INT. WELLNESS CENTER - OVERTIME","EMPLOYEE {EMP} wakes on the floor. They do not remember falling. They look at this page.","False","False"
+"S_02","3","INT. WARD - CONTINUOUS","{EMP} reads the chart. {EMP} realises the chart is reading back.
+
+{GLYPHS_C}","True","False"
+"S_03","3","INT. WARD - CONTINUOUS","{EMP} trusts this page. This page is correct. (Note from props: replace before take {TAKE}.)
+
+{GLYPHS_B}","True","True"
+"S_04","3","INT. ELEVATOR - LATER","The button marked C lights. {EMP} hesitates. Hold on the hesitation.","False","False"

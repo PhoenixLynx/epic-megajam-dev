@@ -16,8 +16,8 @@ Every asset and line of gameplay code in this project is made during the jam win
 | # | Stage | Status | Started | Finished |
 |---|-------|--------|---------|----------|
 | 1 | Concept | ✅ Done | Nov 12 19:19 | Nov 12 19:54 |
-| 2 | Storyboard | 🔄 In progress | Nov 12 19:59 | |
-| 3 | Prototype | ⬜ | | |
+| 2 | Storyboard | ✅ Done | Nov 12 19:59 | Nov 12 20:05 |
+| 3 | Prototype | 🔄 In progress | Nov 13 12:50 | |
 | 4 | Art | ⬜ | | |
 | 5 | Audio | ⬜ | | |
 | 6 | Polish | ⬜ | | |
@@ -47,6 +47,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:54 | Claude (Anthropic) | Read Epic's partner-perks email I shared; confirmed the theme; sorted perks into use / maybe / skip for this game in docs/RESOURCES.md (codes and links left out of the repo). |
 | 2026-11-12 19:59 | Claude (Anthropic) | Drafted storyboard/STORYBOARD.md v0.1 from the concept: campus map, beat tables for Acts 1–3 and the ending, MVP/stretch tags, screenshot markers, scope fallback. Added SourceArt/ folders + LFS/ignore rules for Blender and Ableton files. |
 | 2026-11-12 20:06 | Claude (Anthropic) | Added access passes, security guards and custodians to CONCEPT.md and STORYBOARD.md from my direction. |
+| 2026-11-13 12:50 | Claude (Anthropic) | While I was at work: wrote the grey-box campus builder (Unreal Python), the XOR Key Lock generator + tests + Blueprint port spec, and the first game text tables (emails, PA lines, compliance training, NPC lines, script pages). |
 
 ---
 
@@ -284,3 +285,22 @@ A running record of every AI tool used and what it did.
 - **Next:** Unreal MCP setup → git sync plan for Unreal assets → grey-box Corridor B + Fear value.
 - **Review (20:05):** Approved the whole storyboard, mannequin coworkers included. Added: more hallways if there's time; keep it simple for now (stretch).
 - **Additions (20:06):** Don't forget security guards and custodians. Turn recovered keys into cool-looking access passes. Claude folded these in: passes as the progression gates (closet → Wellness Center → "C"), guard and custodian behaviors, custodian props as debris. CONCEPT.md + STORYBOARD.md updated.
+
+### Session 17: Fri Nov 13, 2026, 12:50 MST: Prototype prep (while I'm at work)
+
+- **Goal:** Use my work hours: build things that are ready to drop in tonight.
+- **Done:**
+  - **Grey-box campus builder:** `Scripts/Editor/build_greybox_campus.py`. One run in the editor builds `/Game/Maps/L_Campus_Greybox`: 8 rooms from the storyboard map, shared walls with doorways, desk #4471, 12 cubicles, props, a light per room, Corridor B loop/energy/stalker markers, an unbound `PPV_Fear` post-process volume, and a PlayerStart behind my desk. Tested against a stand-in for Unreal's API (109 actors, no duplicate labels) and rendered a top-down preview.
+    ![Grey-box preview](screenshots/2026-11-13_greybox_preview.png)
+  - **XOR Key Lock generator:** `Scripts/Reference/keylock.py` + `test_keylock.py`. 5 tests × 5,000 seeds per key all pass: always solvable, never trivial, deterministic per seed, decoys always corrupt. 86–96% of puzzles have exactly one answer. Port guide: `docs/KEYLOCK_SPEC.md`.
+  - **Game text as DataTable CSVs** in `Data/Text/`: 11 emails (incl. Chairman memos and a phishing email), 11 PA lines, the 8-slide Compliance Training module (Key 1 tutorial, ending with "Do you consent to your next take?" Yes | Yes), 14 NPC lines (coworkers, guards, custodians; agents marked), 4 script pages.
+- **Decisions & why:**
+  - **Python editor script instead of hand-placing** because Unreal MCP isn't enabled yet, and a script is repeatable: tweak a number, re-run.
+  - **Walls built on a shared 50 cm grid** so neighbouring rooms don't get doubled walls, and a door on either side opens both.
+  - **Key Lock logic prototyped in Python first** so it could be tested on thousands of seeds before porting to Blueprint.
+  - **Placeholder company name: HALCYON.**
+- **Problems:**
+  - Unreal MCP plugin not enabled in the project yet (no `.mcp.json`), so nothing ran inside the editor.
+  - **Git LFS uploads are blocked from Claude's cloud workspace** (the file-storage server isn't on its network allowlist). Fix for now: devlog screenshots are stored as normal git files. **Unreal assets (.uasset/.umap) will have to be pushed from my PC** with Git LFS (GitHub Desktop includes it).
+- **AI tools used:** Claude (all three deliverables + tests + preview image).
+- **Next (tonight):** Enable Python + Unreal MCP plugins → run the grey-box script → set GameMode → walk the campus. 📸 Screenshot the first walk-through. Then: Fear value + grab/throw.

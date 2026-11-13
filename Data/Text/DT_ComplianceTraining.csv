@@ -1,0 +1,21 @@
+"Name","Order","Title","Body","Kind","Options"
+"T01","1","Data Integrity Module 1","Welcome, {EMP}! This short module keeps our data, and you, intact.
+
+Estimated time: 3 minutes.
+Estimated time: forever.","Slide",""
+"T02","2","What is a Signature?","Every HALCYON key has a SIGNATURE: a row of glyphs, each one LIT or UNLIT.","Slide",""
+"T03","3","Fragments","Keys are assembled from FRAGMENTS. Each fragment is also a row of glyphs.
+
+You may switch fragments ON or OFF.","Slide",""
+"T04","4","The Integrity Rule","Look down each column of glyphs.
+
+If an ODD number of your active fragments are lit there, the result is LIT.
+If an EVEN number are lit (or none), the result is UNLIT.","Slide",""
+"T05","5","Practice","Combine fragments until your RESULT matches the SIGNATURE.
+The result is shown live for this module only.","KeyLock",""
+"T06","6","Well Done!","Integrity confirmed. Future keys will not show you the signature.
+You will have to find it.
+
+It is written all around you.","Slide",""
+"T07","7","Quick Check","Malware may disguise itself as a fragment. What should you do?","Quiz","Trust every fragment|Report it to your manager|Look closer"
+"T08","8","Final Question","Do you consent to your next take?","Quiz","Yes|Yes"

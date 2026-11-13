@@ -1,0 +1,74 @@
+"Name","Act","Sender","Subject","Body","HasGlyphClue","IsPhishing","ArrivesAfter"
+"A1_Welcome","1","HALCYON People Team","Welcome back, {EMP}!","Good morning, {EMP}!
+
+We hope you slept well. Today is a big day, and we're so glad you're here for it.
+
+Your task list is on your badge. Please complete Mandatory Compliance Training before noon.
+
+Remember: you are exactly where you need to be.
+
+Warmly,
+The People Team","False","False","Start"
+"A1_ChairmanMemo","1","The Chairman","Places, everyone.","Team,
+
+Big day. Everyone knows their marks.
+
+Let's keep it natural. Let's keep it moving. And let's get it in one take this time.
+
+- C","False","False","Start"
+"A1_ITNotice","1","IT Service Desk","Scheduled maintenance: Corridor B","Hello,
+
+Corridor B will undergo routine continuity maintenance today. You may notice flickering lights, repeated signage, or a brief sense that you have walked this way before. This is expected.
+
+Please do not report it.
+
+IT Service Desk
+
+{GLYPHS_A}","True","False","Start"
+"A1_Coffee","1","Break Room Bot","Fresh coffee is ready ☕","A fresh pot has been brewed for you, {EMP}.
+It is exactly the temperature you like.
+It has always been exactly the temperature you like.","False","False","AfterEmails"
+"A2_Lunch","2","HALCYON People Team","Lunch is served","Lunch is served.
+
+Lunch is served.
+
+Please enjoy your lunch. Lunch is served.","False","False","Act2Start"
+"A2_CallInvite","2","Calendar","Invite: Sync (12:30)","Sync @ 12:30, Conference Room
+Organizer: C
+Camera: optional (organizer's camera will be off)
+
+Agenda:
+1. Welcome
+2. Quarterly energy targets
+3. Morale
+4. Retake","False","False","Act2Start"
+"A2_PayrollPhish","2","Payro11 Department","ACTION REQUIRED: verify your key","Dear Employee,
+
+To keep receiving your energy allocation, reply with your key signature below. This is the correct one. Trust this one.
+
+{GLYPHS_B}","True","True","AfterCall"
+"A2_Facilities","2","Facilities","Re: the clocks","We are aware that all clocks on the floor read 2:14.
+It is 2:14.
+
+- Facilities
+
+{GLYPHS_B}","True","False","AfterMeeting"
+"A2_ChairmanMemo","2","The Chairman","Notes from this morning","{EMP},
+
+Good energy this morning. A little hesitant at the corridor. We'll go again.
+
+Don't look at the camera.
+
+- C","False","False","AfterMeeting"
+"A3_TeamBuilding","3","HALCYON People Team","Mandatory team building: Wellness Center","Overtime is a privilege!
+
+Join us in the Wellness Center for a short trust exercise. Your team will be there to catch you.
+
+Attendance is mandatory. Attendance has always been mandatory.","False","False","Act3Start"
+"A3_ChairmanMemo","3","The Chairman","That's nearly a wrap","{EMP},
+
+You've been wonderful. One more scene.
+
+The button you've been looking at will light up soon.
+
+- C","False","False","AfterKey3"
