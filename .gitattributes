@@ -15,3 +15,8 @@
 
 # Devlog screenshots stay small and are stored as normal git files (not LFS)
 devlog/screenshots/** -filter binary
+
+# Small generated jam assets Claude makes in the cloud (it cannot upload LFS files): plain git
+SourceArt/Textures/UI/** -filter binary
+SourceArt/UI_Mockups/** -filter binary
+SourceArt/Audio/Placeholder/** -filter binary

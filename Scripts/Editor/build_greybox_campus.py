@@ -50,7 +50,6 @@ ROOMS = [
 PROPS = [
     # Open office: your desk, a row of cubicles, bulletin board
     ("Desk_4471",           1300, 2300, 160,  80,  75, 0),
-    ("Chair_4471",          1300, 2380,  50,  50,  90, 0),
     ("Monitor_4471",        1300, 2280,  60,  10,  40, 0),
     ("BulletinBoard",        820, 2700,  10, 200, 120, 0),
     ("FileCabinet_A",       1700, 3500,  50,  60, 130, 0),
@@ -95,6 +94,47 @@ MARKERS = [
 
 PLAYER_START = (1300, 2550, 0)  # behind desk #4471, facing north (the monitor)
 
+# Throwables: physics props you can grab and throw (label, x, y, z_bottom, sx, sy, sz, extra tags)
+THROWABLES = [
+    ("Mug_4471",          1250, 2290, 75,  10, 10, 12, ["ChangeOnRewind"]),  # on your desk
+    ("Keyboard_4471",     1310, 2320, 75,  45, 15,  3, []),
+    ("Chair_4471",        1300, 2380,  0,  50, 50, 90, ["ChangeOnRewind"]),
+    ("ReamOfPaper_A",     2150, 2010, 75,  30, 21,  5, []),
+    ("ReamOfPaper_B",     2500, 2460, 75,  30, 21,  5, []),
+    ("CoffeePot",         3260,  540, 90,  15, 15, 20, []),
+    ("WetFloorSign",      3550, 1200,  0,  30, 25, 60, []),
+    ("FireExtinguisher",  1230, 3780,  0,  15, 15, 50, []),
+    ("MopBucket",         1550, 3800,  0,  40, 30, 35, []),
+]
+
+# Corridor B loop. Posters repeat every LOOP_PERIOD cm so the stretch you're
+# teleported into looks identical; one poster gets changed per loop (in BP).
+LOOP_PERIOD = 1000
+LOOP_TRIGGER_Y = 4950          # walk past this...
+POSTERS = [                    # (label, x on wall, y, wall side)
+    ("Poster_0", 1212, 4150), ("Poster_1", 1212, 4450), ("Poster_2", 1588, 4300),
+    ("Poster_3", 1212, 5150), ("Poster_4", 1212, 5450), ("Poster_5", 1588, 5300),
+]
+
+# Act 1 blocker: keeps the Wellness Center shut (opens with Pass 2) and stops
+# you seeing past the loop.
+DOORS = [("Door_Wellness", 1400, 5700, 300, 20, 300)]
+
+# Act 3: the Hospital sits directly BELOW the Wellness Center. Trust fall ->
+# hide the Wellness floor -> you drop into the ward.
+BUILD_HOSPITAL = True
+HOSPITAL_Z = -1500.0
+HOSPITAL_ROOMS = [("HospitalWard", 400, 5300, 2800, 2400, [])]
+HOSPITAL_PROPS = []
+for r in range(3):
+    for c in range(5):
+        bx, by = 800 + c * 500, 5800 + r * 650
+        HOSPITAL_PROPS.append((f"HospBed_{r}{c}", bx, by, 90, 200, 60, 0))
+        HOSPITAL_PROPS.append((f"HospCurtain_{r}{c}", bx + 160, by, 4, 220, 200, 0))
+        HOSPITAL_PROPS.append((f"HospChart_{r}{c}", bx, by + 120, 30, 5, 110, 0))   # chart stand = script page
+HOSPITAL_MARKERS = [("Hospital_Landing", 1400, 6400), ("Hospital_REC_Light", 3150, 5400),
+                    ("Hospital_Exit", 3000, 7500), ("KeyLock3_Terminal", 2200, 7550)]
+
 # --------------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------------
@@ -129,6 +169,34 @@ def spawn_simple(cls, label, x, y, z, folder, yaw=0.0):
     actor.set_actor_label(PREFIX + label)
     actor.set_folder_path(f"Greybox/{folder}")
     return actor
+
+
+def make_throwable(actor, extra_tags=()):
+    """Movable + physics + hit events + 'Throwable' tag (see docs/BLUEPRINT_RECIPES.md #2)."""
+    comp = actor.static_mesh_component
+    comp.set_mobility(unreal.ComponentMobility.MOVABLE)
+    comp.set_simulate_physics(True)
+    comp.set_notify_rigid_body_collision(True)
+    actor.set_editor_property("tags", [unreal.Name("Throwable")] + [unreal.Name(t) for t in extra_tags])
+
+
+def build_rooms(rooms, z0, folder_prefix):
+    """Floors (+ optional ceilings) and merged walls for a set of rooms at height z0."""
+    for name, x, y, w, d, _ in rooms:
+        spawn_box(f"Floor_{name}", x + w / 2, y + d / 2, z0 - FLOOR_THICK / 2,
+                  w, d, FLOOR_THICK, folder_prefix + "Floors")
+        if BUILD_CEILINGS:
+            spawn_box(f"Ceiling_{name}", x + w / 2, y + d / 2, z0 + WALL_HEIGHT + FLOOR_THICK / 2,
+                      w, d, FLOOR_THICK, folder_prefix + "Ceilings")
+    tag = folder_prefix.strip("/") or "Campus"
+    for n, (orient, line, s0, e0) in enumerate(wall_segments(rooms)):
+        length = e0 - s0
+        if orient == "H":
+            spawn_box(f"Wall_{tag}_{n:03d}", s0 + length / 2, line, z0 + WALL_HEIGHT / 2,
+                      length + WALL_THICK, WALL_THICK, WALL_HEIGHT, folder_prefix + "Walls")
+        else:
+            spawn_box(f"Wall_{tag}_{n:03d}", line, s0 + length / 2, z0 + WALL_HEIGHT / 2,
+                      WALL_THICK, length + WALL_THICK, WALL_HEIGHT, folder_prefix + "Walls")
 
 
 def wall_segments(rooms):
@@ -177,30 +245,40 @@ def wall_segments(rooms):
 def build():
     open_or_create_level()
 
-    with unreal.ScopedSlowTask(4, "Building grey-box campus...") as task:
+    with unreal.ScopedSlowTask(6, "Building grey-box campus...") as task:
         task.make_dialog(True)
 
-        task.enter_progress_frame(1, "Floors")
-        for name, x, y, w, d, _ in ROOMS:
-            spawn_box(f"Floor_{name}", x + w / 2, y + d / 2, -FLOOR_THICK / 2,
-                      w, d, FLOOR_THICK, "Floors")
-            if BUILD_CEILINGS:
-                spawn_box(f"Ceiling_{name}", x + w / 2, y + d / 2, WALL_HEIGHT + FLOOR_THICK / 2,
-                          w, d, FLOOR_THICK, "Ceilings")
+        task.enter_progress_frame(1, "Floors and walls")
+        build_rooms(ROOMS, 0.0, "")
 
-        task.enter_progress_frame(1, "Walls")
-        for n, (orient, line, s, e) in enumerate(wall_segments(ROOMS)):
-            length = e - s
-            if orient == "H":
-                spawn_box(f"Wall_{n:03d}", s + length / 2, line, WALL_HEIGHT / 2,
-                          length + WALL_THICK, WALL_THICK, WALL_HEIGHT, "Walls")
-            else:
-                spawn_box(f"Wall_{n:03d}", line, s + length / 2, WALL_HEIGHT / 2,
-                          WALL_THICK, length + WALL_THICK, WALL_HEIGHT, "Walls")
 
         task.enter_progress_frame(1, "Props")
         for label, x, y, sx, sy, sz, yaw in PROPS:
             spawn_box(label, x, y, sz / 2, sx, sy, sz, "Props", yaw)
+        for label, x, y, z0, sx, sy, sz, tags in THROWABLES:
+            a = spawn_box(label, x, y, z0 + sz / 2, sx, sy, sz, "Throwables")
+            make_throwable(a, tags)
+        for label, x, y, sx, sy, sz in DOORS:
+            spawn_box(label, x, y, sz / 2, sx, sy, sz, "Doors")
+
+        task.enter_progress_frame(1, "Corridor B loop")
+        for label, x, y in POSTERS:
+            spawn_box(label, x, y, 160, 4, 60, 90, "CorridorB_Loop")
+        trig = spawn_simple(unreal.TriggerBox, "LoopTrigger", 1400, LOOP_TRIGGER_Y, 150, "CorridorB_Loop")
+        trig.set_actor_scale3d(unreal.Vector(380 / 64.0, 40 / 64.0, 300 / 64.0))  # TriggerBox is 64 cm by default
+
+        task.enter_progress_frame(1, "Hospital (below the Wellness Center)")
+        if BUILD_HOSPITAL:
+            build_rooms(HOSPITAL_ROOMS, HOSPITAL_Z, "Hospital/")
+            for label, x, y, sx, sy, sz, yaw in HOSPITAL_PROPS:
+                spawn_box(label, x, y, HOSPITAL_Z + sz / 2, sx, sy, sz, "Hospital/Props", yaw)
+            for label, x, y in HOSPITAL_MARKERS:
+                spawn_simple(unreal.TargetPoint, label, x, y, HOSPITAL_Z + 50, "Hospital/Markers")
+            hl = spawn_simple(unreal.PointLight, "Light_HospitalWard", 1800, 6500,
+                              HOSPITAL_Z + WALL_HEIGHT - 30, "Hospital/Lights")
+            hl.point_light_component.set_intensity(1500.0)          # dim on purpose
+            hl.point_light_component.set_light_color(unreal.LinearColor(0.75, 0.9, 1.0, 1.0))
+            hl.point_light_component.set_attenuation_radius(2600.0)
 
         task.enter_progress_frame(1, "Lights, markers, player start")
         for name, x, y, w, d, _ in ROOMS:
@@ -214,6 +292,10 @@ def build():
         # Unbound post-process volume: the Fear effects will drive this one.
         ppv = spawn_simple(unreal.PostProcessVolume, "PPV_Fear", 2000, 3000, 150, "Systems")
         ppv.set_editor_property("unbound", True)
+        nav = spawn_simple(unreal.NavMeshBoundsVolume, "NavMeshBounds", 2000, 3700,
+                           (HOSPITAL_Z if BUILD_HOSPITAL else 0) / 2 + 150, "Systems")
+        # Covers the whole campus (and the Hospital). Press P in the viewport to see the walkable area.
+        nav.set_actor_scale3d(unreal.Vector(44, 76, (abs(HOSPITAL_Z) + 600) / 200 if BUILD_HOSPITAL else 4))
         px, py, pyaw = PLAYER_START
         spawn_simple(unreal.PlayerStart, "PlayerStart_Desk4471", px, py, 100, "Systems", yaw=-90)
 

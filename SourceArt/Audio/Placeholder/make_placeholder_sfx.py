@@ -1,0 +1,126 @@
+"""
+make_placeholder_sfx.py: synthesized stand-in sound effects for TAKE 4471.
+
+These are PLACEHOLDERS so the prototype has sound tonight. SkyYamaha replaces
+them with real recordings during the jam. Everything is generated from math
+(no samples), 48 kHz, 16-bit mono WAV.
+
+Usage: python make_placeholder_sfx.py   (needs numpy)
+"""
+import os
+import wave
+
+import numpy as np
+
+SR = 48000
+HERE = os.path.dirname(os.path.abspath(__file__))
+rng = np.random.default_rng(4471)
+
+
+def t(sec):
+    return np.arange(int(SR * sec)) / SR
+
+
+def env(sec, attack=0.002, decay=0.3):
+    x = t(sec)
+    a = np.clip(x / attack, 0, 1)
+    return a * np.exp(-x / decay)
+
+
+def tone(freq, sec, decay, partials=((1, 1.0),)):
+    x = t(sec)
+    out = sum(amp * np.sin(2 * np.pi * freq * mult * x) for mult, amp in partials)
+    return out * env(sec, decay=decay)
+
+
+def bandpass_noise(sec, lo, hi):
+    n = rng.standard_normal(int(SR * sec))
+    spec = np.fft.rfft(n)
+    f = np.fft.rfftfreq(len(n), 1 / SR)
+    spec[(f < lo) | (f > hi)] = 0
+    return np.fft.irfft(spec, len(n))
+
+
+def pad(sig, sec):
+    out = np.zeros(int(SR * sec))
+    out[: len(sig)] = sig[: len(out)]
+    return out
+
+
+def write(name, sig, peak=0.8):
+    sig = sig / (np.max(np.abs(sig)) + 1e-9) * peak
+    data = (sig * 32767).astype("<i2")
+    with wave.open(os.path.join(HERE, name + ".wav"), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes(data.tobytes())
+    print(f"{name}.wav  {len(sig) / SR:.2f}s")
+
+
+# Clapperboard snap: sharp wood crack + low thump + short room tail
+snap = bandpass_noise(0.4, 900, 6000) * env(0.4, 0.0005, 0.018)
+thump = tone(95, 0.4, 0.05)
+tail = bandpass_noise(0.4, 300, 3000) * env(0.4, 0.01, 0.12) * 0.15
+write("sfx_clapper_snap", snap + 0.6 * thump + tail)
+
+# PA chime: friendly three-note corporate "ding-dong-ding" (E5 C5 G4)
+bell = ((1, 1.0), (2, 0.35), (3, 0.12), (4.2, 0.05))
+chime = np.zeros(int(SR * 2.4))
+for i, f in enumerate((659.25, 523.25, 392.0)):
+    s = tone(f, 1.6, 0.55, bell)
+    start = int(i * 0.38 * SR)
+    chime[start:start + len(s)] += s
+write("sfx_pa_chime", chime)
+
+# Elevator ding: one clean bell with slightly inharmonic partials
+write("sfx_elevator_ding", pad(tone(1318.5, 2.0, 0.6, ((1, 1), (2.76, 0.3), (5.4, 0.08))), 2.0))
+
+# Fluorescent buzz LOOP: 120 Hz mains hum + harmonics + irregular flicker. Exactly 4 s, loops cleanly.
+x = t(4.0)
+hum = sum(a * np.sin(2 * np.pi * 120 * k * x) for k, a in ((1, 1.0), (2, 0.5), (3, 0.35), (5, 0.2), (7, 0.12)))
+flicker = 1 - 0.35 * (np.sin(2 * np.pi * 0.5 * x) > 0.92) - 0.2 * (np.sin(2 * np.pi * 1.75 * x) > 0.97)
+write("sfx_fluoro_buzz_loop", hum * flicker, peak=0.5)
+
+# Glyph toggle: soft click + tiny blip
+write("sfx_glyph_toggle", pad(bandpass_noise(0.05, 2000, 8000) * env(0.05, 0.0003, 0.004), 0.15)
+      + 0.4 * pad(tone(1760, 0.12, 0.03), 0.15), peak=0.6)
+
+# Lock SOLVED: rising shimmer arpeggio (A minor add9, glassy)
+solved = np.zeros(int(SR * 2.2))
+for i, f in enumerate((440, 523.25, 659.25, 987.77, 1318.5)):
+    s = tone(f, 1.4, 0.5, ((1, 1), (2, 0.25), (3, 0.1)))
+    st = int(i * 0.09 * SR)
+    solved[st:st + len(s)] += s
+write("sfx_lock_solved", solved)
+
+# Lock WRONG: dull low double buzz (no information, just "no")
+wrong = np.zeros(int(SR * 0.7))
+for st in (0.0, 0.28):
+    b = np.sign(np.sin(2 * np.pi * 110 * t(0.22))) * env(0.22, 0.003, 0.15)
+    i = int(st * SR)
+    wrong[i:i + len(b)] += b
+write("sfx_lock_wrong", wrong, peak=0.5)
+
+# Lock CORRUPTED: bit-crushed descending glitch (malware)
+x = t(1.2)
+sweep = np.sin(2 * np.pi * np.cumsum(np.linspace(1800, 60, len(x))) / SR)
+crushed = np.round(sweep * 4) / 4                        # 3-bit crush
+hold = np.repeat(crushed[::12], 12)[: len(x)]            # sample-rate crush
+stutter = (np.floor(x * 18) % 3 != 0)                    # chopped
+write("sfx_lock_corrupted", hold * stutter * env(1.2, 0.002, 0.6), peak=0.6)
+
+# Badge reader: OK (two rising beeps) / DENIED (one low beep)
+ok = np.concatenate([tone(1567.98, 0.09, 1.0) * env(0.09, 0.002, 0.05), np.zeros(int(0.04 * SR)),
+                     tone(2093.0, 0.12, 1.0) * env(0.12, 0.002, 0.07)])
+write("sfx_badge_ok", ok, peak=0.5)
+write("sfx_badge_denied", tone(392.0, 0.35, 1.0, ((1, 1), (3, 0.3))) * env(0.35, 0.002, 0.2), peak=0.5)
+
+# Heartbeat loop (Fear stage 3+): lub-dub at 72 bpm, exactly 2 beats
+beat = np.zeros(int(SR * 60 / 72 * 2))
+for b in range(2):
+    for off, amp in ((0.0, 1.0), (0.16, 0.6)):
+        s = tone(50, 0.25, 0.06) * amp
+        i = int((b * 60 / 72 + off) * SR)
+        beat[i:i + len(s)] += s[: len(beat) - i]
+write("sfx_heartbeat_loop", beat, peak=0.7)

@@ -48,6 +48,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:59 | Claude (Anthropic) | Drafted storyboard/STORYBOARD.md v0.1 from the concept: campus map, beat tables for Acts 1–3 and the ending, MVP/stretch tags, screenshot markers, scope fallback. Added SourceArt/ folders + LFS/ignore rules for Blender and Ableton files. |
 | 2026-11-12 20:06 | Claude (Anthropic) | Added access passes, security guards and custodians to CONCEPT.md and STORYBOARD.md from my direction. |
 | 2026-11-13 12:50 | Claude (Anthropic) | While I was at work: wrote the grey-box campus builder (Unreal Python), the XOR Key Lock generator + tests + Blueprint port spec, and the first game text tables (emails, PA lines, compliance training, NPC lines, script pages). |
+| 2026-11-13 13:00 | Claude (Anthropic) | Glyph alphabet (8 glyphs × lit/unlit + hidden), UI mockups (Key Lock, inbox, HUD badge), Blueprint recipes, grey-box additions (throwables, loop, Hospital, nav mesh), Fear materials script, 11 synthesized placeholder SFX. |
 
 ---
 
@@ -304,3 +305,27 @@ A running record of every AI tool used and what it did.
   - **Git LFS uploads are blocked from Claude's cloud workspace** (the file-storage server isn't on its network allowlist). Fix for now: devlog screenshots are stored as normal git files. **Unreal assets (.uasset/.umap) will have to be pushed from my PC** with Git LFS (GitHub Desktop includes it).
 - **AI tools used:** Claude (all three deliverables + tests + preview image).
 - **Next (tonight):** Enable Python + Unreal MCP plugins → run the grey-box script → set GameMode → walk the campus. 📸 Screenshot the first walk-through. Then: Fear value + grab/throw.
+
+### Session 18: Fri Nov 13, 2026, 13:00 MST: Art direction, recipes, sound (still at work)
+
+- **Goal:** Prep everything that doesn't need the editor: glyph art, UI look, Blueprint recipes, more builders, placeholder sound.
+- **Done:**
+  - **Glyph alphabet:** 8 glyphs (Witness, Reel, Eye, Lock, Slate, Spiral, Signal, Keyhole), each lit (soul-light cyan glow) and unlit, plus a tarnished-brass "?" for hidden glyphs. Generated from code (`SourceArt/Textures/UI/Glyphs/make_glyphs.py`) as 256 px PNG + SVG.
+    ![Glyph sheet](screenshots/2026-11-13_glyph_sheet.png)
+  - **UI mockups** (`SourceArt/UI_Mockups/ui_mockups.html`): the HALCYON Integrity Terminal (Key Lock with fragments, malware "UNVERIFIED SOURCE" rows, hidden glyphs, a notes row for the signature I find, Soul Sight meter); HALCYON Mail with the glyph signature footer; the employee badge HUD with task list, take number and 3 access-pass slots.
+    ![Key Lock mockup](screenshots/2026-11-13_mockup_keylock.png)
+    ![Inbox mockup](screenshots/2026-11-13_mockup_inbox.png)
+    ![HUD mockup](screenshots/2026-11-13_mockup_hud.png)
+  - **Blueprint recipes** (`docs/BLUEPRINT_RECIPES.md`): Fear Director (+ editor slider preview), grab/throw/telekinesis, Corridor B loop teleport, stalker states + scaling, rewind on capture.
+  - **Grey-box v2:** throwables (orange, physics on), loop posters + trigger, Wellness door blocker, nav mesh, and the **Hospital directly below the Wellness Center**. 181 actors.
+    ![Grey-box preview](screenshots/2026-11-13_greybox_preview.png)
+  - **Fear materials script** (`Scripts/Editor/build_fear_assets.py`): `MPC_Fear` + `M_GreyboxFear` (clean → grimy, desaturated, damp, with noise so rot spreads unevenly) + colour-coded instances applied to the grey-box.
+  - **11 placeholder SFX** synthesized from math (`SourceArt/Audio/Placeholder/`): clapper snap, PA chime, elevator ding, fluorescent buzz loop, glyph toggle, lock solved/wrong/corrupted, badge ok/denied, heartbeat loop. To be replaced by my own recordings.
+- **Decisions & why:**
+  - **Loop corridor only activates at Fear ≥ 0.5.** Claude caught that the teleport changes how far down the corridor you can see (end wall 7 m vs 17 m); fog and dim light at that Fear level hide it.
+  - **Hospital under the Wellness Center** makes the trust fall a literal fall: no loading, just hide the floor.
+  - **Orange = throwable** in the grey-box so it's obvious what can be grabbed while testing.
+  - **Notes row on the Key Lock** so I can mark the signature I've pieced together from clues.
+  - Small generated assets (UI textures, mockups, placeholder audio) are stored as normal git files, not LFS, because Claude's cloud workspace can't upload LFS.
+- **AI tools used:** Claude (everything above; glyphs, mockups and SFX generated from code it wrote).
+- **Next (tonight):** run both scripts → Fear Director recipe → 📸 Fear 0 / 0.5 / 1 screenshots.
