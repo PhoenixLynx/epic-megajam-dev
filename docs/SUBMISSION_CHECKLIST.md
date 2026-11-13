@@ -7,7 +7,7 @@
 
 - [ ] Windows development build packaged (zipped, tested by launching it on a clean run)
 - [ ] itch.io game page set to **public**
-- [ ] Devlog linked from the itch page
+- [ ] Devlog linked from the itch page (GitHub repo starts **private**: switch it to **public** before linking, or post the devlog on itch instead)
 - [ ] Only the Unreal Engine logo used (no other engine/brand logos in the game or on the page)
 - [ ] Submitted to the jam before the deadline (official: Nov 15, 5:59 PM PST = 6:59 PM Phoenix)
 - [ ] Any pre-jam material (prompts, scripts, assets) declared; any sourced assets listed with licenses
