@@ -51,6 +51,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-13 13:00 | Claude (Anthropic) | Glyph alphabet (8 glyphs × lit/unlit + hidden), UI mockups (Key Lock, inbox, HUD badge), Blueprint recipes, grey-box additions (throwables, loop, Hospital, nav mesh), Fear materials script, 11 synthesized placeholder SFX. |
 | 2026-11-13 15:27 | Claude (Anthropic) | Enabled the Python, Editor Scripting, Unreal MCP and All Toolsets plugins in the .uproject (exact names read from my UE 5.8 install); wrote preflight_check.py, init_unreal.py (auto-starts MCP) and docs/TONIGHT.md. |
 | 2026-11-13 15:32 | Claude (Anthropic) | Wrote docs/PRODUCTION_CHECKLIST.md: every task to submission with owners, timing, done-criteria and checkpoints. |
+| 2026-11-13 15:39 | Claude (Anthropic) | Wrote the rest of the game text (Act 2–3 NPC lines, prop text incl. call sheet, the full ending with both branches, credits); designed the title, TAKE slate and loading screens; generated 6 HALCYON posters (+ loop twins) and the Chairman portrait from code. |
 
 ---
 
@@ -357,3 +358,23 @@ A running record of every AI tool used and what it did.
   - Node.js and Git for Windows are already installed on the PC (seen in Program Files), so no downloads needed tonight.
 - **AI tools used:** Claude (checklist, scheduling).
 - **Next:** tonight's runbook; Claude keeps working down "Claude can do these any time".
+
+### Session 21: Fri Nov 13, 2026, 15:39 MST: Writing, screens, posters
+
+- **Goal:** Knock out the "Claude can do any time" list while I'm at work.
+- **Done:**
+  - **Writing** (`Data/Text/`): NPC lines now 30 (video call, meeting, frozen clocks, Act 3 trust circle, nurse agent, wrap-party lines incl. the unmasked stalker: *"Sorry about the chasing. You're really fast."*). New tables: `DT_PropText` (call sheet, whiteboard, agenda, plaque, signs), `DT_Ending` (17 beats: wrap party → Collector's offer → **Yes = THE THEATRICAL CUT / No = THE DIRECTOR'S CUT** → Sight flicker → black), `DT_Credits` ("Directed by" left blank).
+  - **Screens** (`SourceArt/UI_Mockups/screens_mockups.html`):
+    ![Title](screenshots/2026-11-13_mockup_title.png)
+    ![Slate](screenshots/2026-11-13_mockup_slate.png)
+    ![Loading](screenshots/2026-11-13_mockup_loading.png)
+  - **Posters + portrait** (`SourceArt/Textures/Props/make_prop_textures.py`): 6 HALCYON posters, each with a `_Changed` twin that differs by one detail for the Corridor B loop, and the Chairman portrait, cropped at the chin.
+    ![Posters](screenshots/2026-11-13_poster_sheet.png)
+    ![Chairman](screenshots/2026-11-13_chairman_portrait.png)
+- **Decisions & why:**
+  - **Title: TAKE 4471, subtitle "A Director's Cut"** (working title, can change).
+  - **Loop posters change by one word** (IS → WAS, DAY → TAKE, an extra "BE PRESENT."): subtle enough to miss, obvious once spotted. Fits "solutions should be subtle and not easy to check".
+  - **Ending branch titles shown on screen** (THE THEATRICAL CUT / THE DIRECTOR'S CUT) to land the theme.
+  - The title screen says "Made with Unreal Engine" as text only; the real UE logo goes in per jam rules.
+- **AI tools used:** Claude (writing; screens and textures generated from HTML/SVG code it wrote, rendered with headless Chrome).
+- **Next:** tonight's runbook (TONIGHT.md).

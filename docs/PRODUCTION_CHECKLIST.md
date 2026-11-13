@@ -73,7 +73,8 @@ Claude updates this every session. `[x]` = done · **MVP** = must ship · *Stret
 - [ ] Key 3 → Pass 3 → elevator "C" lights: 🤝
 - [ ] **Wrap party** room: confetti, NPCs, stalker unmasked, frozen clock, director's chair turned away: 🤝
 - [ ] **Collector offer + Yes/No** → theatrical cut / director's cut → Sight flicker → cut to black: 🤝
-- [ ] Credits ("Directed by" left blank): 🤖 text + 🤝 widget
+- [x] Credits + ending text written (`DT_Credits`, `DT_Ending`): 🤖
+- [ ] Credits + ending widgets: 🤝
 - [ ] *Stretch:* second stalker, nested loops
 
 ## F. Art
@@ -83,9 +84,11 @@ Claude updates this every session. `[x]` = done · **MVP** = must ship · *Stret
 - [ ] Office props (desk, chair, cabinet, mug, extinguisher, director's chair): 🎬 Blender / Rodin, 🤖 Blender scripts on request. **Sat–Sun**
 - [ ] Mannequin coworker + stalker models: 🎬 (or Rodin). **Sat**
 - [ ] PBR materials from PBRgen (carpet, tiles, + grime versions): 🎬. **Before Sun** (perk ends Nov 15)
-- [ ] Posters, Chairman portrait, call sheet, script-page textures: 🤖 drafts / 🎬 fal. **Sat**
+- [x] Posters (6 + loop twins) + Chairman portrait drafts: 🤖
+- [ ] Call sheet + script-page textures (text is written): 🤖. **Sat**
 - [ ] Lighting pass (bright campus vs Fear vs Hospital): 🤝. **Sun AM**
-- [ ] TAKE slate + title screen + loading screen: 🤖 design → 🤝 widget. **Sat**
+- [x] TAKE slate + title screen + loading screen designs: 🤖
+- [ ] Build them as widgets: 🤝. **Sat**
 
 ## G. Audio
 - [x] Placeholder SFX (11): 🤖
@@ -122,9 +125,9 @@ Claude updates this every session. `[x]` = done · **MVP** = must ship · *Stret
 ---
 
 ## Claude can do these any time, without the editor
-1. Act 2 + Act 3 text: more NPC lines, call sheet, credits, collector dialogue, ending text.
-2. Title screen / TAKE slate / loading screen designs (like the mockups).
-3. Poster + Chairman portrait + script-page texture drafts (generated from code).
+1. ~~Act 2 + 3 text, call sheet, credits, Collector, endings~~ ✔
+2. ~~Title / TAKE slate / loading designs~~ ✔
+3. ~~Posters + Chairman portrait~~ ✔ (call sheet + script-page textures still to do)
 4. Blender Python scripts for office props.
 5. itch page copy + cover image draft + devlog summary for the Glass Box.
 6. More builder scripts: wrap party room, mannequin placement, clue placement.

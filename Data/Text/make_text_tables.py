@@ -127,6 +127,25 @@ NPC = [
     ("J_A1_Mop", "Custodian", 1, False, "Greeting", "Mind the floor, it's wet. It's always wet over there."),
     ("J_A2_Hint", "Custodian", 2, False, "Hint", "They only clean the posters in Corridor B. Funny. One of them's always new."),
     ("J_A3_Hint", "Custodian", 3, False, "Hint", "Nobody reads the charts in Wellness. I do. They're about you, you know."),
+    # --- more Act 2 ---
+    ("C_A2_Call1", "Coworker", 2, False, "VideoCall", "Can everyone see my screen? ...No? It's just you on it. Weird."),
+    ("C_A2_Call2", "Coworker", 2, False, "VideoCall", "C is on the call. C is always on the call."),
+    ("C_A2_Meeting", "Coworker", 2, False, "Meeting", "Item four is you. It's always been you. Don't take it personally."),
+    ("C_A2_Clocks", "Coworker", 2, False, "Ambient", "Has it been two fourteen for a while? It feels like it's been two fourteen for a while."),
+    ("C_A2_Agent3", "Coworker", 2, True, "FalseClue", "The whiteboard's wrong, by the way. They redraw it. Use the one in the payroll email."),
+    ("C_A2_Retake", "Coworker", 2, False, "AfterRewind", "Oh, you're back! I mean... good morning. Again."),
+    ("G_A2_Closet", "Guard", 2, False, "BadgeCheck", "Supply closet? Pass one gets you in. Pass two gets you further. Nobody's ever needed pass three."),
+    ("J_A2_Cart", "Custodian", 2, False, "Hint", "If it chases you, put something in its way. It hates a mess. I'd know."),
+    # --- Act 3 ---
+    ("C_A3_Circle", "Coworker", 3, False, "TeamBuilding", "Arms out, eyes closed. We've got you. We've always got you."),
+    ("C_A3_Circle2", "Coworker", 3, True, "TeamBuilding", "Lean back. Further. Further than that."),
+    ("N_A3_Nurse", "Coworker", 3, True, "Hospital", "You're awake early. That isn't in the script. Lie back down."),
+    ("J_A3_Ward", "Custodian", 3, False, "Hint", "Charts with a coffee ring are the real ones. Props never drink coffee."),
+    # --- Wrap party ---
+    ("P_Coworker", "Coworker", 4, False, "Party", "You were incredible. Honestly. The corridor bit? Chills."),
+    ("P_Guard", "Guard", 4, False, "Party", "No hard feelings about the radio thing. Just doing my blocking."),
+    ("P_Custodian", "Custodian", 4, False, "Party", "Good work. Don't hand them anything."),
+    ("P_Stalker", "Stalker", 4, False, "Party", "(mask under one arm, coffee in the other) Sorry about the chasing. You're really fast."),
 ]
 
 # ---------------------------------------------------------------------------
@@ -144,9 +163,71 @@ SCRIPT = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# PROP TEXT: readable props in the world (struct S_PropText: Where str, Kind str, Text str)
+# ---------------------------------------------------------------------------
+PROPS = [
+    ("CallSheet", "BulletinBoard", "CallSheet",
+     "HALCYON CONTINUITY: CALL SHEET\nDay 1 of 1 · Take {TAKE}\nDirector: C\n\n"
+     "CAST\n  EMPLOYEE {EMP} ........ Themself\n  COWORKERS ........... As cast\n  SECURITY ............ As cast\n  THE DARK FIGURE ..... Stunt\n\n"
+     "SCHEDULE\n  09:00 Desk / Email\n  10:00 Corridor B (night look)\n  12:00 Lunch (repeat as needed)\n"
+     "  14:14 Hold\n  16:00 Wellness (trust fall: NO MATS)\n  ??:?? Wrap\n\nNOTES\n  Do not let {EMP} see this sheet."),
+    ("Whiteboard", "ConferenceRoom", "Whiteboard",
+     "Q4 ENERGY TARGETS ↑↑↑\nRetention: 100%\nMorale: mandatory\n\n{GLYPHS_B}\n\n(do not erase)"),
+    ("Agenda", "CallScreen", "Agenda",
+     "SYNC · 12:30\n1. Welcome\n2. Quarterly energy targets\n3. Morale\n4. Retake ({EMP})"),
+    ("Plaque", "Lobby", "Portrait", "THE CHAIRMAN\nFounder · Director · Friend"),
+    ("ElevatorPanel", "Elevator", "Sign", "1   2   3   C\n(C: authorised personnel only)"),
+    ("WetFloor", "Anywhere", "Sign", "CAUTION\nWET FLOOR\n(always)"),
+    ("CorridorBSign", "CorridorB", "Sign", "CORRIDOR B\nYou have always been walking here."),
+    ("WellnessSign", "WellnessCenter", "Sign", "WELLNESS CENTER\nWellness is mandatory."),
+]
+
+# ---------------------------------------------------------------------------
+# ENDING SEQUENCE (struct S_EndingLine: Order int, Beat str, Speaker str, Line str, Branch str [All|Yes|No])
+# ---------------------------------------------------------------------------
+ENDING = [
+    ("E01", 1, "Doors", "", "(The elevator doors open. Light. Confetti. Applause.)", "All"),
+    ("E02", 2, "Wrap", "PA", "That's a wrap on Employee {EMP}! That's a wrap on Employee {EMP}!", "All"),
+    ("E03", 3, "Wrap", "Coworker", "You were incredible. We're so proud of you.", "All"),
+    ("E04", 4, "Off", "", "(The clock on the wall still reads 2:14.)", "All"),
+    ("E05", 5, "Collector", "The Collector", "Congratulations, {EMP}. Really. Not many make it to the end of the take.", "All"),
+    ("E06", 6, "Collector", "The Collector", "The Chairman watched every second. He thinks you've earned your director's cut.", "All"),
+    ("E07", 7, "Collector", "The Collector", "The astral realm is open now. You can build yourself any world you want. A palace. An afterlife. No more corridors.", "All"),
+    ("E08", 8, "Collector", "The Collector", "You just have to hand over your keys.", "All"),
+    ("E09", 9, "Choice", "", "HAND OVER YOUR KEYS?   [ YES ]   [ NO ]", "All"),
+    ("E10", 10, "Yes", "The Collector", "Wonderful. Your world is being built as we speak. You'll love it. Everyone does.", "Yes"),
+    ("E11", 11, "Yes", "", "(A bright palace. Perfect lawns. A warm sun that never moves. Everyone you meet is smiling, a beat too long.)", "Yes"),
+    ("E12", 12, "Yes", "", "THE THEATRICAL CUT", "Yes"),
+    ("E13", 13, "No", "The Collector", "Of course. Of course. Take your time.", "No"),
+    ("E14", 14, "No", "", "(The passes are no longer on your badge. You never felt them go.)", "No"),
+    ("E15", 15, "No", "", "(For three seconds: the uncut footage. The real office. Empty desks. A long line of badges on hooks, each with a number.)", "No"),
+    ("E16", 16, "No", "", "THE DIRECTOR'S CUT", "No"),
+    ("E17", 17, "Final", "", "(Soul Sight flickers on the Collector. Code starts to resolve. Cut to black.)", "All"),
+]
+
+# ---------------------------------------------------------------------------
+# CREDITS (struct S_CreditLine: Order int, Role str, Name str)
+# ---------------------------------------------------------------------------
+CREDITS = [
+    ("C01", 1, "TAKE 4471", ""),
+    ("C02", 2, "A HALCYON Continuity production", ""),
+    ("C03", 3, "Game design, art, music", "phoenixlynx (SkyYamaha)"),
+    ("C04", 4, "Development partner", "Claude (Anthropic)"),
+    ("C05", 5, "Made in", "Unreal Engine 5.8 for the 2026 Epic AI MegaJam"),
+    ("C06", 6, "Theme", "Director's Cut"),
+    ("C07", 7, "Employee {EMP}", "Themself"),
+    ("C08", 8, "Takes", "{TAKE}"),
+    ("C09", 9, "Directed by", ""),
+]
+
+
 if __name__ == "__main__":
     write("DT_Emails.csv", ["Name", "Act", "Sender", "Subject", "Body", "HasGlyphClue", "IsPhishing", "ArrivesAfter"], EMAILS)
     write("DT_PALines.csv", ["Name", "Act", "Trigger", "Line", "Repeats"], PA)
     write("DT_ComplianceTraining.csv", ["Name", "Order", "Title", "Body", "Kind", "Options"], TRAINING)
     write("DT_NPCLines.csv", ["Name", "Role", "Act", "IsAgent", "Context", "Line"], NPC)
     write("DT_ScriptPages.csv", ["Name", "Act", "Scene", "Text", "HasGlyphClue", "IsFake"], SCRIPT)
+    write("DT_PropText.csv", ["Name", "Where", "Kind", "Text"], PROPS)
+    write("DT_Ending.csv", ["Name", "Order", "Beat", "Speaker", "Line", "Branch"], ENDING)
+    write("DT_Credits.csv", ["Name", "Order", "Role", "CreditName"], CREDITS)

@@ -20,3 +20,4 @@ devlog/screenshots/** -filter binary
 SourceArt/Textures/UI/** -filter binary
 SourceArt/UI_Mockups/** -filter binary
 SourceArt/Audio/Placeholder/** -filter binary
+SourceArt/Textures/Props/** -filter binary

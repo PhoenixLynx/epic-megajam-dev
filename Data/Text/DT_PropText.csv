@@ -1,0 +1,44 @@
+"Name","Where","Kind","Text"
+"CallSheet","BulletinBoard","CallSheet","HALCYON CONTINUITY: CALL SHEET
+Day 1 of 1 · Take {TAKE}
+Director: C
+
+CAST
+  EMPLOYEE {EMP} ........ Themself
+  COWORKERS ........... As cast
+  SECURITY ............ As cast
+  THE DARK FIGURE ..... Stunt
+
+SCHEDULE
+  09:00 Desk / Email
+  10:00 Corridor B (night look)
+  12:00 Lunch (repeat as needed)
+  14:14 Hold
+  16:00 Wellness (trust fall: NO MATS)
+  ??:?? Wrap
+
+NOTES
+  Do not let {EMP} see this sheet."
+"Whiteboard","ConferenceRoom","Whiteboard","Q4 ENERGY TARGETS ↑↑↑
+Retention: 100%
+Morale: mandatory
+
+{GLYPHS_B}
+
+(do not erase)"
+"Agenda","CallScreen","Agenda","SYNC · 12:30
+1. Welcome
+2. Quarterly energy targets
+3. Morale
+4. Retake ({EMP})"
+"Plaque","Lobby","Portrait","THE CHAIRMAN
+Founder · Director · Friend"
+"ElevatorPanel","Elevator","Sign","1   2   3   C
+(C: authorised personnel only)"
+"WetFloor","Anywhere","Sign","CAUTION
+WET FLOOR
+(always)"
+"CorridorBSign","CorridorB","Sign","CORRIDOR B
+You have always been walking here."
+"WellnessSign","WellnessCenter","Sign","WELLNESS CENTER
+Wellness is mandatory."
