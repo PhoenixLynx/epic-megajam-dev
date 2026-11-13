@@ -1,4 +1,4 @@
-# Concept (v0.4): working title "SOULHASH"
+# Concept (v0.5): working title "SOULHASH"
 
 **Genre:** first-person cryptographic horror, explore / stalk-and-chase / puzzle
 **Status:** core direction locked. Waiting on jam theme.
@@ -84,6 +84,17 @@ Also scales with **distance to Source**: the closer you are, the less the campus
 - **What they do:** honest NPCs give real clues for the hidden key target; agents plant **false clues** (ties into the false bits). Agents can also start a Fear episode early, lock a door behind you, or report you.
 - You never know for sure who to trust. That's the point.
 
+## Fighting back: improvised, not trained
+
+You're an office worker, not a fighter. You fight with whatever the world has.
+
+- **Grab and throw / swing:** staplers, mugs, monitors, chairs, binders. Clumsy, heavy, satisfying. (Unreal: Physics Handle component to grab; on throw, apply an impulse; damage on hit = based on the object's speed.)
+- **Fire extinguisher:** spray a cone that blinds and slows the stalker for a few seconds; limited charge. Iconic, readable, a great "oh no, use it now" moment.
+- **Block their path:** knock over filing cabinets, chairs, carts, water coolers. Enemies slow down crossing debris. (Cheap version: a "debris" overlap that cuts enemy speed, instead of rebuilding the navigation mesh, which is expensive at runtime.)
+- **Objects break or run out:** extinguishers empty, thrown things scatter. You can't hold the line forever.
+
+**Balance:** improvised hits **stagger and slow** gatekeepers; they buy you time to escape or reach a lock. Only a **soul bit (Dissolve / Patch)** truly ends one. You can fight back, but it's never safe to stay.
+
 ## Ending: the party
 
 Inspired by the movie *The Game* (mood only, nothing copied).
@@ -91,11 +102,13 @@ Inspired by the movie *The Game* (mood only, nothing copied).
 1. **You reach Source with 3 soul bits.** The lights come up and confetti falls. The whole thing was a **giant corporate party celebrating your win.**
 2. **Everyone's there:** the coworkers, the stalker, the malware agents, all smiling, cheering, hugging you. They were your best friends all along. It was all a test.
 3. **Something still seems off:** one clock is still frozen, the PA repeats one line, a guest's smile holds too long.
-4. **The Collector arrives:** a polished, gentle presence comes to "collect" your soul bits so it can build you a utopian afterlife, a palace.
-5. **You hand them over.** (Or they're simply taken: open question.)
+4. **The Collector arrives:** a polished, gentle presence. Its offer: *"The astral realm is open now. You can build yourself a world, a palace, a utopian afterlife. You just have to hand over your keys."*
+5. **The choice: Yes / No.**
+   - **Yes:** you hand them over willingly.
+   - **No:** they're taken anyway, maybe gently, maybe not.
 6. **Final beat:** Soul Sight flickers one last time on the Collector… and **cut to black** before you can read its code. Were you rewarded, or robbed again?
 
-Left deliberately unresolved. No answer in the game.
+Left deliberately unresolved. **Draft: refine during storyboard / as it unfolds.**
 
 ## Core loop
 
@@ -146,6 +159,7 @@ Left deliberately unresolved. No answer in the game.
 - Soul Sight bleed tied to soul bits
 - XOR Key Lock, generated
 - 1 stalker gatekeeper with chase + damage
+- Improvised combat: grab/throw objects, fire extinguisher, knock-over debris that slows enemies
 - 3 soul bits → party ending with the Collector (one room, NPCs reused, cut to black)
 - 2–3 NPC types, some seeded as malware agents giving false clues
 - Title screen, rewind on capture
@@ -159,7 +173,7 @@ Left deliberately unresolved. No answer in the game.
 ## Open questions
 
 - [ ] Jam theme. The concept bends to fit it.
-- [ ] Combat: can the player fight back, or only evade until Dissolve/Patch?
+- [x] Combat: yes, fight back with improvised objects; only soul bits truly end a gatekeeper.
 - [x] "Antics" = the malware's tricks: loops, illusions, agents among the NPCs.
-- [ ] Ending: does the player choose to hand over the soul bits, or are they simply taken?
+- [x] Ending: Yes/No choice; "No" → taken anyway. Details refined as it unfolds.
 - [ ] Final title.

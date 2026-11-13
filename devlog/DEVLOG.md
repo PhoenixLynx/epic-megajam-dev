@@ -37,6 +37,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:26 | Claude (Anthropic) | Updated CONCEPT.md to v0.2 from my direction: corporate campus start, Soul Sight "slip" progression, Augmented Fear layer + creep stages, Wellness Center → Hospital, Unreal techniques for the transition, revised MVP/stretch list. |
 | 2026-11-12 19:27 | Claude (Anthropic) | CONCEPT.md v0.3 from my direction: escalation table, "trapped in time and space" mechanics (loops, frozen time, rewind on capture), subtle Key Lock with a 3-key difficulty ramp. |
 | 2026-11-12 19:30 | Claude (Anthropic) | CONCEPT.md v0.4 from my direction: NPCs as seeded malware agents with false clues; party ending with the Collector, broken into beats. |
+| 2026-11-12 19:36 | Claude (Anthropic) | CONCEPT.md v0.5 from my direction: improvised combat (objects, fire extinguisher, path-blocking debris) with Unreal implementation notes; ending offer + Yes/No choice. |
 
 ---
 
@@ -126,3 +127,19 @@ A running record of every AI tool used and what it did.
 - **Problems:** Theme still unknown; combat style still open.
 - **AI tools used:** Claude (concept update, ending beat breakdown).
 - **Next:** Theme + combat decision → storyboard.
+
+### Session 6: Thu Nov 12, 2026, 19:36 MST: Combat and the ending choice
+
+- **Goal:** Decide how the player fights and how the ending offer works.
+- **Done:**
+  - **Combat:** the player can fight back with any object the world has, not because they're a trained fighter, but because they have to use what's there: fire extinguishers, office supplies. You can slow enemies with things you put in their path.
+  - **Ending offer:** you're told the astral realm is open now and you can build yourself a world; you just have to hand over your keys.
+  - **Ending choice:** Yes/No. If you choose no, maybe they're taken anyway. Refine as it unfolds.
+  - Concept doc updated to v0.5.
+- **Decisions & why:**
+  - **Improvised hits stagger and slow; only soul bits end a gatekeeper.** Keeps the horror (it's never safe to stay and fight) while giving the player agency.
+  - **Debris slows via an overlap speed penalty**, not runtime navmesh rebuilding, which is cheaper and more reliable in a jam.
+  - **Fire extinguisher** as the signature tool: limited charge, blinds and slows.
+- **Problems:** Theme still unknown.
+- **AI tools used:** Claude (concept update, combat implementation notes).
+- **Next:** Theme → close Concept stage → storyboard.
