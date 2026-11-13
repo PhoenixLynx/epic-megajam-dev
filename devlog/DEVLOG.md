@@ -50,6 +50,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-13 12:50 | Claude (Anthropic) | While I was at work: wrote the grey-box campus builder (Unreal Python), the XOR Key Lock generator + tests + Blueprint port spec, and the first game text tables (emails, PA lines, compliance training, NPC lines, script pages). |
 | 2026-11-13 13:00 | Claude (Anthropic) | Glyph alphabet (8 glyphs × lit/unlit + hidden), UI mockups (Key Lock, inbox, HUD badge), Blueprint recipes, grey-box additions (throwables, loop, Hospital, nav mesh), Fear materials script, 11 synthesized placeholder SFX. |
 | 2026-11-13 15:27 | Claude (Anthropic) | Enabled the Python, Editor Scripting, Unreal MCP and All Toolsets plugins in the .uproject (exact names read from my UE 5.8 install); wrote preflight_check.py, init_unreal.py (auto-starts MCP) and docs/TONIGHT.md. |
+| 2026-11-13 15:32 | Claude (Anthropic) | Wrote docs/PRODUCTION_CHECKLIST.md: every task to submission with owners, timing, done-criteria and checkpoints. |
 
 ---
 
@@ -345,3 +346,14 @@ A running record of every AI tool used and what it did.
   - **Reports and logs land inside the project folder** (`Saved/`), which Claude can read, so debugging doesn't need me to copy and paste.
 - **AI tools used:** Claude (plugin setup, scripts, runbook).
 - **Next:** TONIGHT.md, steps 1–7.
+
+### Session 20: Fri Nov 13, 2026, 15:32 MST: Production checklist
+
+- **Goal:** One shared list so we both know what the game still needs.
+- **Done:** `docs/PRODUCTION_CHECKLIST.md`, with ~75 tasks across setup, core systems, Acts 1–3 + ending, art, audio, polish, packaging/submission and record-keeping. Each has an owner (me / Claude / both), a target time, and a "done means" where it matters.
+- **Decisions & why:**
+  - **Checkpoints with fallbacks:** Fri 11 PM core systems · **Sat 2 PM Act 1 playable** · **Sat 10 PM whole game rough** · Sun 12 PM content freeze · Sun 2 PM packaged build · **Sun 5 PM submit**. Each says what to cut if we're behind.
+  - **MVP definition:** TAKE 1 slate → wrap party in ~15 minutes, with a chase, three keys and the final choice.
+  - Node.js and Git for Windows are already installed on the PC (seen in Program Files), so no downloads needed tonight.
+- **AI tools used:** Claude (checklist, scheduling).
+- **Next:** tonight's runbook; Claude keeps working down "Claude can do these any time".
