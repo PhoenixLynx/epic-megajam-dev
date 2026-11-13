@@ -25,6 +25,7 @@ Rule reminders:
 | **Meshy** | Alternative 3D generator | Sign up by Nov 17 | Needs a credit card and **auto-renews**; cancel before the month ends |
 | **Rokoko** | Motion capture for the stalker's movement or NPC idles | Register for voucher | Nice for a creepy, human stalker gait; only if time allows |
 | **Cursor / Grok** ($50) | Extra coding assistant | Claim by Nov 15; 7 days | Optional; Claude already covers this |
+| **OpenAI** (my own account) | Allowed. Possible uses: images, writing help, or in-game use. Separate award: $10k in API credits for best use of OpenAI in UE entries; answer the optional OpenAI question at submission | Submission | Log every use in the AI tool ledger |
 | **Diversion** | Cloud version control built for game projects | Code by Nov 22 | **Backup plan if GitHub's free Git LFS storage quota fills up.** Unreal projects grow fast; check usage after Day 1 |
 
 ## Skip
@@ -33,7 +34,6 @@ Rule reminders:
 |------|-----|
 | **WeLoveIndies** (sound/music) | Pre-made, so it's sourced and unscored, and I'm composing everything. Only as declared emergency SFX. |
 | **Reallusion** (iClone / CC5) | Steep learning curve for a 3-day jam; CC5 is a discount, not free |
-| **OpenAI awards** | Not using OpenAI |
 | **NVIDIA RTX award** | Requires the NvRTX engine branch, too risky to switch mid-jam |
 | **NetApp + AWS** | After the jam |
 
