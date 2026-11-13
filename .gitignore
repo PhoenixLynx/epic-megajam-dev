@@ -52,3 +52,7 @@ SourceArt/Ableton/**/Backup/
 *.asd
 
 # ---- Blender autosaves are already covered above (*.blend1) ----
+
+# ---- Python ----
+__pycache__/
+*.pyc
