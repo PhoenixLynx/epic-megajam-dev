@@ -1,75 +1,104 @@
-# Concept (draft v0.1): working title "SOULHASH"
+# Concept (v0.2): working title "SOULHASH"
 
-**Genre:** first-person cryptographic horror, explore / fight / puzzle
-**Status:** draft. Waiting on jam theme; open questions at bottom.
+**Genre:** first-person cryptographic horror, explore / stalk-and-chase / puzzle
+**Status:** core direction locked. Waiting on jam theme.
 
-## Pitch (player's words)
+## Pitch
 
-> Find the missing pieces of your own soul code, called keys. You solve for them, like mining your own soul bitcoins. As you solve, your Soul Sight improves until you can see both the interface and the source code. Malware and false bits stand in the way, and enemies get harder as you level and the closer you get. Centralized entities have built an illusion overlay to trap you and divert your soul energy.
+You are a standardized citizen-employee at a bright, cheerful corporation. Under the surface, centralized entities have built an illusion overlay to trap people and divert their soul energy. You start to see through it. Every key you solve pulls you further out of the interface and into the truth, while the malware fights back with brainwashing and engineered fear.
 
-## The three layers
+## The layers
 
-| Layer | What it is | What the player does there |
-|-------|-----------|----------------------------|
-| **Real World** (the Interface) | A reality that looks normal but doesn't feel right. It's a skin drawn over the truth. | Explore, find clues, get ambushed. |
-| **Astral Real-Time Zone** (the Overlay) | The hidden layer the gatekeeper entities built to hide and gate your soul energy. It runs live, in "real time". | Fight the gatekeepers, take back soul energy. |
-| **Source** | The true code underneath. The final goal. | Reach it with enough soul bits = win. |
+| Layer | Who made it | Feel | Role |
+|-------|------------|------|------|
+| **Interface: the Campus** | The corporation | Bright, clean, polite, too perfect | Where the game starts. Your normal workday. |
+| **Astral Real-Time Zone** | The gatekeepers (hidden) | The truth: shining linework, glyph-code bleeding through surfaces | Seen through **Soul Sight**. Where your soul energy is held. |
+| **Augmented Fear** | The malware | Visceral, rotting, stalked: the campus turned against you | The malware's attack state. Brainwashing + extreme fear. |
+| **Source** | No one / you | Pure code | Final goal. |
 
-**Build trick:** the Astral Zone is drawn *on top of the same level* as the Real World. Turning on Soul Sight switches post-process and materials and reveals hidden actors. That gives two worlds for the cost of one level, and the core fantasy is literally "seeing through the interface."
+**Soul Sight = truth. Augmented Fear = lies.** They are opposites, and that's the core tension.
+
+## Real World: the Campus
+
+- You're an employee: badge, ID number, standardized desk, wellness reminders.
+- Bright corporate surface: posters thanking you for your energy, consent prompts on doors, smiling staff who are a little too still.
+- Mood references (nothing copied): Magilumiere Co. Ltd.'s corporate cheer, Death Note's contracts and rules.
+- **The Wellness Center** is the campus clinic. In Augmented Fear it becomes **the Hospital**.
+
+## Soul Sight: you slip into it
+
+Not a free toggle at the start. It grows with each soul bit:
+
+| Soul bits | Soul Sight behavior |
+|-----------|--------------------|
+| 0 | Involuntary flickers: a second of glyph-light bleeding through a wall, then gone. |
+| 1 | Hold to see, briefly; it drains fast. |
+| 2 | Longer; reveals false bits and enemy code signatures. |
+| 3 | Sees both interface and source. Path to Source opens. |
+
+## Augmented Fear: the slip
+
+The player shouldn't know exactly when it starts. No siren, no hard cut. It creeps in over ~30–90 seconds until you realize it's wrong and something is already following you.
+
+**Creep stages (all driven by one 0→1 "Fear" value):**
+1. **Off by a little:** a light buzzes, an ambient sound lags, one poster's text is different.
+2. **Draining:** color desaturates, fog thickens, footsteps echo wrong, doors you passed are now closed.
+3. **Watched:** staff mannequins have turned to face you, the corridor is longer than it was.
+4. **Stalked:** the gatekeeper is visible at the edge of the screen, then it chases.
+
+**Unreal tools:** a post-process blend weight lerped by Fear, a material parameter collection (rot/grime/desaturation on every surface), an audio low-pass + heartbeat layer, and actor swaps out of the player's view (check if it's off-screen before swapping).
+
+**Soul Sight pierces Fear:** using it during Fear shows what's real (true exits, fake enemies, the stalker's code signature). But it drains fast, so it's a tense resource.
 
 ## Core loop
 
-1. Explore the Real World.
-2. Use **Soul Sight** (time-limited, it drains) to see the Astral overlay: hidden enemies, energy, false bits.
-3. **Fight** gatekeepers (they deal real damage) to free **soul energy**.
-4. Spend the energy at a **Key Lock** to solve a generated puzzle → **mint a soul bit** (soul bits only exist once you've recovered the energy).
-5. Each soul bit **upgrades Soul Sight** (longer, sees more) and can be spent to **Dissolve** (destroy) or **Patch** (neutralize) an enemy instead of fighting it.
-6. With N soul bits (target: 3), the path to **Source** opens.
+1. Work your day on the Campus. Small objectives, notice what's wrong.
+2. Soul Sight flickers reveal hidden **soul energy** and **Key Locks**.
+3. Going after energy triggers **Augmented Fear**: the campus turns, a gatekeeper stalks and chases. It deals real damage.
+4. Survive, recover the energy, reach a **Key Lock**, solve it → **mint a soul bit**.
+5. Soul bit = stronger Soul Sight, and can be spent to **Dissolve** or **Patch** a gatekeeper.
+6. Each bit makes the next Fear episode harder and deeper (Hospital wing).
+7. 3 bits → Source.
 
-## Puzzle: XOR Key Lock (recommended)
+## Puzzle: XOR Key Lock (locked in)
 
-- The lock shows a **target signature**: a row of 8 glyphs, each glyph = one bit, on or off.
-- You get 4–8 **key fragments**, each its own 8-glyph row.
-- Toggle fragments on and off. The lock combines the active ones with **XOR** (exclusive-or: a bit is on if an odd number of active fragments have it on) and shows the running result.
-- Match the target = key solved.
-- **Always solvable by construction:** generate the fragments randomly, secretly pick a random subset, XOR them together, and that result *is* the target.
-- **False bits:** some fragments are malware decoys that corrupt the result. Only higher Soul Sight reveals them.
-- **Sight ties in:** at low Soul Sight some glyphs show as `?`. Each level reveals more.
-- **Scaling:** more bits per row, more fragments, more decoys, and a timer while enemies close in.
-
-Fallback if XOR feels too abstract: Lights-Out style glyph grid (press a node, it and its neighbors flip). Generate it by pressing random nodes from the solved state, so it's always solvable.
+- Target signature: a row of glyph-bits. Key fragments: rows of glyph-bits. Toggle fragments; active ones combine by XOR. Match the target.
+- Generated backwards from a secret answer subset → always solvable, never the same.
+- **False bits:** malware decoy fragments, revealed only at Soul Sight 2+.
+- Low sight shows some glyphs as `?`.
+- Scaling: more bits, more fragments, more decoys, solving while stalked.
 
 ## Every run is unique
 
-- Run seed comes from the system clock's high-resolution ticks plus a random stream. It's never shown or saved, so a run can't be recreated.
-- The seed drives: puzzle generation, enemy placement, which rooms hide energy, small Real World "wrongness" details.
-- **Dev-only seed override** (stripped or hidden in the shipped build) so bugs can be reproduced during the jam.
+- Seed from high-res clock ticks; never shown or saved.
+- Drives: puzzles, energy and lock locations, gatekeeper spawns, which campus details are "wrong."
+- Dev-only seed override for debugging.
 
-## Enemies: the Gatekeepers
+## Enemies: Gatekeepers
 
-- Centralized entities that hold your soul energy.
-- **Difficulty = f(soul bits owned, distance to Source):** health, speed and aggression go up as you level and get closer.
-- Each one carries a visible **code signature** under Soul Sight. Spend a soul bit to Dissolve or Patch it.
-- MVP: 1 enemy base + 2 variants (melee chaser, ranged "notary" that stamps/curses).
-
-## Aesthetic: cryptographic horror
-
-- Bright, polite corporate surface vs. hostile hidden machinery underneath.
-- Inspirations (for mood only, nothing copied): Magilumiere Co. Ltd. (corporate magic bureaucracy), Death Note (rules, names, contracts), Backrooms / Control / SCP (wrong spaces, institutional horror), The Matrix (code under reality).
-- Soul Sight look: shining, luminous linework bleeding through surfaces into glyph-code.
+- Malware entities that brainwash and inflict fear. They stalk first and chase second.
+- **Difficulty = f(soul bits owned, distance to Source).**
+- Code signature visible under Soul Sight; spend a soul bit to Dissolve or Patch.
+- MVP: 1 stalker (chase + grab damage). Stretch: a ranged "Notary" variant.
 
 ## MVP scope (3 days, solo)
 
-- 1 Real World level (a handful of rooms) + Astral overlay via Soul Sight
-- XOR Key Lock, procedurally generated
-- 1 enemy type + 2 variants, simple combat
-- 3 soul bits → Source ending
-- Title screen, death/restart, ending screen
+**Must:**
+- Campus level (lobby, office floor, corridor, Wellness Center), built once
+- Augmented Fear as a state on the same level (post-process + materials + audio + swaps)
+- Soul Sight bleed tied to soul bits
+- XOR Key Lock, generated
+- 1 stalker gatekeeper with chase + damage
+- 3 soul bits → Source ending; title, death/restart, end screen
+
+**Stretch (in order):**
+1. Hospital wing as its own deeper Fear area
+2. Dissolve / Patch spend
+3. Second enemy variant
+4. Extra campus "wrongness" events
 
 ## Open questions
 
-- [ ] Jam theme. Concept must bend to fit it.
-- [ ] What the Real World is (options in DEVLOG Session 2).
-- [ ] Puzzle choice: XOR Key Lock vs. glyph grid.
-- [ ] Combat style: melee, projectile, or both.
+- [ ] Jam theme. The concept bends to fit it.
+- [ ] Combat: can the player fight back, or only evade until Dissolve/Patch?
 - [ ] Final title.

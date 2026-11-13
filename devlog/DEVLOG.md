@@ -34,6 +34,7 @@ A running record of every AI tool used and what it did.
 |------------|------|-------------|
 | 2026-11-12 19:17 | Claude (Anthropic) | Set up repo scaffold: git on `main`, Unreal .gitignore, Git LFS tracking, folder layout, this devlog, submission checklist. |
 | 2026-11-12 19:19 | Claude (Anthropic) | Turned my raw concept notes into docs/CONCEPT.md: layer structure, core loop, XOR Key Lock puzzle design, seed approach, MVP scope, Real World options. Ideas and direction are mine; Claude structured and scoped them. |
+| 2026-11-12 19:26 | Claude (Anthropic) | Updated CONCEPT.md to v0.2 from my direction: corporate campus start, Soul Sight "slip" progression, Augmented Fear layer + creep stages, Wellness Center → Hospital, Unreal techniques for the transition, revised MVP/stretch list. |
 
 ---
 
@@ -73,3 +74,21 @@ A running record of every AI tool used and what it did.
 - **Problems:** Theme still unknown, so the concept may need to bend.
 - **AI tools used:** Claude (concept structuring + scoping).
 - **Next:** Theme → lock concept → storyboard.
+
+### Session 3: Thu Nov 12, 2026, 19:26 MST: Concept direction locked
+
+- **Goal:** Pick the Real World and define the enemy experience.
+- **Done:**
+  - **Real World = the Campus:** you start as a standardized citizen-employee at a bright corporation. The cheer is there to contrast with the conspiracy underneath.
+  - **Soul Sight is something you slip into**, growing with each solved key: involuntary flickers at first, full sight at 3 soul bits.
+  - **XOR Key Lock confirmed** as the puzzle, uniquely generated every time.
+  - **New layer: Augmented Fear.** The malware brainwashes and inflicts extreme fear. You slip into it without knowing exactly when, until you're being stalked and chased. It should feel visceral. Not a siren-style hard switch.
+  - **Hospital:** the campus Wellness Center becomes the Hospital in Fear.
+  - Concept doc updated to v0.2.
+- **Decisions & why:**
+  - Soul Sight (truth) and Augmented Fear (lies) are framed as opposites; Soul Sight can pierce Fear but drains fast. One tension drives both systems.
+  - Fear is one 0→1 value driving post-process, materials, audio and off-screen actor swaps, so the creep is gradual and it's all one system to build.
+  - Hospital wing moved to stretch goal #1; Wellness Center covers it in the MVP.
+- **Problems:** Theme still unknown.
+- **AI tools used:** Claude (concept doc update, scoping, Unreal technique suggestions).
+- **Next:** Theme → storyboard (campus layout + first Fear episode beat by beat).
