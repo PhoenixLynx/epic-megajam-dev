@@ -1,4 +1,7 @@
-# Concept (v0.6): working title "SOULHASH"
+# Concept (v0.7): working title "SOULHASH"
+
+> **Theme: "Director's Cut"** (to confirm on the official jam page). Brainstorm: [THEME_BRAINSTORM.md](THEME_BRAINSTORM.md).
+> **Spine:** the whole thing is an orchestrated movie. Your soul bits are the scenes cut from your life. A Director, the Chairman, is behind it all and is never fully seen.
 
 **Genre:** first-person cryptographic horror, explore / stalk-and-chase / puzzle
 **Status:** core direction locked. Waiting on jam theme.
@@ -76,6 +79,27 @@ Fear zones should make you feel there's no way out, in both space and time.
 
 Also scales with **distance to Source**: the closer you are, the less the campus pretends to be normal.
 
+## The Chairman (the Director)
+
+Head of the corporation, and the director of your life's production. **Hinted at all game, never fully shown.**
+
+**Foreshadowing, in rising order:**
+1. **Lobby portrait:** the Chairman's face is always just cropped out of the frame.
+2. **Memos** signed "The Chairman," written in film language: "Places, everyone." "Let's go again from the top."
+3. **Call sheet** on the bulletin board, the daily schedule a film crew posts, listing *you* by employee number in the cast.
+4. **PA announcements:** "The Chairman thanks you for your performance."
+5. **The empty director's chair:** it appears in odd places, a little closer to you each take.
+6. **In Fear:** a boom mic shadow, a camera dolly track on the floor, a red REC light in a dark doorway.
+7. **Elevator button "C":** never lights. At the end, it does.
+
+## Movie motifs throughout
+
+- **"CUT!" on capture:** a clapperboard snaps the next take number, and you restart at your desk. Take count climbs all game.
+- **Script pages** carry the key clues; stage directions describe you, sometimes before you act. Agents plant fakes.
+- **NPCs are actors**; malware agents break character (missed marks, glances at a camera that isn't there).
+- **Letterbox bars** close in as Fear rises, with film grain. Soul Sight pushes them back.
+- **Astral logic = editing reality:** telekinesis moves props; float is wire work. Stretch: short rewind, freeze frame.
+
 ## NPCs: anyone could be malware
 
 - The friendly coworkers, receptionist and wellness staff you meet can be **agents of the malware**.
@@ -117,13 +141,14 @@ The deeper you are in the astral realm, the more its rules work for you. A certa
 
 Inspired by the movie *The Game* (mood only, nothing copied).
 
-1. **You reach Source with 3 soul bits.** The lights come up and confetti falls. The whole thing was a **giant corporate party celebrating your win.**
-2. **Everyone's there:** the coworkers, the stalker, the malware agents, all smiling, cheering, hugging you. They were your best friends all along. It was all a test.
+1. **You reach Source with 3 soul bits.** Elevator button "C" lights. The doors open, the lights come up and confetti falls. It's a **wrap party**: "That's a wrap!" The whole thing was an orchestrated movie, and you were the star.
+2. **Everyone's there:** the coworkers, the stalker (mask off, holding a coffee), the malware agents, all smiling, cheering, hugging you. They were your best friends all along. It was all a production.
+   - The **director's chair** is there, turned away. The Chairman is never seen.
 3. **Something still seems off:** one clock is still frozen, the PA repeats one line, a guest's smile holds too long.
-4. **The Collector arrives:** a polished, gentle presence. Its offer: *"The astral realm is open now. You can build yourself a world, a palace, a utopian afterlife. You just have to hand over your keys."*
+4. **The Collector arrives,** speaking for the Chairman: a polished, gentle presence. Its offer (reels = your soul bits; working draft): *"The astral realm is open now. You can build yourself a world, a palace, a utopian afterlife. You just have to hand over your keys."*
 5. **The choice: Yes / No.**
-   - **Yes:** you hand them over willingly.
-   - **No:** they're taken anyway, maybe gently, maybe not.
+   - **Yes → the theatrical cut:** a bright, polished, happy ending. Too happy.
+   - **No → the director's cut:** the reels are taken anyway; you glimpse a few seconds of the uncut, darker version.
 6. **Final beat:** Soul Sight flickers one last time on the Collector… and **cut to black** before you can read its code. Were you rewarded, or robbed again?
 
 Left deliberately unresolved. **Draft: refine during storyboard / as it unfolds.**

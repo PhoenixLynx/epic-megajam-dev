@@ -42,6 +42,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:40 | Claude (Anthropic) | Web-searched the jam rules on pre-made assets and the theme. Added the music plan (stems composed during the jam + MetaSounds runtime generation) to CONCEPT.md; added rule items to the checklist. |
 | 2026-11-12 19:42 | Claude (Anthropic) | Wrote docs/AUDIO_PLAN.md: bright/dark ambient palettes, 7 generative techniques, recording list. I compose all the music; Claude designed the generative system. |
 | 2026-11-12 19:46 | Claude (Anthropic) | Brainstormed "Director's Cut" theme tie-ins → docs/THEME_BRAINSTORM.md (core reframe, mechanics, ending, titles). Web-searched to try to confirm the theme officially (not confirmed yet). |
+| 2026-11-12 19:48 | Claude (Anthropic) | CONCEPT.md v0.7: folded in the theme. "Orchestrated movie" spine, the Chairman with a 7-step foreshadowing list, movie motifs, wrap-party ending, theatrical vs. director's cut. |
 
 ---
 
@@ -197,6 +198,15 @@ A running record of every AI tool used and what it did.
 ### Session 10: Thu Nov 12, 2026, 19:46 MST: Theme brainstorm
 
 - **Goal:** Brainstorm how "Director's Cut" fits the game.
-- **Done:** Brainstorm written to `docs/THEME_BRAINSTORM.md`. Picks pending.
-- **AI tools used:** Claude (brainstorm, theme search).
-- **Next:** Pick theme ideas → fold into CONCEPT.md → storyboard.
+- **Done:** Brainstorm written to `docs/THEME_BRAINSTORM.md`.
+- **Picks:**
+  - Play with the ending, and foreshadow or reference a director's cut throughout the game.
+  - Make it feel like the whole thing was an orchestrated movie.
+  - Allude to a director / chairman.
+- **Decisions & why:**
+  - **The Chairman is never fully seen:** cropped portrait, signed memos, the empty director's chair creeping closer each take, the elevator "C" button that only lights at the end. Hints build dread without needing a character model.
+  - **The Collector speaks for the Chairman** at the wrap party; the director's chair stays turned away.
+  - **Yes = theatrical cut, No = director's cut** gives the choice a theme meaning.
+  - Concept doc updated to v0.7. **Concept stage nearly closed**; only official theme confirmation is left.
+- **AI tools used:** Claude (brainstorm, concept update).
+- **Next:** Storyboard: campus map, opening scene, first Fear episode, ending beats.
