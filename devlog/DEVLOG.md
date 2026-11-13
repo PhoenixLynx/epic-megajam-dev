@@ -40,6 +40,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:36 | Claude (Anthropic) | CONCEPT.md v0.5 from my direction: improvised combat (objects, fire extinguisher, path-blocking debris) with Unreal implementation notes; ending offer + Yes/No choice. |
 | 2026-11-12 19:37 | Claude (Anthropic) | CONCEPT.md v0.6 from my direction: coffee burn + more office weapons; "astral logic" powers tiered by soul bits, with Unreal implementation notes. |
 | 2026-11-12 19:40 | Claude (Anthropic) | Web-searched the jam rules on pre-made assets and the theme. Added the music plan (stems composed during the jam + MetaSounds runtime generation) to CONCEPT.md; added rule items to the checklist. |
+| 2026-11-12 19:42 | Claude (Anthropic) | Wrote docs/AUDIO_PLAN.md: bright/dark ambient palettes, 7 generative techniques, recording list. I compose all the music; Claude designed the generative system. |
 
 ---
 
@@ -176,3 +177,17 @@ A running record of every AI tool used and what it did.
 - **Problems:** Old tracks would cost scoring; theme still unconfirmed.
 - **AI tools used:** Claude (web search on rules, music system design).
 - **Next:** Confirm theme → fit concept to it → storyboard.
+
+### Session 9: Thu Nov 12, 2026, 19:42 MST: Audio plan
+
+- **Goal:** Define the sound of the game.
+- **Done:**
+  - Direction: something really eerie, dark ambient, plus brighter ambient. I'll compose new material, and we'll build generative algorithms to expand on it.
+  - Wrote `docs/AUDIO_PLAN.md`.
+- **Decisions & why:**
+  - **Bright ambient = campus, dark ambient = Fear/Astral,** crossfaded by the Fear value, so the music tracks the slip.
+  - **Phasing loops of odd lengths** as the base layer: the simplest way to get endlessly non-repeating ambience.
+  - **Shuffle bag + follow-on table + scale-locked random walk** for melody: variety that still sounds composed.
+  - Motifs from my older albums may be re-recorded as new material and noted in the devlog; old audio files aren't used.
+- **AI tools used:** Claude (generative audio design, recording list).
+- **Next:** Confirm theme → storyboard. Start recording audio stems in parallel when I'm away from the PC.

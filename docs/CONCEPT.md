@@ -164,6 +164,7 @@ Left deliberately unresolved. **Draft: refine during storyboard / as it unfolds.
   - **Soul Sight** adds a shimmering, luminous layer on top.
   - **Time loops:** the music literally loops a few bars and stutters when you're trapped.
 - **Ending party:** a cheerful corporate anthem built from the same fragments, with one stem left slightly out of tune.
+- **Two palettes:** bright ambient (campus) and dark, eerie ambient (Fear/Astral), crossfaded by Fear. Full plan and recording list in [AUDIO_PLAN.md](AUDIO_PLAN.md).
 
 ## Every run is unique
 
@@ -205,7 +206,7 @@ Left deliberately unresolved. **Draft: refine during storyboard / as it unfolds.
 ## Open questions
 
 - [ ] Jam theme. A participant's devlog says it's **"Director's Cut"**. Needs confirming from the official page.
-- [ ] Old tracks: compose everything fresh (recommended), or use some and declare them as sourced assets?
+- [x] Old tracks: compose everything fresh; motifs from older work may be re-recorded and noted in the devlog.
 - [x] Combat: yes, fight back with improvised objects; only soul bits truly end a gatekeeper.
 - [x] "Antics" = the malware's tricks: loops, illusions, agents among the NPCs.
 - [x] Ending: Yes/No choice; "No" → taken anyway. Details refined as it unfolds.
