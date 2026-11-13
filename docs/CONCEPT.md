@@ -1,4 +1,4 @@
-# Concept (v0.3): working title "SOULHASH"
+# Concept (v0.4): working title "SOULHASH"
 
 **Genre:** first-person cryptographic horror, explore / stalk-and-chase / puzzle
 **Status:** core direction locked. Waiting on jam theme.
@@ -76,6 +76,27 @@ Fear zones should make you feel there's no way out, in both space and time.
 
 Also scales with **distance to Source**: the closer you are, the less the campus pretends to be normal.
 
+## NPCs: anyone could be malware
+
+- The friendly coworkers, receptionist and wellness staff you meet can be **agents of the malware**.
+- Which ones are agents is **chosen by the run seed**, so it's different every game.
+- Agents look and talk exactly like everyone else. Under Soul Sight they *may* flicker a code signature, but only at higher Sight levels, and not reliably.
+- **What they do:** honest NPCs give real clues for the hidden key target; agents plant **false clues** (ties into the false bits). Agents can also start a Fear episode early, lock a door behind you, or report you.
+- You never know for sure who to trust. That's the point.
+
+## Ending: the party
+
+Inspired by the movie *The Game* (mood only, nothing copied).
+
+1. **You reach Source with 3 soul bits.** The lights come up and confetti falls. The whole thing was a **giant corporate party celebrating your win.**
+2. **Everyone's there:** the coworkers, the stalker, the malware agents, all smiling, cheering, hugging you. They were your best friends all along. It was all a test.
+3. **Something still seems off:** one clock is still frozen, the PA repeats one line, a guest's smile holds too long.
+4. **The Collector arrives:** a polished, gentle presence comes to "collect" your soul bits so it can build you a utopian afterlife, a palace.
+5. **You hand them over.** (Or they're simply taken: open question.)
+6. **Final beat:** Soul Sight flickers one last time on the Collector… and **cut to black** before you can read its code. Were you rewarded, or robbed again?
+
+Left deliberately unresolved. No answer in the game.
+
 ## Core loop
 
 1. Work your day on the Campus. Small objectives, notice what's wrong.
@@ -125,7 +146,9 @@ Also scales with **distance to Source**: the closer you are, the less the campus
 - Soul Sight bleed tied to soul bits
 - XOR Key Lock, generated
 - 1 stalker gatekeeper with chase + damage
-- 3 soul bits → Source ending; title, death/restart, end screen
+- 3 soul bits → party ending with the Collector (one room, NPCs reused, cut to black)
+- 2–3 NPC types, some seeded as malware agents giving false clues
+- Title screen, rewind on capture
 
 **Stretch (in order):**
 1. Hospital wing as its own deeper Fear area
@@ -137,5 +160,6 @@ Also scales with **distance to Source**: the closer you are, the less the campus
 
 - [ ] Jam theme. The concept bends to fit it.
 - [ ] Combat: can the player fight back, or only evade until Dissolve/Patch?
-- [ ] "Antics": does this mean the malware's tricks and illusions (fake doors, moving mannequins), or something else?
+- [x] "Antics" = the malware's tricks: loops, illusions, agents among the NPCs.
+- [ ] Ending: does the player choose to hand over the soul bits, or are they simply taken?
 - [ ] Final title.

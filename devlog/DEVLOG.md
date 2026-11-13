@@ -36,6 +36,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-12 19:19 | Claude (Anthropic) | Turned my raw concept notes into docs/CONCEPT.md: layer structure, core loop, XOR Key Lock puzzle design, seed approach, MVP scope, Real World options. Ideas and direction are mine; Claude structured and scoped them. |
 | 2026-11-12 19:26 | Claude (Anthropic) | Updated CONCEPT.md to v0.2 from my direction: corporate campus start, Soul Sight "slip" progression, Augmented Fear layer + creep stages, Wellness Center → Hospital, Unreal techniques for the transition, revised MVP/stretch list. |
 | 2026-11-12 19:27 | Claude (Anthropic) | CONCEPT.md v0.3 from my direction: escalation table, "trapped in time and space" mechanics (loops, frozen time, rewind on capture), subtle Key Lock with a 3-key difficulty ramp. |
+| 2026-11-12 19:30 | Claude (Anthropic) | CONCEPT.md v0.4 from my direction: NPCs as seeded malware agents with false clues; party ending with the Collector, broken into beats. |
 
 ---
 
@@ -108,4 +109,20 @@ A running record of every AI tool used and what it did.
   - **Loop corridor via invisible teleport.** Cheapest convincing space trap in Unreal; MVP includes one.
 - **Problems:** Theme still unknown. Combat style undecided.
 - **AI tools used:** Claude (concept update, mechanic suggestions).
+- **Next:** Theme + combat decision → storyboard.
+
+### Session 5: Thu Nov 12, 2026, 19:30 MST: NPC agents and the ending
+
+- **Goal:** Define who you can trust, and how it ends.
+- **Done:**
+  - Confirmed: getting stuck in a loop is a core feeling of the game.
+  - **Any NPC, even the nice ones, can be an agent of the malware.**
+  - **Ending:** like the movie *The Game*, all the malware and horrible things turn out to be your best friends, and a giant corporate party celebrates your win. But something still seems off. You've recovered your soul bits, and something comes to "collect" them to build you a utopian afterlife or palace. It leaves you hanging: can you trust them, or have you been stolen from again?
+  - Concept doc updated to v0.4.
+- **Decisions & why:**
+  - **Agents chosen by the run seed**, so trust has to be re-earned every run, and they feed false clues into the subtle Key Lock. One system serves both paranoia and puzzle difficulty.
+  - **Ending ends on a cut to black mid-Soul Sight flicker** so the question stays open.
+  - **Party room reuses existing NPCs and the stalker model**, which keeps the ending cheap to build.
+- **Problems:** Theme still unknown; combat style still open.
+- **AI tools used:** Claude (concept update, ending beat breakdown).
 - **Next:** Theme + combat decision → storyboard.
