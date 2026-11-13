@@ -21,3 +21,5 @@ SourceArt/Textures/UI/** -filter binary
 SourceArt/UI_Mockups/** -filter binary
 SourceArt/Audio/Placeholder/** -filter binary
 SourceArt/Textures/Props/** -filter binary
+SourceArt/Blender/Export/** -filter binary
+SourceArt/Blender/OfficeProps.blend -filter binary

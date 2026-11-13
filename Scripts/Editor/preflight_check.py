@@ -56,6 +56,10 @@ for fn in ("create_material_expression", "connect_material_expressions", "connec
            "set_material_instance_parent", "set_material_instance_vector_parameter_value"):
     check(f"MaterialEditingLibrary.{fn}", lambda f=fn: has(unreal.MaterialEditingLibrary, f))
 
+# --- Asset importer ----------------------------------------------------------
+for cls in ("AssetImportTask", "FbxImportUI", "TextureCompressionSettings", "TextureGroup"):
+    check(f"class unreal.{cls}", lambda c=cls: has(unreal, c))
+
 # --- Unreal MCP ----------------------------------------------------------------
 project_dir = unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir())
 

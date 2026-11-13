@@ -28,6 +28,11 @@ Press **Play**: you spawn behind desk #4471 facing your monitor. 📸 **Screensh
 **Tools → Execute Python Script…** → `Scripts/Editor/build_fear_assets.py`
 **Expect:** walls off-white, carpet blue-grey, props mint, throwables orange.
 
+## 4b. Import Claude's assets (1 min)
+**Tools → Execute Python Script…** → `Scripts/Editor/import_jam_assets.py`
+**Expect:** `/Game/Props/Meshes` (16 office props), `/Game/UI/Glyphs`, `/Game/Props/Textures` (posters, portrait, call sheet, charts), `/Game/Audio/Placeholder`.
+Drag `SM_DirectorsChair` into your cubicle. 📸
+
 ## 5. Connect Claude to the editor (5–10 min)
 The MCP server runs inside the editor at `http://127.0.0.1:8000/mcp`. Two ways to connect:
 

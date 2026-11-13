@@ -52,6 +52,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-13 15:27 | Claude (Anthropic) | Enabled the Python, Editor Scripting, Unreal MCP and All Toolsets plugins in the .uproject (exact names read from my UE 5.8 install); wrote preflight_check.py, init_unreal.py (auto-starts MCP) and docs/TONIGHT.md. |
 | 2026-11-13 15:32 | Claude (Anthropic) | Wrote docs/PRODUCTION_CHECKLIST.md: every task to submission with owners, timing, done-criteria and checkpoints. |
 | 2026-11-13 15:39 | Claude (Anthropic) | Wrote the rest of the game text (Act 2–3 NPC lines, prop text incl. call sheet, the full ending with both branches, credits); designed the title, TAKE slate and loading screens; generated 6 HALCYON posters (+ loop twins) and the Chairman portrait from code. |
+| 2026-11-13 15:45 | Claude (Anthropic) | Wrote a Blender 5.2 script that builds 16 office props and exports FBX (ran it in its own workspace with the bpy module and rendered a preview); generated the call sheet + 4 chart textures; wrote an Unreal import script for all generated assets. |
 
 ---
 
@@ -378,3 +379,18 @@ A running record of every AI tool used and what it did.
   - The title screen says "Made with Unreal Engine" as text only; the real UE logo goes in per jam rules.
 - **AI tools used:** Claude (writing; screens and textures generated from HTML/SVG code it wrote, rendered with headless Chrome).
 - **Next:** tonight's runbook (TONIGHT.md).
+
+### Session 22: Fri Nov 13, 2026, 15:45 MST: Office props + paper textures
+
+- **Goal:** Real props instead of grey cubes, plus the last paper textures.
+- **Done:**
+  - **`SourceArt/Blender/make_office_props.py`** (Blender 5.2): builds 16 props procedurally with real-world sizes, floor pivots, bevelled edges and named material slots: desk, office chair, filing cabinets (4- and 2-drawer), monitor (screen has its own material slot for UI later), keyboard, mug, fire extinguisher, **director's chair**, water cooler, wet-floor sign, cubicle panel, ream of paper, **hospital bed**, mop bucket, coffee machine. Exports one FBX each + `OfficeProps.blend`. Claude ran it with Blender 5.2.4 (the `bpy` Python module) and rendered a preview:
+    ![Office props](screenshots/2026-11-13_office_props.png)
+  - **Paper textures:** call sheet (take numbers 1–6 crossed out in red, 7 circled; "DO NOT LET 4471 SEE THIS SHEET") and 4 patient-chart script pages. Real pages have a **coffee ring** and say REV. WHITE; the fake is clean, REV. BLUE (the custodian's tip). Each has an empty **glyph strip** for the run's clue glyphs.
+    ![Paper](screenshots/2026-11-13_paper_textures.png)
+  - **`Scripts/Editor/import_jam_assets.py`:** imports all props, glyphs, posters/paper and placeholder sounds into tidy `/Game/...` folders; preflight now checks the importer's API too. Added as step 4b in TONIGHT.md.
+- **Decisions & why:**
+  - **Procedural Blender script instead of hand-modelling**: fast, editable by number, and repeatable. I'll polish hero props (and the Chairman portrait) later if there's time.
+  - **Glyph strips left blank on paper** because clue glyphs come from the run seed.
+- **AI tools used:** Claude (Blender script + test run + preview render, paper textures, import script).
+- **Next:** TONIGHT.md.
