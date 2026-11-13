@@ -53,6 +53,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-13 15:32 | Claude (Anthropic) | Wrote docs/PRODUCTION_CHECKLIST.md: every task to submission with owners, timing, done-criteria and checkpoints. |
 | 2026-11-13 15:39 | Claude (Anthropic) | Wrote the rest of the game text (Act 2–3 NPC lines, prop text incl. call sheet, the full ending with both branches, credits); designed the title, TAKE slate and loading screens; generated 6 HALCYON posters (+ loop twins) and the Chairman portrait from code. |
 | 2026-11-13 15:45 | Claude (Anthropic) | Wrote a Blender 5.2 script that builds 16 office props and exports FBX (ran it in its own workspace with the bpy module and rendered a preview); generated the call sheet + 4 chart textures; wrote an Unreal import script for all generated assets. |
+| 2026-11-13 16:03 | Claude (Anthropic) | Added 33 props (supplies, plants, lobby, kitchen, mannequins, stalker) to the Blender script, wrote dress_campus.py (furnishes every room, adds a kitchen), assembled the dressed campus in Blender to check the layout, wrote docs/ART_DIRECTION.md. |
 
 ---
 
@@ -394,3 +395,23 @@ A running record of every AI tool used and what it did.
   - **Glyph strips left blank on paper** because clue glyphs come from the run seed.
 - **AI tools used:** Claude (Blender script + test run + preview render, paper textures, import script).
 - **Next:** TONIGHT.md.
+
+### Session 23: Fri Nov 13, 2026, 16:03 MST: More props, a kitchen, and a bright office
+
+- **Goal:** More things to throw, and a convincing bright corporate office: fake plants, design details, a kitchen.
+- **Done:**
+  - **Props: 16 → 49.** Office supplies (3 binders, stapler, tape dispenser, pen cup, desk lamp, desk phone, PC tower, laptop, copier, trash bin), fixtures (wall clock frozen at 2:14, pass reader, exit sign), bright design (tall fake ficus, desk succulent, lobby planter, mint sofa, coffee table, HALCYON sun logo, meeting chair), **kitchen** (counter with sink + wall cabinets, fridge with a memo, microwave, kettle, mint vending machine, café table, bar stool), **figures** (mint mannequin coworker, guard, custodian, and the too-tall, too-thin **stalker**).
+    ![Kitchen, figures](screenshots/2026-11-13_props_kitchen_figures.png)
+    ![Supplies, plants](screenshots/2026-11-13_props_supplies.png)
+  - **`Scripts/Editor/dress_campus.py`:** replaces grey-box cubes with real props and furnishes every room: desk #4471 fully kitted out, 12 cubicles with seeded clutter, lobby, the break room turned **kitchen**, conference room, supply closet, Corridor B, Wellness Center and the Hospital ward. 208 props, **111 throwable** (physics + tag), 9 mannequins, director's chair hidden until Act 2.
+  - Claude **assembled the dressed campus in Blender** from the same placement data to check for overlaps before tonight:
+    ![Dressed campus](screenshots/2026-11-13_dressed_campus.png)
+    ![Lobby + kitchen](screenshots/2026-11-13_dressed_lobby_kitchen.png)
+  - **`docs/ART_DIRECTION.md`:** HALCYON bright rules vs their Fear opposites (palette, light, plants, signage, people, sound, order), shape language, rooms at a glance, the throwables list.
+- **Decisions & why:**
+  - **Break room becomes the kitchen** (same room, no new geometry).
+  - **Cubicle clutter uses a fixed seed** so the furniture is stable; the *run* seed varies clues and NPC agents, not furniture.
+  - **Corridor B stays bare** past the entrance so the loop looks identical.
+  - **YAW_FIX / SCALE_FIX knobs** in the dressing script, because how Blender's axes map into Unreal is only confirmed once imported.
+- **AI tools used:** Claude (props script, dressing script, Blender layout check renders, art direction).
+- **Next:** tonight: preflight → grey-box → Fear materials → import → **dress** → MCP.

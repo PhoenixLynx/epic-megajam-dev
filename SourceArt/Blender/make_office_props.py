@@ -4,7 +4,7 @@ make_office_props.py: TAKE 4471 office props, built procedurally in Blender (5.2
 Run inside Blender: Scripting tab > Open > this file > Run Script
    or headless:      blender -b -P make_office_props.py
 
-Builds 16 low-poly props, each with its pivot at the floor (bottom centre),
+Builds 49 low-poly props (office, supplies, plants, lobby, kitchen, mannequins), each with its pivot at the floor (bottom centre),
 real-world size in metres, bevelled edges, and named material slots.
 Saves SourceArt/Blender/OfficeProps.blend and one FBX per prop in
 SourceArt/Blender/Export/  (import into Unreal at /Game/Props/Meshes).
@@ -31,6 +31,11 @@ PALETTE = {  # slot name -> viewport colour (RGBA)
     "M_RedPaint": (0.70, 0.07, 0.06, 1), "M_Canvas": (0.12, 0.12, 0.12, 1),
     "M_Ceramic": (0.93, 0.93, 0.90, 1), "M_Paper": (0.97, 0.97, 0.95, 1),
     "M_Yellow": (0.95, 0.78, 0.10, 1), "M_Mattress": (0.80, 0.86, 0.88, 1),
+    "M_Leaf": (0.20, 0.55, 0.30, 1), "M_LeafLight": (0.40, 0.70, 0.35, 1), "M_Soil": (0.18, 0.12, 0.08, 1),
+    "M_PotWhite": (0.95, 0.95, 0.93, 1), "M_BinderBlue": (0.18, 0.35, 0.70, 1), "M_BinderMint": (0.45, 0.78, 0.70, 1),
+    "M_BinderRed": (0.75, 0.20, 0.22, 1), "M_Skin": (0.86, 0.84, 0.80, 1), "M_StalkerSkin": (0.30, 0.31, 0.33, 1),
+    "M_Counter": (0.92, 0.92, 0.90, 1), "M_Steel": (0.75, 0.77, 0.79, 1), "M_SofaMint": (0.55, 0.80, 0.74, 1),
+    "M_ExitGreen": (0.10, 0.75, 0.35, 1), "M_ClockFace": (0.98, 0.98, 0.96, 1), "M_SkyBlue": (0.65, 0.78, 0.95, 1),
 }
 
 
@@ -282,9 +287,332 @@ def coffee_machine():
     return p.finish(0.004)
 
 
+# --------------------------------------------------------------------------
+# Office supplies (most are throwable)
+# --------------------------------------------------------------------------
+def binder(colour="M_BinderBlue", name="SM_Binder"):
+    p = Prop(name)
+    p.box((0.05, 0.28, 0.32), (0, 0, 0.16), colour)
+    p.box((0.042, 0.27, 0.305), (0.006, 0, 0.16), "M_Paper")
+    p.cyl(0.012, 0.012, (-0.026, 0.0, 0.025), "M_MetalLight", segs=10, axis="X")  # spine ring hole
+    p.box((0.002, 0.18, 0.06), (-0.026, 0, 0.24), "M_Paper")                        # spine label
+    return p.finish(0.003)
+
+
+def stapler():
+    p = Prop("SM_Stapler")
+    p.box((0.05, 0.17, 0.02), (0, 0, 0.01), "M_PlasticBlack")
+    p.box((0.042, 0.16, 0.03), (0, 0.004, 0.038), "M_MetalDark", rot_x=0.06)
+    return p.finish(0.003)
+
+
+def tape_dispenser():
+    p = Prop("SM_TapeDispenser")
+    p.box((0.06, 0.14, 0.05), (0, 0, 0.025), "M_PlasticBlack")
+    p.cyl(0.03, 0.02, (0, 0.01, 0.07), "M_Glass", segs=16, axis="X")
+    return p.finish(0.004)
+
+
+def pen_cup():
+    p = Prop("SM_PenCup")
+    p.cyl(0.04, 0.1, (0, 0, 0.05), "M_MetalDark", segs=16)
+    for i, (dx, dy, col) in enumerate(((0.01, 0.01, "M_BinderBlue"), (-0.015, 0.0, "M_BinderRed"),
+                                       (0.0, -0.015, "M_PlasticBlack"), (0.018, -0.01, "M_Yellow"))):
+        p.cyl(0.004, 0.15, (dx, dy, 0.1 + i * 0.006), col, segs=6)
+    return p.finish(0.0)
+
+
+def desk_lamp():
+    p = Prop("SM_DeskLamp")
+    p.cyl(0.07, 0.02, (0, 0, 0.01), "M_PlasticWhite", segs=20)
+    p.box((0.015, 0.015, 0.3), (0, 0, 0.16), "M_PlasticWhite", rot_y=0.25)
+    p.box((0.015, 0.015, 0.25), (0.11, 0, 0.36), "M_PlasticWhite", rot_y=1.0)
+    p.cyl(0.06, 0.09, (0.22, 0, 0.40), "M_PlasticWhite", segs=16, radius2=0.025)
+    return p.finish(0.003)
+
+
+def desk_phone():
+    p = Prop("SM_DeskPhone")
+    p.box((0.2, 0.18, 0.05), (0, 0, 0.025), "M_PlasticBlack", rot_x=-0.15)
+    p.box((0.05, 0.2, 0.035), (-0.07, 0, 0.07), "M_PlasticBlack")                    # handset
+    p.box((0.08, 0.06, 0.003), (0.04, -0.02, 0.054), "M_Screen")
+    return p.finish(0.004)
+
+
+def pc_tower():
+    p = Prop("SM_PCTower")
+    p.box((0.2, 0.45, 0.42), (0, 0, 0.21), "M_PlasticBlack")
+    p.box((0.16, 0.005, 0.03), (0, -0.226, 0.37), "M_MetalLight")
+    p.cyl(0.012, 0.006, (0.05, -0.227, 0.33), "M_SkyBlue", segs=12, axis="Y")       # power LED
+    return p.finish(0.004)
+
+
+def laptop():
+    p = Prop("SM_Laptop")
+    p.box((0.33, 0.23, 0.018), (0, 0, 0.009), "M_MetalLight")
+    p.box((0.33, 0.012, 0.22), (0, 0.12, 0.115), "M_MetalLight", rot_x=-0.25)
+    p.box((0.30, 0.004, 0.19), (0, 0.112, 0.118), "M_Screen", rot_x=-0.25)
+    return p.finish(0.003)
+
+
+def printer():
+    p = Prop("SM_Printer")
+    p.box((0.6, 0.55, 0.9), (0, 0, 0.45), "M_PlasticWhite")                          # copier body
+    p.box((0.6, 0.55, 0.12), (0, 0, 0.96), "M_PlasticWhite")
+    p.box((0.4, 0.2, 0.004), (0.05, -0.12, 1.022), "M_Screen")                      # glass
+    p.box((0.18, 0.08, 0.05), (-0.18, -0.24, 1.0), "M_MetalDark")                    # panel
+    for z in (0.2, 0.42):
+        p.box((0.56, 0.01, 0.18), (0, -0.276, z), "M_MetalLight")
+    p.box((0.3, 0.25, 0.04), (0.42, 0, 0.75), "M_PlasticWhite")                      # output tray
+    return p.finish(0.006)
+
+
+def trash_bin():
+    p = Prop("SM_TrashBin")
+    p.cyl(0.14, 0.32, (0, 0, 0.16), "M_MetalDark", segs=20, radius2=0.16)
+    p.box((0.08, 0.06, 0.05), (0.02, 0.0, 0.33), "M_Paper", rot_z=0.5)             # crumpled paper
+    return p.finish(0.0)
+
+
+def wall_clock():
+    p = Prop("SM_WallClock")   # pivot at its back centre; hang on walls. Hands frozen at 2:14.
+    p.cyl(0.16, 0.04, (0, 0.02, 0), "M_PlasticWhite", segs=32, axis="Y")
+    p.cyl(0.145, 0.002, (0, -0.001, 0), "M_ClockFace", segs=32, axis="Y")
+    p.box((0.012, 0.004, 0.08), (0.02, -0.005, 0.03), "M_PlasticBlack", rot_y=-math.radians(67))   # hour ~2:14
+    p.box((0.008, 0.004, 0.12), (0.055, -0.006, -0.01), "M_PlasticBlack", rot_y=-math.radians(96)) # minute 14
+    p.cyl(0.01, 0.01, (0, -0.008, 0), "M_RedPaint", segs=8, axis="Y")
+    return p.finish(0.0)
+
+
+def pass_reader():
+    p = Prop("SM_PassReader")  # wall-mounted; pivot at back centre
+    p.box((0.09, 0.03, 0.14), (0, 0.015, 0), "M_PlasticBlack")
+    p.box((0.06, 0.004, 0.04), (0, -0.001, 0.03), "M_Screen")
+    p.cyl(0.006, 0.004, (0, -0.002, -0.04), "M_ExitGreen", segs=8, axis="Y")
+    return p.finish(0.003)
+
+
+def exit_sign():
+    p = Prop("SM_ExitSign")
+    p.box((0.4, 0.06, 0.18), (0, 0, 0), "M_PlasticWhite")
+    p.box((0.34, 0.004, 0.12), (0, -0.032, 0), "M_ExitGreen")
+    return p.finish(0.003)
+
+
+# --------------------------------------------------------------------------
+# Bright corporate design: plants, lobby, signage
+# --------------------------------------------------------------------------
+def _leaves(p, centre, count, spread, size, seed, mats=("M_Leaf", "M_LeafLight")):
+    import random
+    rnd = random.Random(seed)
+    golden = math.pi * (3 - math.sqrt(5))
+    for i in range(count):
+        a = i * golden
+        r = spread * math.sqrt((i + 0.5) / count)
+        h = rnd.uniform(-0.4, 0.4) * spread
+        loc = (centre[0] + math.cos(a) * r, centre[1] + math.sin(a) * r, centre[2] + h)
+        p.box((size, size * 0.45, size * 0.06), loc, mats[i % 2], rot_z=a, rot_x=rnd.uniform(-0.6, 0.6),
+              rot_y=rnd.uniform(-0.5, 0.5))
+
+
+def plant_tall():
+    p = Prop("SM_PlantTall")   # fake ficus in a white pot
+    p.cyl(0.2, 0.42, (0, 0, 0.21), "M_PotWhite", segs=24, radius2=0.24)
+    p.cyl(0.21, 0.02, (0, 0, 0.42), "M_Soil", segs=24)
+    p.cyl(0.025, 1.1, (0, 0, 0.95), "M_Wood", segs=8)
+    _leaves(p, (0, 0, 1.45), 70, 0.38, 0.13, 7)
+    _leaves(p, (0, 0, 1.05), 30, 0.28, 0.12, 9)
+    return p.finish(0.0)
+
+
+def plant_desk():
+    p = Prop("SM_PlantDesk")   # small succulent, throwable
+    p.cyl(0.06, 0.08, (0, 0, 0.04), "M_PotWhite", segs=16, radius2=0.07)
+    _leaves(p, (0, 0, 0.11), 14, 0.05, 0.06, 3)
+    return p.finish(0.0)
+
+
+def planter_box():
+    p = Prop("SM_PlanterBox")  # long low planter for the lobby
+    p.box((1.6, 0.4, 0.45), (0, 0, 0.225), "M_PotWhite")
+    p.box((1.55, 0.36, 0.02), (0, 0, 0.44), "M_Soil")
+    for i, x in enumerate((-0.6, -0.2, 0.2, 0.6)):
+        _leaves(p, (x, 0, 0.65), 22, 0.18, 0.11, 20 + i)
+    return p.finish(0.0)
+
+
+def lobby_sofa():
+    p = Prop("SM_LobbySofa")
+    p.box((2.0, 0.85, 0.42), (0, 0, 0.21), "M_SofaMint")
+    p.box((2.0, 0.2, 0.45), (0, 0.33, 0.62), "M_SofaMint")
+    for x in (-0.95, 0.95):
+        p.box((0.12, 0.85, 0.25), (x, 0, 0.53), "M_SofaMint")
+    for x in (-0.48, 0.48):
+        p.box((0.94, 0.62, 0.12), (x, -0.08, 0.48), "M_SofaMint")                     # cushions
+    return p.finish(0.02)
+
+
+def coffee_table():
+    p = Prop("SM_CoffeeTable")
+    p.cyl(0.45, 0.04, (0, 0, 0.42), "M_Wood", segs=32)
+    p.cyl(0.05, 0.4, (0, 0, 0.2), "M_MetalLight", segs=12)
+    p.cyl(0.25, 0.02, (0, 0, 0.01), "M_MetalLight", segs=24)
+    return p.finish(0.004)
+
+
+def logo_sign():
+    p = Prop("SM_HalcyonSign")  # wall logo: half-sun over horizon lines; pivot at back centre
+    segs = 14
+    for i in range(segs):
+        a0, a1 = math.pi * i / segs, math.pi * (i + 1) / segs
+        mid = (a0 + a1) / 2
+        p.box((0.1, 0.05, 0.42 * (a1 - a0) * 1.1), (math.cos(mid) * 0.42, 0, 0.1 + math.sin(mid) * 0.42),
+              "M_FabricMint", rot_y=-mid)
+    p.box((1.1, 0.05, 0.06), (0, 0, 0.0), "M_FabricMint")
+    p.box((0.7, 0.05, 0.05), (0, 0, -0.12), "M_FabricMint")
+    return p.finish(0.004)
+
+
+def meeting_chair():
+    p = Prop("SM_MeetingChair")
+    for x in (-0.2, 0.2):
+        for y in (-0.2, 0.2):
+            p.cyl(0.012, 0.45, (x, y, 0.225), "M_MetalLight", segs=8)
+    p.box((0.46, 0.46, 0.05), (0, 0, 0.47), "M_SofaMint")
+    p.box((0.46, 0.04, 0.4), (0, 0.22, 0.72), "M_SofaMint", rot_x=-0.1)
+    return p.finish(0.008)
+
+
+# --------------------------------------------------------------------------
+# Kitchen
+# --------------------------------------------------------------------------
+def kitchen_counter():
+    p = Prop("SM_KitchenCounter")   # 2.4 m run with sink; pivot floor-centre, back against +Y
+    p.box((2.4, 0.6, 0.86), (0, 0, 0.43), "M_PlasticWhite")
+    p.box((2.44, 0.64, 0.04), (0, -0.01, 0.88), "M_Counter")
+    for i in range(4):
+        x = -0.9 + i * 0.6
+        p.box((0.57, 0.01, 0.7), (x, -0.305, 0.43), "M_PlasticWhite")
+        p.box((0.12, 0.02, 0.015), (x, -0.315, 0.74), "M_MetalLight")
+    p.box((0.5, 0.4, 0.015), (0.5, 0.0, 0.903), "M_Steel")                          # sink
+    p.cyl(0.012, 0.25, (0.5, 0.2, 1.02), "M_Steel", segs=8)                        # tap
+    p.box((0.015, 0.15, 0.015), (0.5, 0.13, 1.14), "M_Steel")
+    p.box((2.4, 0.35, 0.7), (0, 0.125, 1.85), "M_PlasticWhite")                    # wall cabinets
+    return p.finish(0.005)
+
+
+def fridge():
+    p = Prop("SM_Fridge")
+    p.box((0.7, 0.7, 1.8), (0, 0, 0.9), "M_Steel")
+    p.box((0.68, 0.01, 0.01), (0, -0.351, 1.2), "M_MetalDark")
+    for z in (1.5, 0.8):
+        p.box((0.02, 0.03, 0.35), (0.3, -0.37, z), "M_MetalDark")
+    p.box((0.12, 0.003, 0.16), (-0.15, -0.352, 1.45), "M_Paper", rot_y=0.08)       # a memo on the door
+    return p.finish(0.008)
+
+
+def microwave():
+    p = Prop("SM_Microwave")
+    p.box((0.5, 0.38, 0.29), (0, 0, 0.145), "M_Steel")
+    p.box((0.33, 0.005, 0.22), (-0.06, -0.19, 0.15), "M_Screen")
+    p.box((0.1, 0.006, 0.22), (0.18, -0.19, 0.15), "M_PlasticBlack")
+    return p.finish(0.004)
+
+
+def kettle():
+    p = Prop("SM_Kettle")
+    p.cyl(0.08, 0.02, (0, 0, 0.01), "M_PlasticBlack", segs=20)
+    p.cyl(0.075, 0.2, (0, 0, 0.12), "M_PlasticWhite", segs=20, radius2=0.06)
+    p.box((0.03, 0.03, 0.14), (0.085, 0, 0.13), "M_PlasticWhite")
+    p.box((0.05, 0.02, 0.02), (-0.085, 0, 0.17), "M_PlasticWhite", rot_y=0.5)
+    return p.finish(0.003)
+
+
+def vending_machine():
+    p = Prop("SM_VendingMachine")
+    p.box((0.9, 0.8, 1.85), (0, 0, 0.925), "M_FabricMint")
+    p.box((0.62, 0.01, 1.2), (-0.1, -0.405, 1.1), "M_Glass")
+    for r in range(5):
+        for c in range(5):
+            p.box((0.08, 0.06, 0.14), (-0.34 + c * 0.12, -0.33, 0.6 + r * 0.22),
+                  ("M_BinderRed", "M_Yellow", "M_BinderBlue", "M_LeafLight", "M_PlasticWhite")[(r + c) % 5])
+    p.box((0.16, 0.01, 0.4), (0.33, -0.405, 1.2), "M_PlasticBlack")
+    p.box((0.6, 0.01, 0.15), (-0.1, -0.405, 0.3), "M_PlasticBlack")
+    return p.finish(0.008)
+
+
+def cafe_table():
+    p = Prop("SM_CafeTable")
+    p.cyl(0.4, 0.03, (0, 0, 1.03), "M_Counter", segs=28)
+    p.cyl(0.03, 1.0, (0, 0, 0.52), "M_Steel", segs=10)
+    p.cyl(0.25, 0.02, (0, 0, 0.01), "M_Steel", segs=24)
+    return p.finish(0.004)
+
+
+def bar_stool():
+    p = Prop("SM_BarStool")
+    p.cyl(0.18, 0.06, (0, 0, 0.75), "M_SofaMint", segs=20)
+    p.cyl(0.025, 0.72, (0, 0, 0.36), "M_Steel", segs=10)
+    p.cyl(0.2, 0.02, (0, 0, 0.01), "M_Steel", segs=20)
+    p.cyl(0.16, 0.015, (0, 0, 0.3), "M_Steel", segs=20)                             # foot ring
+    return p.finish(0.004)
+
+
+# --------------------------------------------------------------------------
+# Figures: mannequin coworkers + the stalker
+# --------------------------------------------------------------------------
+def _figure(p, height, skin, suit, thin=1.0):
+    s = height / 1.8
+    p.sphere(0.11 * s, (0, 0, 1.66 * s), skin, segs=16)                            # head, featureless
+    p.cyl(0.05 * s * thin, 0.1 * s, (0, 0, 1.52 * s), skin, segs=10)                # neck
+    p.box((0.42 * s * thin, 0.22 * s, 0.6 * s), (0, 0, 1.18 * s), suit)             # torso
+    p.box((0.38 * s * thin, 0.2 * s, 0.18 * s), (0, 0, 0.84 * s), suit)             # hips
+    for side in (-1, 1):
+        p.cyl(0.05 * s * thin, 0.6 * s, (side * 0.27 * s * thin, 0, 1.12 * s), suit, segs=10)   # arms
+        p.sphere(0.045 * s, (side * 0.27 * s * thin, 0, 0.8 * s), skin, segs=10)               # hands
+        p.cyl(0.065 * s * thin, 0.8 * s, (side * 0.1 * s * thin, 0, 0.4 * s), suit, segs=10)  # legs
+        p.box((0.1 * s, 0.24 * s, 0.06 * s), (side * 0.1 * s * thin, -0.05 * s, 0.03 * s), "M_PlasticBlack")
+
+
+def mannequin():
+    p = Prop("SM_Mannequin")       # coworkers: smooth, faceless, in HALCYON mint
+    _figure(p, 1.78, "M_Skin", "M_FabricMint")
+    p.box((0.08, 0.005, 0.11), (0.1, -0.115, 1.28), "M_PlasticWhite")              # badge
+    return p.finish(0.0)
+
+
+def mannequin_guard():
+    p = Prop("SM_MannequinGuard")
+    _figure(p, 1.85, "M_Skin", "M_BinderBlue")
+    p.cyl(0.12, 0.05, (0, 0, 1.78), "M_MetalDark", segs=16)                          # cap
+    return p.finish(0.0)
+
+
+def mannequin_custodian():
+    p = Prop("SM_MannequinCustodian")
+    _figure(p, 1.72, "M_Skin", "M_Yellow")
+    return p.finish(0.0)
+
+
+def stalker():
+    p = Prop("SM_Stalker")         # too tall, too thin, in a dark suit
+    _figure(p, 2.35, "M_StalkerSkin", "M_MetalDark", thin=0.72)
+    return p.finish(0.0)
+
+
 BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabinet(2), monitor, keyboard,
             mug, fire_extinguisher, directors_chair, water_cooler, wet_floor_sign, cubicle_panel,
-            ream_of_paper, hospital_bed, mop_bucket, coffee_machine]
+            ream_of_paper, hospital_bed, mop_bucket, coffee_machine,
+            # office supplies
+            binder, lambda: binder("M_BinderMint", "SM_BinderMint"), lambda: binder("M_BinderRed", "SM_BinderRed"),
+            stapler, tape_dispenser, pen_cup, desk_lamp, desk_phone, pc_tower, laptop, printer, trash_bin,
+            wall_clock, pass_reader, exit_sign,
+            # bright corporate design
+            plant_tall, plant_desk, planter_box, lobby_sofa, coffee_table, logo_sign, meeting_chair,
+            # kitchen
+            kitchen_counter, fridge, microwave, kettle, vending_machine, cafe_table, bar_stool,
+            # figures
+            mannequin, mannequin_guard, mannequin_custodian, stalker]
 
 
 def export_fbx(obj):

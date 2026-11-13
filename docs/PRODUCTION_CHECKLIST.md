@@ -82,9 +82,13 @@ Claude updates this every session. `[x]` = done · **MVP** = must ship · *Stret
 - [x] UI mockups (Key Lock, inbox, HUD): 🤖
 - [ ] Import glyphs + build UI widgets from mockups: 🤝. **Sat**
 - [x] 16 grey office props from a Blender script (`SourceArt/Blender/make_office_props.py`) + FBX exports: 🤖
-- [ ] Import props (`import_jam_assets.py`) and swap into the grey-box: 🤝. **Fri/Sat**
+- [x] 33 more props: office supplies, plants, lobby, kitchen, wall clock, pass reader, mannequins (coworker/guard/custodian) + the stalker: 🤖 (49 total)
+- [x] Set-dressing script (`dress_campus.py`): every room furnished, kitchen added, 111 throwables: 🤖
+- [x] Art direction (`docs/ART_DIRECTION.md`): 🤖
+- [ ] Import + dress in Unreal (`import_jam_assets.py` → `dress_campus.py`): 🎬. **Fri**
 - [ ] *Polish:* hero props refined in Blender / Rodin: 🎬
-- [ ] Mannequin coworker + stalker models: 🎬 (or Rodin). **Sat**
+- [x] Mannequin coworker / guard / custodian + stalker (grey placeholders): 🤖
+- [ ] *Polish:* nicer mannequins + stalker (Blender/Rodin): 🎬
 - [ ] PBR materials from PBRgen (carpet, tiles, + grime versions): 🎬. **Before Sun** (perk ends Nov 15)
 - [x] Posters (6 + loop twins) + Chairman portrait drafts: 🤖
 - [ ] *Polish:* refine the Chairman portrait: 🎬

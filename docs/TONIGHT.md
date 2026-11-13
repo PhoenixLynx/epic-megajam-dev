@@ -31,7 +31,8 @@ Press **Play**: you spawn behind desk #4471 facing your monitor. 📸 **Screensh
 ## 4b. Import Claude's assets (1 min)
 **Tools → Execute Python Script…** → `Scripts/Editor/import_jam_assets.py`
 **Expect:** `/Game/Props/Meshes` (16 office props), `/Game/UI/Glyphs`, `/Game/Props/Textures` (posters, portrait, call sheet, charts), `/Game/Audio/Placeholder`.
-Drag `SM_DirectorsChair` into your cubicle. 📸
+Then **Tools → Execute Python Script…** → `Scripts/Editor/dress_campus.py`: furnishes every room with the real props (208 placed, 111 throwable), turns the break room into a kitchen, places the mannequins.
+**Check:** your desk's monitor should face your chair. If **all** props face the wrong way, open `dress_campus.py`, set `YAW_FIX = 180` (or 90 / -90) at the top, and run it again. If they're tiny or huge, change `SCALE_FIX`. 📸 **Screenshot: the dressed office.**
 
 ## 5. Connect Claude to the editor (5–10 min)
 The MCP server runs inside the editor at `http://127.0.0.1:8000/mcp`. Two ways to connect:
