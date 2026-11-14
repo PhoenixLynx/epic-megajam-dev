@@ -604,3 +604,7 @@ A running record of every AI tool used and what it did.
 - **From the video (6):** motion blur was heavy when turning, so it's off now (`DefaultEngine.ini`). After logging out the camera was left looking up/down; now it levels out. Overhead clipping and no Quit were fixed last session.
 - **New sounds (placeholders, synthesized):** `sfx_sip_slurp`, `sfx_door_locked`, `sfx_door_open`, `sfx_door_close`, `sfx_coffee_pour`.
 - **AI tools used:** Claude (C++, sound synthesis, scripts, video review).
+- **Overnight scheduled runs (22:17):** two one-off scheduled Claude runs, briefed by `docs/OVERNIGHT_BRIEF.md`. They work on their own git branches and stage files on the PC under `_to_delete/`, never in `Source/`, so nothing breaks the project while you sleep. Both run with automatic approval.
+  - **Run 1, 00:45:** Act 1 progression: objectives on the HUD, the cold open (`TAKE 1`, PA "Good morning, team"), multi-line story NPC conversations, morning complete → 10:00 meeting slip → Corridor B wisp → loop break. Branch `overnight-run1`.
+  - **Run 2, 03:15:** compile-readiness review of everything new, then beat 1.10 (clock jumps to 12:00, "Lunch is served.", Act 2 task list) and, if time allows, the repeating PA and clocks frozen at 2:14. Branch `overnight-run2`.
+  - Morning: Claude reviews both branches, merges, copies into the project, rebuild.
