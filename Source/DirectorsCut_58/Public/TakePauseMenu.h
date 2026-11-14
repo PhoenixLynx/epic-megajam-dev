@@ -36,6 +36,7 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 private:
@@ -44,6 +45,7 @@ private:
 	UPROPERTY() TObjectPtr<UTextBlock> StatusText;
 	UPROPERTY() TObjectPtr<UTextBlock> SaveInfo;
 	UPROPERTY() TObjectPtr<class UMultiLineEditableTextBox> NotesBox;
+	bool bFocusNotes = false;
 	UTextBlock* MakeText(const FString& Text, int32 Size, const FLinearColor& Color, bool bBold = false);
 	UTakeIndexedButton* MakeButton(const FString& Text, int32 Index, bool bPrimary = false);
 	void RefreshTasks();

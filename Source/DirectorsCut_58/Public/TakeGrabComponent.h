@@ -274,6 +274,7 @@ private:
 	void TickMail(float DeltaTime);
 	void NoteGlyphs(int32 Key, const FString& Source);
 	void SkipTasks();
+	void OpenNotes();
 	// Energy (GameInstance->Energy): drains, coffee / food / the wisp refill it, low = a bit slower
 	float BaseWalkSpeed = -1.f;
 	bool bLowEnergyNoted = false;

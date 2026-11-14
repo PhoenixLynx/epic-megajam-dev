@@ -174,7 +174,8 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 		SetPage->AddChildToVerticalBox(MakeText(
 			TEXT("WASD  move      Mouse  look      Space  jump\n")
 			TEXT("E  use / talk / pick up / drop      Click or Right Mouse  throw\n")
-			TEXT("E or Tab  log out of your terminal      Esc or P  pause"), 15, PInk))->SetPadding(FMargin(0.f, 6.f, 0.f, 0.f));
+			TEXT("E or Tab  log out of your terminal      Esc or P  pause\n")
+			TEXT("N  write a playtest note      F8  skip the current tasks (playtest)"), 15, PInk))->SetPadding(FMargin(0.f, 6.f, 0.f, 0.f));
 		Pages->AddChild(SetPage);
 
 		// Page 2: playtest notes (saved to Saved/PlaytestNotes.txt with the time, take and place) + skip
@@ -196,6 +197,12 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 		Pages->AddChild(NotesPage);
 	}
 	return Super::RebuildWidget();
+}
+
+void UTakePauseMenu::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+	if (bFocusNotes && NotesBox) { bFocusNotes = false; NotesBox->SetKeyboardFocus(); }
 }
 
 void UTakePauseMenu::NativeConstruct()
@@ -246,7 +253,7 @@ void UTakePauseMenu::OnMenu(int32 Item)
 	case Resume:   OnResumeRequested.Broadcast(); break;
 	case Tasks:    if (Pages) { Pages->SetActiveWidgetIndex(0); } RefreshTasks(); break;
 	case Settings: if (Pages) { Pages->SetActiveWidgetIndex(1); } break;
-	case Notes:    if (Pages) { Pages->SetActiveWidgetIndex(2); } if (NotesBox) { NotesBox->SetKeyboardFocus(); } break;
+	case Notes:    if (Pages) { Pages->SetActiveWidgetIndex(2); } bFocusNotes = true; break;   // focused next tick, so the N that opened this doesn't get typed
 	case Save:     SetStatus(SaveProgress(this) ? TEXT("Saved. HALCYON remembers.") : TEXT("Save failed.")); RefreshSaveInfo(); break;
 	case Load:
 		if (LoadProgress(this)) { SetStatus(TEXT("Loaded.")); RefreshTasks(); OnResumeRequested.Broadcast(); }

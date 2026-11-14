@@ -14,6 +14,7 @@
 #include "TakeFearDirector.h"
 #include "TakeKeyLockLibrary.h"
 #include "TakeWidgets.h"
+#include "TakePauseMenu.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Engine/StaticMesh.h"
@@ -566,4 +567,10 @@ void UTakeGrabComponent::SkipTasks()
 		GI->TakeSkip();
 		ShowSubtitle(TEXT(""), TEXT("(Playtest skip: tasks done.)"), 2.f);
 	}
+}
+
+void UTakeGrabComponent::OpenNotes()
+{
+	if (!PauseMenu) { TogglePause(); }          // pauses the game (not while seated / inspecting)
+	if (PauseMenu) { PauseMenu->OnMenu(6); }    // 6 = the Playtest notes page, typing box focused
 }

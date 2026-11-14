@@ -112,7 +112,8 @@ void UTakeGrabComponent::BindKeys()
 	IC->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &UTakeGrabComponent::ThrowInput);   // only while holding
 	IC->BindKey(EKeys::F, IE_Pressed, this, &UTakeGrabComponent::Sip);
 	IC->BindKey(EKeys::P, IE_Pressed, this, &UTakeGrabComponent::TogglePause);
-	IC->BindKey(EKeys::Escape, IE_Pressed, this, &UTakeGrabComponent::TogglePause);   // in the editor Esc stops Play: use P
+	IC->BindKey(EKeys::Escape, IE_Pressed, this, &UTakeGrabComponent::TogglePause);
+	IC->BindKey(EKeys::N, IE_Pressed, this, &UTakeGrabComponent::OpenNotes);   // playtest note, any time   // in the editor Esc stops Play: use P
 	if (bDebugFearKeys)
 	{
 		IC->BindKey(EKeys::Zero, IE_Pressed, this, &UTakeGrabComponent::Fear0);
