@@ -43,6 +43,13 @@ void UTakeGrabComponent::BeginPlay()
 	}
 	if (bHideTemplateMeshes) { HideTemplateMeshes(); }
 	UTakePauseMenu::ApplySavedSettings();
+	PlayStartTime = GetWorld()->GetTimeSeconds();
+	for (int32 I = 1; I <= 4; ++I)
+	{
+		const FString Name = FString::Printf(TEXT("sfx_step_%d"), I);
+		if (USoundBase* Snd = LoadObject<USoundBase>(nullptr, *FString::Printf(TEXT("/Game/Audio/Placeholder/%s.%s"), *Name, *Name))) { StepSounds.Add(Snd); }
+	}
+	BindPropImpacts();
 	if (bAutoBindKeys)
 	{
 		// Input component exists once the pawn is possessed; try now and shortly after.
@@ -207,6 +214,7 @@ bool UTakeGrabComponent::TryGrabOrDrop()
 	HeldYawOffset = Comp->GetComponentRotation().Yaw - View.Yaw;   // keeps the prop's facing relative to you
 	HeldPitchRoll = FRotator(Comp->GetComponentRotation().Pitch, 0.f, Comp->GetComponentRotation().Roll);
 	Handle->GrabComponentAtLocationWithRotation(Comp, NAME_None, Comp->GetComponentLocation(), Comp->GetComponentRotation());
+	PlaySfx(TEXT("sfx_pickup"), Comp->GetComponentLocation(), 0.6f);
 	OnGrabbed.Broadcast(Comp);
 	return true;
 }
@@ -224,6 +232,7 @@ void UTakeGrabComponent::Throw()
 	GetView(Loc, Rot);
 	Handle->ReleaseComponent();
 	Comp->AddImpulse(Rot.Vector() * ThrowStrength, NAME_None, /*bVelChange=*/true);
+	PlaySfx(TEXT("sfx_throw"), Comp->GetComponentLocation(), 0.7f);
 	OnThrown.Broadcast(Comp);
 }
 
@@ -477,6 +486,58 @@ bool UTakeGrabComponent::IsLockedForMe(const AActor* Door) const
 	return Need > 0 && GetSoulBits() < Need;
 }
 
+void UTakeGrabComponent::TickFootsteps(float DeltaTime)
+{
+	const ACharacter* C = Cast<ACharacter>(GetOwner());
+	if (!C || bSeated || StepSounds.Num() == 0) { return; }
+	const UCharacterMovementComponent* Move = C->GetCharacterMovement();
+	const float Speed = C->GetVelocity().Size2D();
+	if (!Move || !Move->IsMovingOnGround() || Speed < 40.f) { StepAccum = 0.f; return; }
+	StepAccum += Speed * DeltaTime;
+	const float Stride = C->bIsCrouched ? 55.f : 78.f;
+	if (StepAccum < Stride) { return; }
+	StepAccum = 0.f;
+	int32 Pick = FMath::RandRange(0, StepSounds.Num() - 1);
+	if (Pick == LastStep && StepSounds.Num() > 1) { Pick = (Pick + 1) % StepSounds.Num(); }
+	LastStep = Pick;
+	const FVector Feet = C->GetActorLocation() - FVector(0.f, 0.f, C->GetSimpleCollisionHalfHeight());
+	UGameplayStatics::PlaySoundAtLocation(this, StepSounds[Pick], Feet, C->bIsCrouched ? 0.18f : 0.32f, FMath::FRandRange(0.94f, 1.06f));
+}
+
+void UTakeGrabComponent::BindPropImpacts()
+{
+	int32 N = 0;
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		if (!It->ActorHasTag(TEXT("Throwable"))) { continue; }
+		TArray<UPrimitiveComponent*> Prims;
+		It->GetComponents<UPrimitiveComponent>(Prims);
+		for (UPrimitiveComponent* P : Prims)
+		{
+			if (!P->IsSimulatingPhysics()) { continue; }
+			P->SetNotifyRigidBodyCollision(true);
+			P->OnComponentHit.AddUniqueDynamic(this, &UTakeGrabComponent::OnPropHit);
+			++N;
+		}
+	}
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Impact sounds on %d prop(s)"), N);
+}
+
+void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (!HitComp) { return; }
+	const double Now = GetWorld()->GetTimeSeconds();
+	if (Now - PlayStartTime < 2.0) { return; }   // props settling at the start
+	const float Speed = HitComp->GetComponentVelocity().Size();
+	if (Speed < 160.f) { return; }
+	double& Last = LastImpact.FindOrAdd(HitComp);
+	if (Now - Last < 0.15) { return; }
+	Last = Now;
+	const bool bHeavy = HitComp->GetMass() > 8.f;
+	const float Vol = FMath::GetMappedRangeValueClamped(FVector2D(160.f, 900.f), FVector2D(0.2f, 0.9f), Speed);
+	PlaySfx(bHeavy ? TEXT("sfx_impact_heavy") : TEXT("sfx_impact_light"), Hit.ImpactPoint, Vol);
+}
+
 void UTakeGrabComponent::TickClock(float DeltaTime)
 {
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
@@ -553,6 +614,7 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickSwings(DeltaTime);
 	SipLeft = FMath::Max(0.f, SipLeft - DeltaTime);
 	TickClock(DeltaTime);
+	TickFootsteps(DeltaTime);
 	UpdatePrompt();
 	UpdateTasks();
 	if (SubtitleLeft > 0.f)

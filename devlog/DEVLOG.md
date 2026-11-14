@@ -618,3 +618,10 @@ A running record of every AI tool used and what it did.
   - **Facing knob:** if a rigged mannequin faces the wrong way, `MeshYaw` (default -90) on the coworker fixes it. In Play you can test on everyone with the console command `TakeNPCYaw 90` (or 0 / 180 / -90).
   - **Story characters (receptionist, closet guard, closet custodian) only talk when you press E**: no proximity or bump lines. Ordinary coworkers never show "E  Talk".
 - **AI tools used:** Claude (screenshot diagnosis, C++).
+
+### Session 39: Fri Nov 13, 2026, 22:50 MST: Sound you can feel
+
+- **Me:** time for one more round of compiles.
+- **Checked:** session 38 compiled cleanly; the log shows "Seated 4 coworker(s)" and 3/3 DataTables.
+- **Done:** footsteps (4 variations, never the same one twice in a row, slight pitch change each step; quieter when crouched/seated), a pick-up tick, a throw whoosh, and **impact clunks** when a thrown or knocked prop hits something (light / heavy by mass, louder the faster it was going, quiet for the first 2 s while props settle). New placeholder sounds: `sfx_step_1–4`, `sfx_pickup`, `sfx_throw`, `sfx_impact_light`, `sfx_impact_heavy`.
+- **AI tools used:** Claude (sound synthesis, C++).

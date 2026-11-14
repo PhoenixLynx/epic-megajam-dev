@@ -93,6 +93,15 @@ private:
 	bool IsLockedForMe(const AActor* Door) const;
 	void PlaySfx(const TCHAR* Name, const FVector& Where, float Volume = 1.f);
 	void TickClock(float DeltaTime);
+	// Game feel: footsteps, pick up / throw sounds, props clunking when they land
+	UPROPERTY() TArray<TObjectPtr<class USoundBase>> StepSounds;
+	float StepAccum = 0.f;
+	int32 LastStep = -1;
+	double PlayStartTime = 0.0;
+	TMap<TWeakObjectPtr<UPrimitiveComponent>, double> LastImpact;
+	void TickFootsteps(float DeltaTime);
+	void BindPropImpacts();
+	UFUNCTION() void OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	int32 TasksShown = -1;          // bitmask of finished tasks last time we drew the list
 	void PourCoffee();
 	void UpdateTasks();
