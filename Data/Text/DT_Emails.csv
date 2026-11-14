@@ -42,6 +42,25 @@ Agenda:
 2. Quarterly energy targets
 3. Morale
 4. Retake","False","False","Act2Start"
+"A1_SecurityIncident","1","HALCYON Security","INCIDENT REPORT #4471-B","Employee {EMP},
+
+At approximately now, you threw an object at a member of Security.
+This has been noted. It has been noted before.
+Security does not forget. Security does not need to.
+
+Further incidents will be escalated to HR.
+
+- Officer on duty (the one you hit)","False","False","GuardComplaint"
+"A1_HRIncident","1","HALCYON People Team","A gentle reminder about workplace conduct :)","Hi {EMP}!
+
+We've received several reports of office supplies travelling at speed.
+At HALCYON, every object has its place, and so does every employee.
+
+Please complete Respectful Workplace Module 2 at your earliest convenience.
+(There is no Module 2. Please stop.)
+
+Warmly,
+People Team","False","False","HRIncident"
 "A1_MailboxMigration","1","HALCYON IT","Mailbox migration complete","Hi {EMP},
 
 Your mailbox migration is complete. Mail addressed to 4470 will now be delivered to you.

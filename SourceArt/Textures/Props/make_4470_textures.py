@@ -59,6 +59,24 @@ PAGES = {
 <div style="position:absolute;left:40px;top:52px;width:410px;height:190px;background:#ffffff;transform:rotate(-2deg);overflow:hidden;
  box-shadow:0 2px 6px rgba(0,0,0,.2);font:700 140px Poppins;color:#2b3a40;letter-spacing:4px;padding-left:8px;font-size:128px">4471</div>
 <div style="position:absolute;left:560px;top:110px;font:600 46px Poppins;color:#7fd4c4">HALCYON</div>"""),
+    "T_File_4470": (760, 980, """
+<div style="position:absolute;inset:0;background:#efe6cf"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:70px;background:#e2d3ac"></div>
+<div style="position:absolute;left:520px;top:-2px;width:200px;height:72px;background:#e9dcb8;border-radius:0 0 10px 10px;
+ font:600 26px Poppins;color:#6b5a32;text-align:center;line-height:72px">4470</div>
+<div style="position:absolute;left:60px;top:110px;right:60px;font-family:Poppins;color:#2b3a40">
+ <div style="font-size:16px;letter-spacing:3px;color:#7a8a90">HALCYON &middot; PEOPLE TEAM &middot; CONFIDENTIAL</div>
+ <div style="font:700 44px Poppins;margin-top:10px">PERSONNEL FILE</div>
+ <div style="font-size:26px;margin-top:4px">Employee 4470</div>
+ <div style="margin-top:30px;font-size:21px;line-height:1.7">
+  <b>Desk:</b> 4471<br><b>Start date:</b> today<br><b>Status:</b>
+  <span style="font:34px 'Permanent Marker';color:#b02a2a;margin-left:10px">WRAPPED</span><br>
+  <b>Performance:</b> Consistent. Did everything the same way, every time.<br>
+  <b>Notes:</b> Asked about Corridor B. Asked about the clocks. Asked to see the Chairman.<br>
+  <b>Replacement:</b> 4471 (scheduled)
+ </div>
+ <div style="margin-top:34px;font:44px Caveat;color:#1f2a6e;transform:rotate(-2deg)">they looked closer.</div>
+</div>"""),
 }
 
 if __name__ == "__main__":

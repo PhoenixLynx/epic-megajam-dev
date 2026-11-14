@@ -85,7 +85,8 @@ void ATakeCoworker::BeginPlay()
 		GetCharacterMovement()->GravityScale = 0.f;
 		UCapsuleComponent* Cap = GetCapsuleComponent();
 		Cap->SetCollisionResponseToAllChannels(ECR_Ignore);
-		Cap->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);   // you still can't walk through them
+		Cap->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);          // you still can't walk through them
+		Cap->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Block);   // and things you throw still hit them
 	}
 	if (bStoryNPC) { bTalksWhenNear = false; }   // story characters wait for you to press E
 	SetupSkeletal();
@@ -170,6 +171,7 @@ void ATakeCoworker::LoadLines()
 			if (R->Context == TEXT("AfterClocks") && !bLinesClocksFrozen) { continue; }   // only once every clock reads 2:14
 			if (R->Context == TEXT("Greeting") || R->Context == TEXT("BadgeCheck")) { Greetings.Add(R->Line); }
 			else if (R->Context == TEXT("AfterCoffee")) { CoffeeLines.Add(R->Line); }
+			else if (R->Context == TEXT("Hit")) { HitLines.Add(R->Line); }
 			else { Lines.Add(R->Line); }
 		}
 		for (auto& Set : Story)
@@ -190,6 +192,36 @@ void ATakeCoworker::LoadLines()
 		if (NPCRole.Equals(TEXT("Receptionist"), ESearchCase::IgnoreCase)) { Lines = { TEXT("Welcome to HALCYON. You're expected."), TEXT("Please sign in. You already have.") }; }
 	}
 	Bag.Reset();
+}
+
+void ATakeCoworker::HitByProp(float Speed)
+{
+	const double Now = GetWorld()->GetTimeSeconds();
+	if (Now - LastHitTime < 1.0 || bVanished) { return; }
+	LastHitTime = Now;
+	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (Player)
+	{
+		const FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
+		SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));   // they turn to see who did it
+	}
+	if (State == ETakeCoworkerState::Watching)
+	{
+		// Fear: no words. They just turn, and the room gets a little worse. (Faces come later.)
+		if (FearDirector.IsValid()) { FearDirector->StartCreep(FMath::Min(1.f, FearDirector->Fear + 0.05f), 0.5f); }
+		return;
+	}
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (GI)
+	{
+		++GI->CoworkersHit;
+		if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { ++GI->GuardComplaints; }
+	}
+	CooldownLeft = 0.f;   // they always answer this
+	if (HitLines.Num() > 0) { SayLine(HitLines[FMath::RandRange(0, HitLines.Num() - 1)]); return; }
+	if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { SayLine(TEXT("That's going in my report.")); }
+	else if (NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase)) { SayLine(TEXT("I'll be cleaning that up, then.")); }
+	else { SayLine(TEXT("Hey! I haven't even had my coffee yet.")); }
 }
 
 FString ATakeCoworker::NextLine()

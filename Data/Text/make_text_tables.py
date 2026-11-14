@@ -54,6 +54,17 @@ EMAILS = [
      "Sync @ 12:30, Conference Room\nOrganizer: C\nCamera: optional (organizer's camera will be off)\n\n"
      "Agenda:\n1. Welcome\n2. Quarterly energy targets\n3. Morale\n4. Retake",
      False, False, "Act2Start"),
+    ("A1_SecurityIncident", 1, "HALCYON Security", "INCIDENT REPORT #4471-B",
+     "Employee {EMP},\n\nAt approximately now, you threw an object at a member of Security.\n"
+     "This has been noted. It has been noted before.\nSecurity does not forget. Security does not need to.\n\n"
+     "Further incidents will be escalated to HR.\n\n- Officer on duty (the one you hit)",
+     False, False, "GuardComplaint"),
+    ("A1_HRIncident", 1, "HALCYON People Team", "A gentle reminder about workplace conduct :)",
+     "Hi {EMP}!\n\nWe've received several reports of office supplies travelling at speed.\n"
+     "At HALCYON, every object has its place, and so does every employee.\n\n"
+     "Please complete Respectful Workplace Module 2 at your earliest convenience.\n"
+     "(There is no Module 2. Please stop.)\n\nWarmly,\nPeople Team",
+     False, False, "HRIncident"),
     ("A1_MailboxMigration", 1, "HALCYON IT", "Mailbox migration complete",
      "Hi {EMP},\n\nYour mailbox migration is complete. Mail addressed to 4470 will now be delivered to you.\n"
      "Please do not reply to 4470's correspondence. 4470 is no longer with the production.\n\n- IT",
@@ -152,6 +163,18 @@ NPC = [
     ("J_A1_Bump1", "Custodian", 1, False, "Bump", "Same scuffs every morning. Same exact scuffs."),
     ("J_A1_Bump2", "Custodian", 1, False, "Bump", "Don't go in my closet. Nothing in there. Mops."),
     ("J_A1_Bump3", "Custodian", 1, False, "Bump", "Whoa there. Wet floor."),
+    # --- when you throw something at them ---
+    ("C_A1_Hit1", "Coworker", 1, False, "Hit", "Hey! I haven't even had my coffee yet."),
+    ("C_A1_Hit2", "Coworker", 1, False, "Hit", "Ow. ...That's going in the morale survey."),
+    ("C_A1_Hit3", "Coworker", 1, False, "Hit", "Was that a stapler? Is that how we're doing this today?"),
+    ("C_A1_Hit4", "Coworker", 1, False, "Hit", "I'm going to pretend that was a team-building exercise."),
+    ("C_A1_Hit5", "Coworker", 1, False, "Hit", "Rude. Productive, maybe. But rude."),
+    ("C_A1_HitAgent", "Coworker", 1, True, "Hit", "Do that again. I dare you. I've seen what happens."),
+    ("R_A1_Hit", "Receptionist", 1, False, "Hit", "I'm going to need you to sign the incident book. You've signed it before."),
+    ("G_A1_Hit1", "Guard", 1, False, "Hit", "That's going in my report."),
+    ("G_A1_Hit2", "Guard", 1, False, "Hit", "Do that again and you'll be talking to HR. Nobody comes back from HR."),
+    ("J_A1_Hit1", "Custodian", 1, False, "Hit", "I'll be cleaning that up, then. Like always."),
+    ("J_A1_Hit2", "Custodian", 1, False, "Hit", "Throw it at the walls, not at me. The walls can take it."),
     # --- 4470: the employee before you ---
     ("C_A1_4470a", "Coworker", 1, False, "Bump", "Morning, 4470- sorry. 4471. Force of habit."),
     ("C_A1_4470b", "Coworker", 1, False, "Bump", "You sit at 4470's old desk, right? ...Your desk. Sorry. Your desk."),

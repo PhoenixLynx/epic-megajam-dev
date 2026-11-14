@@ -64,6 +64,8 @@ public:
 	/** Say a random line (bump, E, or scripted). Returns false while on cooldown. */
 	UFUNCTION(BlueprintCallable, Category = "Coworker") bool Speak(const FString& Context = TEXT(""));
 	UFUNCTION(BlueprintCallable, Category = "Coworker") void SayLine(const FString& Line);
+	/** Something you threw hit them. */
+	void HitByProp(float Speed);
 	/** E on a story NPC: the next line of its current conversation (DT_NPCLines Context Story1, Story2, ...;
 	 *  Pass1Story1.. once you hold pass 1, DoneStory1.. once the morning is done, SlipStory1.. after the 10:00 slip).
 	 *  Once a conversation is finished, E gives small talk. Non-story NPCs just Speak(). */
@@ -104,6 +106,8 @@ private:
 	TArray<FString> Lines;          // small talk, cycled without repeats
 	TArray<FString> Greetings;      // first time you meet
 	TArray<FString> CoffeeLines;    // once you've had your coffee
+	TArray<FString> HitLines;       // when you throw something at them
+	double LastHitTime = -10.0;
 	TArray<int32> Bag;              // shuffled order of Lines still to say
 	int32 LastLine = -1;
 	bool bGreeted = false;

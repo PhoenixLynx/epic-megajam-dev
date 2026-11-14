@@ -48,6 +48,19 @@ def put(mesh, x, y, z=0.0, yaw=0.0, tags=()):
     P.append((mesh, x, y, z, yaw, list(tags)))
 
 
+def cabinet(x, y, yaw, drawers=4, drawer_tags=None):
+    """A filing cabinet you can open: shell + one sliding SM_FileDrawer per drawer (E opens / closes).
+    drawer_tags: {drawer index (0 = bottom): [extra tags]}"""
+    import math
+    put(f"SM_FilingShell_{drawers}", x, y, 0, yaw)
+    a = math.radians(yaw + YAW_FIX)
+    lx, ly = 0.0, 30.0                       # drawer fronts sit 30 cm in front of the pivot (Unreal local +Y)
+    dx, dy = x + lx * math.cos(a) - ly * math.sin(a), y + lx * math.sin(a) + ly * math.cos(a)
+    for i in range(drawers):
+        extra = (drawer_tags or {}).get(i, [])
+        put("SM_FileDrawer", dx, dy, 33 * i + 16.5, yaw, ["Openable", "Slide=40", "FileDrawer"] + extra)
+
+
 # --- Your desk #4471 ----------------------------------------------------------
 put("SM_Desk", 1300, 2300, 0, 180, ["Terminal", "Desk4471"])
 put("SM_Monitor", 1300, 2272, DESK_TOP, 180, ["Terminal", "Monitor4471"])   # E here = sit and log in
@@ -63,8 +76,8 @@ put("SM_PCTower", 1410, 2280, 0, 180)
 put("SM_OfficeChair", 1300, 2385, 0, 0, ["ChangeOnRewind"])
 put("SM_TrashBin", 1170, 2370)
 put("SM_DirectorsChair", 1480, 2470, 0, 210, ["Act2Reveal"])  # hidden in game until Act 2
-put("SM_FilingCabinet_4", 1700, 3500, 0, 0)    # drawers face into the office
-put("SM_FilingCabinet_2", 1760, 3500, 0, 0)
+cabinet(1700, 3500, 0, 4, {3: ["InspectTex=MI_File_4470"]})   # top drawer: 4470's personnel file
+cabinet(1760, 3500, 0, 2)
 put("SM_Printer", 3300, 1870, 0, -90)
 put("SM_PlantTall", 860, 1780)
 put("SM_PlantTall", 3330, 3620)
@@ -172,7 +185,7 @@ put("SM_PenCup", 980, 1000, TABLE_Z)
 put("SM_PlantTall", 280, 580)
 put("SM_PlantTall", 1320, 1620)
 put("SM_TrashBin", 1340, 600)
-put("SM_FilingCabinet_2", 1340, 900, 0, -90)
+cabinet(1340, 900, -90, 2)
 put("SM_WallClock", 800, 512, 240, 180)
 
 # --- Supply closet: three steel shelves along the back wall, stocked -----------------------
@@ -192,7 +205,7 @@ for sx in (2890, 3050, 3210):
                 put(mesh, sx - 45 + k * 28, 4175 + rnd.uniform(-6, 6), z + 1, rnd.uniform(-20, 20))
 for i in range(4):   # boxes of paper on the bottom shelf
     put("SM_ReamOfPaper", 3050 + rnd.uniform(-40, 40), 4175, SHELF_Z[0] + 1 + i * 5, rnd.uniform(-8, 8))
-put("SM_FilingCabinet_4", 3270, 3900, 0, -90)
+cabinet(3270, 3900, -90, 4)
 put("SM_Printer", 2850, 3820, 0, 90)
 put("SM_TrashBin", 3260, 4060)
 put("SM_WetFloorSign", 3180, 3780, 0, 30)
@@ -233,7 +246,7 @@ for i in range(3):
     put(["SM_ReamOfPaper", "SM_SnackBox", "SM_TeaBox"][i], 835, 3470 + i * 40, 61)   # odd things stored on the shelf
 put("SM_MannequinCustodian", 960, 3560, 0, 90, ["NPC", "Custodian_Closet"])
 # 4470: the employee before you. Their things are boxed up in here.
-put("SM_MovingBox", 905, 3410, 0, -90)
+put("SM_MovingBox", 905, 3410, 0, -90, ["Inspectable", "InspectTex=MI_Label_4470"])
 BOXES += [("Label_4470", 928, 3410, 16, 1, 30, 16, "/Game/Props/Materials/MI_Label_4470", ["Inspectable"]),          # on the box, facing the door
           ("Polaroid_4470", 890, 3440, 31, 9, 11, 0.4, "/Game/Props/Materials/MI_Polaroid_4470", ["Inspectable"]),    # dropped on top
           ("Sticky_4470", 835, 3500, 107, 8, 8, 0.3, "/Game/Props/Materials/MI_Sticky_4470", ["Inspectable"])]       # on the shelf

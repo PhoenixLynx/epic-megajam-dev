@@ -246,6 +246,7 @@ bool UTakeGrabComponent::TryGrabOrDrop()
 	HeldYawOffset = Comp->GetComponentRotation().Yaw - View.Yaw;   // keeps the prop's facing relative to you
 	HeldPitchRoll = FRotator(Comp->GetComponentRotation().Pitch, 0.f, Comp->GetComponentRotation().Roll);
 	Handle->GrabComponentAtLocationWithRotation(Comp, NAME_None, Comp->GetComponentLocation(), Comp->GetComponentRotation());
+	Comp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);   // a held mug can't shove you (or be shoved by you)
 	PlaySfx(TEXT("sfx_pickup"), Comp->GetComponentLocation(), 0.6f);
 	OnGrabbed.Broadcast(Comp);
 	return true;
@@ -253,7 +254,9 @@ bool UTakeGrabComponent::TryGrabOrDrop()
 
 void UTakeGrabComponent::Drop()
 {
-	if (Handle) { Handle->ReleaseComponent(); }
+	if (!Handle) { return; }
+	if (UPrimitiveComponent* C = Handle->GetGrabbedComponent()) { C->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block); }
+	Handle->ReleaseComponent();
 }
 
 void UTakeGrabComponent::Throw()
@@ -263,6 +266,7 @@ void UTakeGrabComponent::Throw()
 	FVector Loc; FRotator Rot;
 	GetView(Loc, Rot);
 	Handle->ReleaseComponent();
+	Comp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);   // pawns include coworkers: let it hit them
 	Comp->AddImpulse(Rot.Vector() * ThrowStrength, NAME_None, /*bVelChange=*/true);
 	PlaySfx(TEXT("sfx_throw"), Comp->GetComponentLocation(), 0.7f);
 	OnThrown.Broadcast(Comp);
@@ -277,10 +281,13 @@ void UTakeGrabComponent::ToggleOpen(AActor* Openable)
 	{
 		FSwing New;
 		New.ClosedYaw = Openable->GetActorRotation().Yaw;
+		New.ClosedLoc = Openable->GetActorLocation();
+		New.SlideDir = Openable->GetActorRightVector();   // our props face local +Y
 		for (const FName& Tag : Openable->Tags)
 		{
 			const FString T = Tag.ToString();
 			if (T.StartsWith(TEXT("OpenYaw="))) { New.OpenYaw = FCString::Atof(*T.Mid(8)); }
+			if (T.StartsWith(TEXT("Slide="))) { New.Slide = FCString::Atof(*T.Mid(6)); New.OpenYaw = 0.f; }
 		}
 		S = &Swings.Add(Openable, New);
 	}
@@ -300,7 +307,14 @@ void UTakeGrabComponent::ToggleOpen(AActor* Openable)
 		ShowSubtitle(TEXT(""), TEXT("Access pass accepted."), 2.f);
 	}
 	S->bOpen = !S->bOpen;
-	PlaySfx(S->bOpen ? TEXT("sfx_door_open") : TEXT("sfx_door_close"), Where, 0.8f);
+	PlaySfx(S->bOpen ? TEXT("sfx_door_open") : TEXT("sfx_door_close"), Where, S->Slide > 0.f ? 0.45f : 0.8f);
+	if (S->bOpen && S->Slide > 0.f)   // a drawer with something worth reading in it
+	{
+		for (const FName& Tag : Openable->Tags)
+		{
+			if (Tag.ToString().StartsWith(TEXT("InspectTex="))) { Inspect(Openable); break; }
+		}
+	}
 }
 
 void UTakeGrabComponent::TickSwings(float DeltaTime)
@@ -320,6 +334,11 @@ void UTakeGrabComponent::TickSwings(float DeltaTime)
 		{
 			S.JiggleLeft = FMath::Max(0.f, S.JiggleLeft - DeltaTime);
 			Jiggle = 1.4f * FMath::Sin(S.JiggleLeft * 70.f) * (S.JiggleLeft / 0.45f);
+		}
+		if (S.Slide > 0.f)   // drawers slide straight out
+		{
+			A->SetActorLocation(S.ClosedLoc + S.SlideDir * S.Slide * Eased);
+			continue;
 		}
 		FRotator R = A->GetActorRotation();
 		R.Yaw = S.ClosedYaw + S.OpenYaw * Eased + Jiggle;
@@ -662,6 +681,16 @@ void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 	const bool bHeavy = HitComp->GetMass() > 8.f;
 	const float Vol = FMath::GetMappedRangeValueClamped(FVector2D(160.f, 900.f), FVector2D(0.2f, 0.9f), Speed);
 	PlaySfx(bHeavy ? TEXT("sfx_impact_heavy") : TEXT("sfx_impact_light"), Hit.ImpactPoint, Vol);
+	if (ATakeCoworker* Victim = Cast<ATakeCoworker>(OtherActor))
+	{
+		Victim->HitByProp(Speed);
+		const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		if (GI && (GI->GuardComplaints == 1 || GI->CoworkersHit == 3) && !bMailChimed)
+		{
+			bMailChimed = true;
+			ShowSubtitle(TEXT(""), TEXT("(Somewhere, your computer chimes. New email.)"), 3.f);
+		}
+	}
 }
 
 void UTakeGrabComponent::ShowSubtitleSequence(const FString& Who, const TArray<FString>& Lines)
@@ -790,6 +819,18 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 	if (!PC || !Target || Inspecting) { return; }
 	// The picture is whatever texture the board's material shows right now (so a changed poster looks changed)
 	UTexture2D* Tex = nullptr;
+	for (const FName& Tag : Target->Tags)   // InspectTex=MI_X: show that picture instead (the moving box shows its label)
+	{
+		const FString T = Tag.ToString();
+		if (!T.StartsWith(TEXT("InspectTex="))) { continue; }
+		const FString Mi = T.Mid(11);
+		if (UMaterialInterface* Mat = LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), *Mi, *Mi)))
+		{
+			UTexture* Found = nullptr;
+			if (Mat->GetTextureParameterValue(FMaterialParameterInfo(FName(TEXT("Tex"))), Found)) { Tex = Cast<UTexture2D>(Found); }
+		}
+	}
+	if (!Tex)
 	if (const UStaticMeshComponent* SM = Target->FindComponentByClass<UStaticMeshComponent>())
 	{
 		if (UMaterialInterface* Mat = SM->GetMaterial(0))
@@ -804,6 +845,7 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 	int32 GlyphKey = 0;   // which Key Lock's signature is hidden on this one (0 = none)
 	struct FCaption { const TCHAR* Key; const TCHAR* Title; const TCHAR* Text; int32 Glyphs; };
 	static const FCaption Captions[] = {
+		{ TEXT("File_4470"), TEXT("PERSONNEL FILE: 4470"), TEXT("Status: WRAPPED. Replacement: 4471 (scheduled).\nSomeone has written underneath, by hand: \"they looked closer.\""), 0 },
 		{ TEXT("Label_4470"), TEXT("4470 - PERSONAL EFFECTS"), TEXT("A moving box with someone's desk in it. A mug, a frame, papers.\nYour badge says 4471. Whoever had this desk before you was 4470."), 0 },
 		{ TEXT("Polaroid_4470"), TEXT("DESK 4471 - DAY 1"), TEXT("Your desk. Someone sitting at it, in a mint suit.\nThe face has been scribbled out. Hard. The pen went through the photo."), 0 },
 		{ TEXT("Sticky_4470"), TEXT("A NOTE"), TEXT("\"if you're reading this it's not your first day. LOOK CLOSER. - 4470\"\nThe handwriting looks a lot like yours."), 0 },
@@ -1033,7 +1075,9 @@ void UTakeGrabComponent::UpdatePrompt()
 	case ETakeLookKind::Openable:
 	{
 		const FSwing* S = Swings.Find(Hit.GetActor());
-		Prompt->SetPrompt(IsLockedForMe(Hit.GetActor()) ? TEXT("E  Try the door") : ((S && S->bOpen) ? TEXT("E  Close") : TEXT("E  Open")));
+		const bool bDrawer = Hit.GetActor()->ActorHasTag(TEXT("FileDrawer"));
+		Prompt->SetPrompt(IsLockedForMe(Hit.GetActor()) ? TEXT("E  Try the door")
+			: ((S && S->bOpen) ? (bDrawer ? TEXT("E  Close the drawer") : TEXT("E  Close")) : (bDrawer ? TEXT("E  Open the drawer") : TEXT("E  Open"))));
 		break;
 	}
 	case ETakeLookKind::Coffee:   Prompt->SetPrompt(TEXT("E  Pour a coffee")); break;
@@ -1084,7 +1128,7 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 			const FVector Flat = FRotator(0.f, Rot.Yaw, 0.f).Vector();
 			const FVector Right = FRotator(0.f, Rot.Yaw + 90.f, 0.f).Vector();
 			const FVector Rest = Loc + Rot.Vector() * MugHoldDistance - FVector(0.f, 0.f, 12.f);
-			const FVector Mouth = Loc + Flat * 22.f - FVector(0.f, 0.f, 9.f);
+			const FVector Mouth = Loc + Flat * 30.f - FVector(0.f, 0.f, 8.f);
 			const FQuat Base = FRotator(HeldPitchRoll.Pitch, Rot.Yaw + HeldYawOffset, HeldPitchRoll.Roll).Quaternion();
 			const FQuat Tip = FQuat(Right, FMath::DegreesToRadians(-55.f * A));   // top of the mug tips back toward your face
 			Handle->SetTargetLocationAndRotation(FMath::Lerp(Rest, Mouth, A), (Tip * Base).Rotator());

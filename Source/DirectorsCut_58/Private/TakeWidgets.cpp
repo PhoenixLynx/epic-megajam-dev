@@ -222,6 +222,8 @@ void UTakeTerminalWidget::LoadMail()
 			if (When == TEXT("ClocksFreeze")) { return GI->bClocksFrozen; }
 			if (When == TEXT("AfterCall"))    { return GI->bJoinedCall; }
 			if (When == TEXT("AfterCheckIn")) { return GI->CoworkersCheckedIn >= 1 || GI->bJoinedCall; }
+			if (When == TEXT("GuardComplaint")) { return GI->GuardComplaints >= 1; }
+			if (When == TEXT("HRIncident"))     { return GI->CoworkersHit >= 3; }
 			if (When == TEXT("AfterMeeting")) { return GI->bAttendedMeeting; }
 			return false;
 		};
@@ -230,7 +232,12 @@ void UTakeTerminalWidget::LoadMail()
 		{
 			if (!R) { continue; }
 			const FMail Mail = { TakeText::Fill(this, R->Sender), TakeText::Fill(this, R->Subject), TakeText::Fill(this, R->Body), R->IsPhishing };
-			if (R->Act == 1) { Mails.Add(Mail); }
+			if (R->Act == 1)
+			{
+				const FString& When = R->ArrivesAfter;
+				if (When.IsEmpty() || When == TEXT("Start") || When == TEXT("AfterEmails")) { Mails.Add(Mail); }
+				else if (Arrived(When)) { Mails.Insert(Mail, NewMail++); }   // things that happened today, newest on top
+			}
 			else if (R->Act <= Act && Arrived(R->ArrivesAfter)) { Mails.Insert(Mail, NewMail++); }
 		}
 	}

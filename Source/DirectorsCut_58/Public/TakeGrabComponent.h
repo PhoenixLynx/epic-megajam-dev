@@ -104,7 +104,11 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
-	struct FSwing { float ClosedYaw = 0.f; float OpenYaw = 90.f; float Alpha = 0.f; bool bOpen = false; float JiggleLeft = 0.f; bool bUnlocked = false; };
+	struct FSwing
+	{
+		float ClosedYaw = 0.f; float OpenYaw = 90.f; float Alpha = 0.f; bool bOpen = false; float JiggleLeft = 0.f; bool bUnlocked = false;
+		float Slide = 0.f; FVector ClosedLoc = FVector::ZeroVector; FVector SlideDir = FVector::ZeroVector;   // drawers
+	};
 
 	UPROPERTY() TObjectPtr<UPhysicsHandleComponent> Handle;
 	UPROPERTY() TObjectPtr<UTakePromptWidget> Prompt;
@@ -124,6 +128,7 @@ private:
 	bool IsHoldingSnack() const;
 	void Eat();
 	int32 Eaten = 0;
+	bool bMailChimed = false;
 	float MugHoldDistance = 55.f;
 	void Sip();
 	int32 PassNeeded(const AActor* Door) const;   // 0 = not locked by a pass

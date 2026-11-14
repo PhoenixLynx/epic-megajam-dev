@@ -179,6 +179,32 @@ def filing_cabinet(drawers=4):
     return p.finish(0.006)
 
 
+def filing_shell(drawers=4):
+    """Cabinet body with empty drawer bays (the drawers are separate SM_FileDrawer actors that slide out)."""
+    h = 0.33 * drawers
+    p = Prop(f"SM_FilingShell_{drawers}")
+    p.box((0.46, 0.02, h), (0, 0.30, h / 2), "M_MetalLight")                     # back
+    for x in (-0.22, 0.22):
+        p.box((0.02, 0.62, h), (x, 0, h / 2), "M_MetalLight")                    # sides
+    for i in range(drawers + 1):
+        p.box((0.46, 0.62, 0.015), (0, 0, min(0.33 * i, h - 0.0075) + 0.0075), "M_MetalLight")   # shelves / top
+    return p.finish(0.004)
+
+
+def file_drawer():
+    """One drawer: front panel, handle, label, a tray with hanging folders. Pivot = centre of the front panel's back face."""
+    p = Prop("SM_FileDrawer")
+    p.box((0.42, 0.012, 0.30), (0, -0.006, 0.0), "M_MetalLight")                # front (faces -Y)
+    p.box((0.16, 0.025, 0.025), (0, -0.025, 0.07), "M_MetalDark")              # handle
+    p.box((0.07, 0.006, 0.035), (0, -0.015, 0.11), "M_Paper")                  # label slot
+    p.box((0.40, 0.56, 0.01), (0, 0.28, -0.13), "M_MetalDark")                 # tray floor
+    for x in (-0.2, 0.2):
+        p.box((0.01, 0.56, 0.22), (x, 0.28, -0.03), "M_MetalDark")            # tray sides
+    for k in range(9):                                                            # hanging folders
+        p.box((0.36, 0.01, 0.22), (0, 0.06 + k * 0.055, -0.02), "M_Yellow" if k % 3 else "M_Paper")
+    return p.finish(0.002)
+
+
 def monitor():
     p = Prop("SM_Monitor")
     p.box((0.22, 0.18, 0.015), (0, 0.02, 0.0075), "M_PlasticBlack")
@@ -804,7 +830,8 @@ BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabine
             # bright corporate design
             plant_tall, plant_desk, planter_box, lobby_sofa, coffee_table, logo_sign, meeting_chair,
             # kitchen
-            kitchen_counter, kitchen_counter_short, kitchen_island, moving_box, fridge, microwave, kettle, vending_machine, cafe_table, bar_stool,
+            kitchen_counter, kitchen_counter_short, kitchen_island, moving_box, fridge,
+             lambda: filing_shell(4), lambda: filing_shell(2), file_drawer, microwave, kettle, vending_machine, cafe_table, bar_stool,
             # figures
             mannequin, mannequin_guard, mannequin_custodian, stalker,
             # wishlist batch

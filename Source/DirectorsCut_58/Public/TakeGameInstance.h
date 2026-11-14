@@ -56,6 +56,9 @@ public:
 	/** Act 1 badge task list */
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bReadEmail = false;
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bGotCoffee = false;
+	/** Things you threw at people (Security and HR keep count). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 CoworkersHit = 0;
+	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 GuardComplaints = 0;
 	UFUNCTION(BlueprintPure, Category = "Take") bool MorningTasksDone() const { return bReadEmail && bGotCoffee && bTrainingComplete; }
 
 	/** Story progress (see ETakeBeat) and the one-line objective shown under the badge task list. */
