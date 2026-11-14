@@ -242,6 +242,11 @@ private:
 	struct FFood { TWeakObjectPtr<AActor> Actor; FTransform Home; float Back = -1.f; };
 	TArray<FFood> Foods;
 	int32 Vended = 0;
+	// Act2Reveal: things that only exist from lunch on (the lunch spread, the director's chair)
+	struct FReveal { TWeakObjectPtr<AActor> Actor; bool bPhysics = false; };
+	TArray<FReveal> Act2Things;
+	bool bAct2Revealed = false;
+	void RevealAct2();
 	TArray<TWeakObjectPtr<AActor>> Spawned;   // vended snacks and poured mugs (oldest recycled)
 	TArray<TWeakObjectPtr<AActor>> Bins;
 	TWeakObjectPtr<UPrimitiveComponent> TossProp;

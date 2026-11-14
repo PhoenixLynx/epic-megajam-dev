@@ -37,6 +37,8 @@ PALETTE = {  # slot name -> viewport colour (RGBA)
     "M_Counter": (0.92, 0.92, 0.90, 1), "M_Steel": (0.75, 0.77, 0.79, 1), "M_SofaMint": (0.55, 0.80, 0.74, 1),
     "M_ExitGreen": (0.10, 0.75, 0.35, 1), "M_ClockFace": (0.98, 0.98, 0.96, 1), "M_SkyBlue": (0.65, 0.78, 0.95, 1),
     "M_Cardboard": (0.55, 0.40, 0.25, 1),
+    "M_Bread": (0.86, 0.68, 0.42, 1), "M_Crust": (0.62, 0.38, 0.18, 1), "M_Cheese": (0.98, 0.80, 0.30, 1),
+    "M_Tomato": (0.80, 0.16, 0.10, 1), "M_Frosting": (0.96, 0.58, 0.72, 1),
 }
 
 
@@ -820,6 +822,49 @@ def lunch_box():
     return p.finish(0.004)
 
 
+def sandwich():
+    """Lunch (Act 2): a stacked sandwich on a paper napkin."""
+    p = Prop("SM_Sandwich")
+    p.box((0.16, 0.16, 0.002), (0, 0, 0.001), "M_Paper")
+    p.box((0.12, 0.10, 0.016), (0, 0, 0.010), "M_Bread")
+    p.box((0.128, 0.108, 0.006), (0, 0, 0.021), "M_LeafLight")
+    p.box((0.118, 0.098, 0.006), (0, 0, 0.027), "M_Cheese")
+    p.box((0.110, 0.090, 0.008), (0, 0, 0.034), "M_Tomato")
+    p.box((0.12, 0.10, 0.016), (0, 0, 0.046), "M_Bread")
+    return p.finish(0.003)
+
+
+def pizza_slice():
+    """Lunch (Act 2): one slice on a paper plate (a triangle from a 3-sided cylinder)."""
+    p = Prop("SM_PizzaSlice")
+    p.cyl(0.11, 0.004, (0, 0, 0.002), "M_Paper", segs=24)
+    p.cyl(0.085, 0.012, (0, 0, 0.010), "M_Cheese", segs=3)
+    p.box((0.13, 0.03, 0.018), (0.0, 0.045, 0.012), "M_Crust")
+    for (x, y) in ((-0.01, -0.01), (0.02, 0.0), (0.0, -0.035)):
+        p.cyl(0.012, 0.004, (x, y, 0.017), "M_Tomato", segs=10)
+    return p.finish(0.0)
+
+
+def salad_bowl():
+    p = Prop("SM_SaladBowl")
+    p.cyl(0.09, 0.06, (0, 0, 0.03), "M_Ceramic", segs=24, radius2=0.065)
+    for i, (dx, dy) in enumerate(((0.03, 0.0), (-0.03, 0.02), (0.0, -0.03), (-0.01, 0.0), (0.02, 0.03))):
+        p.sphere(0.035, (dx, dy, 0.065), "M_LeafLight" if i % 2 else "M_Leaf", segs=8)
+    p.sphere(0.014, (0.01, -0.01, 0.09), "M_Tomato", segs=8)
+    return p.finish(0.0)
+
+
+def donut():
+    """A ring of lumps: dough underneath, pink frosting on top."""
+    import math as _m
+    p = Prop("SM_Donut")
+    for i in range(12):
+        a = 2 * _m.pi * i / 12
+        p.sphere(0.022, (_m.cos(a) * 0.035, _m.sin(a) * 0.035, 0.02), "M_Bread", segs=8)
+        p.sphere(0.018, (_m.cos(a) * 0.035, _m.sin(a) * 0.035, 0.03), "M_Frosting", segs=8)
+    return p.finish(0.0)
+
+
 def fruit_bowl():
     p = Prop("SM_FruitBowl")
     p.cyl(0.14, 0.07, (0, 0, 0.035), "M_Ceramic", segs=24, radius2=0.1)
@@ -846,7 +891,7 @@ BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabine
             # wishlist batch
             reception_desk, fridge_body, fridge_door, door, door_frame, utility_shelf,
             coffee_bag, tea_box, cup_stack, snack_bag, snack_box, soda_can, water_bottle, milk_carton,
-            lunch_box, fruit_bowl]
+            lunch_box, fruit_bowl, sandwich, pizza_slice, salad_bowl, donut]
 
 
 def export_fbx(obj):

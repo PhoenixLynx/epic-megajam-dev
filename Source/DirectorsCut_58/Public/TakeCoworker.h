@@ -132,4 +132,5 @@ private:
 	float GetFear() const;
 	bool PlayerCanSee(const APawn* Player) const;
 	void Animate(float DeltaSeconds, bool bMoving);
+	float WatchReleaseLeft = 0.f;   // seconds Fear must stay low before staring coworkers go back to work
 };

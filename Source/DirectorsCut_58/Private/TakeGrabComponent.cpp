@@ -160,6 +160,9 @@ ATakeCoworker* UTakeGrabComponent::CoworkerInView() const
 		if (!It->bStoryNPC) { continue; }   // office extras talk on their own as you pass
 		const FVector To = It->GetActorLocation() + FVector(0.f, 0.f, 40.f) - Loc;
 		if (To.Size() > UseRange) { continue; }
+		FCollisionQueryParams Sight(SCENE_QUERY_STAT(TakeTalkSight), false, GetOwner());
+		Sight.AddIgnoredActor(*It);
+		if (GetWorld()->LineTraceTestByChannel(Loc, Loc + To, ECC_Visibility, Sight)) { continue; }   // not through a closed door
 		const float Dot = FVector::DotProduct(Rot.Vector(), To.GetSafeNormal());
 		if (Dot > BestDot) { BestDot = Dot; Best = *It; }
 	}
@@ -503,7 +506,8 @@ bool UTakeGrabComponent::IsHoldingSnack() const
 	if (!C || !C->GetStaticMesh()) { return false; }
 	const FString N = C->GetStaticMesh()->GetName();
 	return N.Contains(TEXT("Snack")) || N.Contains(TEXT("Fruit")) || N.Contains(TEXT("SodaCan")) || N.Contains(TEXT("WaterBottle"))
-		|| N.Contains(TEXT("LunchBox")) || N.Contains(TEXT("MilkCarton"));
+		|| N.Contains(TEXT("LunchBox")) || N.Contains(TEXT("MilkCarton")) || N.Contains(TEXT("Sandwich")) || N.Contains(TEXT("Pizza"))
+		|| N.Contains(TEXT("Salad")) || N.Contains(TEXT("Donut"));
 }
 
 void UTakeGrabComponent::Eat()
@@ -523,7 +527,19 @@ void UTakeGrabComponent::Eat()
 		TEXT("*gulp* Room temperature. Every room's temperature."),
 		TEXT("*gulp* Refreshing. Mandatory refreshment."),
 	};
-	if (bDrink) { ShowSubtitle(TEXT(""), Drinks[Eaten % int32(UE_ARRAY_COUNT(Drinks))], 2.5f); }
+	// Lunch (Act 2) has its own lines, one per dish
+	struct FDish { const TCHAR* Key; const TCHAR* Line; };
+	static const FDish Dishes[] = {
+		{ TEXT("Sandwich"), TEXT("*crunch* Turkey. You asked for turkey. You don't remember asking.") },
+		{ TEXT("Pizza"), TEXT("*crunch* Still warm. It was delivered at 12:00. It's always 12:00 somewhere in here.") },
+		{ TEXT("Salad"), TEXT("*crunch* Crisp. Every leaf is the same size. Every leaf.") },
+		{ TEXT("Donut"), TEXT("*chew* Sprinkles spell something. You ate it before you could read it.") },
+		{ TEXT("LunchBox"), TEXT("*chew* Leftovers. The note on the lid says 4471. In your handwriting.") },
+	};
+	const TCHAR* DishLine = nullptr;
+	for (const FDish& D : Dishes) { if (N.Contains(D.Key)) { DishLine = D.Line; break; } }
+	if (DishLine) { ShowSubtitle(TEXT(""), DishLine, 3.f); }
+	else if (bDrink) { ShowSubtitle(TEXT(""), Drinks[Eaten % int32(UE_ARRAY_COUNT(Drinks))], 2.5f); }
 	else { ShowSubtitle(TEXT(""), Bites[Eaten % int32(UE_ARRAY_COUNT(Bites))], 2.5f); }
 	++Eaten;
 	Handle->ReleaseComponent();
@@ -1040,7 +1056,7 @@ void UTakeGrabComponent::TickClock(float DeltaTime)
 		float Cap = 9.f * 60.f + 55.f;
 		float SecondsPerMinute = 3.f;
 		if (GI->Beat == ETakeBeat::Meeting) { Cap = 10.f * 60.f; }
-		else if (GI->Beat >= ETakeBeat::Corridor) { Cap = 11.f * 60.f + 59.f; SecondsPerMinute = 1.f; }
+		else if (GI->Beat >= ETakeBeat::Corridor) { Cap = 10.f * 60.f + 59.f; }   // the corridor eats the hour, then the jump to 12:00
 		if (GI->Beat >= ETakeBeat::Corridor && GI->WorkdayMinutes < 10.f * 60.f + 1.f) { GI->WorkdayMinutes = 10.f * 60.f + 1.f; }
 		GI->WorkdayMinutes = FMath::Min(GI->WorkdayMinutes + DeltaTime / SecondsPerMinute, FMath::Max(Cap, GI->WorkdayMinutes));
 	}

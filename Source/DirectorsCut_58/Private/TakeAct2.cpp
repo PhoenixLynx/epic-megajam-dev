@@ -29,7 +29,8 @@ namespace
 	bool IsFoodMesh(const FString& N)
 	{
 		return N.Contains(TEXT("Snack")) || N.Contains(TEXT("Fruit")) || N.Contains(TEXT("SodaCan")) || N.Contains(TEXT("WaterBottle"))
-			|| N.Contains(TEXT("LunchBox")) || N.Contains(TEXT("MilkCarton"));
+			|| N.Contains(TEXT("LunchBox")) || N.Contains(TEXT("MilkCarton")) || N.Contains(TEXT("Sandwich")) || N.Contains(TEXT("Pizza"))
+			|| N.Contains(TEXT("Salad")) || N.Contains(TEXT("Donut"));
 	}
 }
 
@@ -236,11 +237,25 @@ void UTakeGrabComponent::Vend(AActor* Machine)
 
 void UTakeGrabComponent::CollectFunProps()
 {
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	for (TActorIterator<AStaticMeshActor> It(GetWorld()); It; ++It)
 	{
-		const UStaticMeshComponent* SM = It->GetStaticMeshComponent();
+		UStaticMeshComponent* SM = It->GetStaticMeshComponent();
 		if (!SM || !SM->GetStaticMesh()) { continue; }
 		const FString N = SM->GetStaticMesh()->GetName();
+		if (It->ActorHasTag(TEXT("Act2Reveal")))
+		{
+			FReveal R;
+			R.Actor = *It;
+			R.bPhysics = It->ActorHasTag(TEXT("Throwable"));
+			Act2Things.Add(R);
+			if (!GI || GI->CurrentAct() < 2)   // not there yet: invisible, nothing to bump into, not falling
+			{
+				It->SetActorHiddenInGame(true);
+				It->SetActorEnableCollision(false);
+				SM->SetSimulatePhysics(false);
+			}
+		}
 		if (N.Contains(TEXT("TrashBin"))) { Bins.Add(*It); }
 		else if (IsFoodMesh(N) && It->ActorHasTag(TEXT("Throwable")))
 		{
@@ -251,6 +266,20 @@ void UTakeGrabComponent::CollectFunProps()
 		}
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %d bin(s) for the paper toss, %d food item(s) that come back"), Bins.Num(), Foods.Num());
+}
+
+void UTakeGrabComponent::RevealAct2()
+{
+	bAct2Revealed = true;
+	for (const FReveal& R : Act2Things)
+	{
+		AActor* A = R.Actor.Get();
+		if (!A) { continue; }
+		A->SetActorHiddenInGame(false);
+		A->SetActorEnableCollision(true);
+		if (UStaticMeshComponent* SM = Cast<UStaticMeshComponent>(A->GetRootComponent())) { SM->SetSimulatePhysics(R.bPhysics); }
+	}
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Lunch is out: revealed %d Act 2 thing(s)"), Act2Things.Num());
 }
 
 void UTakeGrabComponent::FoodEaten(AActor* Food)

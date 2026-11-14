@@ -28,7 +28,7 @@ SCALE_FIX = 1.0
 DESK_TOP = 76.0  # cm
 
 # Throwable meshes get physics
-THROWABLE = {"SM_PaperBall", "SM_CoffeeBag", "SM_TeaBox", "SM_CupStack", "SM_SnackBag", "SM_SnackBox", "SM_SodaCan",
+THROWABLE = {"SM_PaperBall", "SM_Sandwich", "SM_PizzaSlice", "SM_SaladBowl", "SM_Donut", "SM_CoffeeBag", "SM_TeaBox", "SM_CupStack", "SM_SnackBag", "SM_SnackBox", "SM_SodaCan",
              "SM_WaterBottle", "SM_MilkCarton", "SM_LunchBox", "SM_FruitBowl", "SM_Mug", "SM_Keyboard", "SM_OfficeChair", "SM_ReamOfPaper", "SM_FireExtinguisher", "SM_WetFloorSign",
              "SM_MopBucket", "SM_Binder", "SM_BinderMint", "SM_BinderRed", "SM_Stapler", "SM_TapeDispenser",
              "SM_PenCup", "SM_DeskLamp", "SM_DeskPhone", "SM_Laptop", "SM_PCTower", "SM_TrashBin", "SM_PlantDesk",
@@ -169,6 +169,14 @@ put("SM_WaterBottle", 3290, 860, 91)
 put("SM_SodaCan", 3100, 1150, 103)        # on the cafe tables
 put("SM_WaterBottle", 3470, 1240, 103)
 put("SM_SnackBag", 3430, 1270, 103, 60)
+# Lunch is served (Act 2): a catering table and lunch on the cafe tables, hidden until 12:00 (C++ reveals 'Act2Reveal')
+put("SM_CafeTable", 3500, 1020, 0, 0, ["Act2Reveal"])
+LUNCH = [("SM_PizzaSlice", 3470, 1000), ("SM_PizzaSlice", 3500, 995), ("SM_Sandwich", 3530, 1010),
+         ("SM_Donut", 3475, 1040), ("SM_Donut", 3505, 1045), ("SM_SaladBowl", 3535, 1045)]
+for mesh, x, y in LUNCH:
+    put(mesh, x, y, 104, rnd.uniform(0, 360), ["Act2Reveal"])
+for mesh, x, y in (("SM_Sandwich", 3080, 1140), ("SM_SaladBowl", 3125, 1165), ("SM_PizzaSlice", 3440, 1230), ("SM_Donut", 3465, 1260)):
+    put(mesh, x, y, 104, rnd.uniform(0, 360), ["Act2Reveal"])
 
 # --- Conference room ------------------------------------------------------------
 for x in (600, 800, 1000):

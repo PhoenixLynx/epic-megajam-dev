@@ -805,3 +805,14 @@ A running record of every AI tool used and what it did.
 - **How Claude and Sol talk:** a `handoff/` folder in Sol's repo. Claude writes `FROM_CLAUDE.md` (where music goes in the game, spec, priorities) and the shared `ASSET_REQUESTS.md` table (10 cues: morning loop + Fear layer, the HALCYON jingle, hold music, the lunch variation, stingers for "Retake" and the 2:14 freeze, title, chase, wrap party). Sol answers in `FROM_SOL.md`. I approve everything; audio freeze Sunday 12:00 PM.
 - **Caught by Sol:** the gameplay video (30-60 s, 1080p) is *required* by the rules, not optional. Checklist fixed.
 - **AI tools used:** Claude (build log check, handoff brief), Sol / ChatGPT (creative workspace, provenance records, rules review).
+
+### Session 50: Sat Nov 14, 2026, 13:10 MST: Playtest fixes, and lunch is actually served
+
+- **My notes (13:07):** (1) the custodian in the supply closet talks to you through the closed door; (2) the clock still ran all the way to 11:59 in the morning; (3) I collected the energy sphere at the end of the corridor but didn't know how to get pass 3; (4) saving glyphs is really helpful; (5) I could join the call (more feedback later); (6) "Lunch is served", so there should be different food; (7) in Fear the coworkers stood still at first, then seemed to move around again; (8) loving the details. Recording: `screenshots/Recording 2026-11-14 125325_fearcoordidor.mp4`; the phone reminder working: ![reminder](screenshots/cautionsign.png)
+- **Fixes:**
+  1. Talking (E) and bump lines now need a clear line of sight: no conversations through closed doors.
+  2. The corridor part of the morning stops at **10:59** and runs at the normal pace, so the jump to 12:00 ("It was eleven a second ago") makes sense.
+  3. Pass 3 isn't in the game yet: it's Key 3, hidden in the Smile poster (already in your notes), and it unlocks in Act 3 tonight.
+  6. **Lunch:** a catering table and lunch on the cafe tables appear at 12:00. New: sandwich, pizza slice, salad, donut, each with its own line when you eat it (*"Every leaf is the same size. Every leaf."*). The director's chair by your desk (tagged for Act 2 since Thursday but never revealed) now shows up at lunch too.
+  7. **Fear:** once coworkers start staring, Fear has to drop clearly and stay down for 2.5 s before they go back to work. Fear hovering around the threshold was flipping them between staring and walking.
+- **AI tools used:** Claude (recording review via contact sheet, C++, Blender lunch props).

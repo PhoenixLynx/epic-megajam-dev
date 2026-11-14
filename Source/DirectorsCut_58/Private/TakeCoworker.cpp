@@ -499,7 +499,8 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 		FCollisionQueryParams SightParams(SCENE_QUERY_STAT(TakeBark), false, Player);
 		SightParams.AddIgnoredActor(this);
 		// Bump: extras react (story characters wait for E)
-		if (Dist < 95.f && !bStoryNPC) { Speak(TEXT("Bump")); }
+		const bool bClearLine = !GetWorld()->LineTraceTestByChannel(Eye, GetActorLocation() + FVector(0.f, 0.f, 60.f), ECC_Visibility, SightParams);
+		if (Dist < 95.f && !bStoryNPC && bClearLine) { Speak(TEXT("Bump")); }   // not through a door
 		// Walk past: they talk on their own, one NPC at a time, not too often
 		else if (bTalksWhenNear && Dist < NearRange && NearCooldownLeft <= 0.f && GetFear() < WatchFear
 		         && GetWorld()->GetTimeSeconds() >= NextAnyoneMayTalk
@@ -511,7 +512,12 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 
 	AAIController* AI = Cast<AAIController>(GetController());
 	const float Fear = GetFear();
-	const float Watch = bIsAgent ? WatchFear - 0.15f : WatchFear;
+	// Hysteresis: once they're staring, Fear has to drop well below the line (and stay there) before they go back
+	// to work, so a Fear value hovering around the threshold doesn't make them twitch between staring and walking.
+	float Watch = bIsAgent ? WatchFear - 0.15f : WatchFear;
+	if (State == ETakeCoworkerState::Watching) { Watch -= 0.2f; }
+	if (Fear >= Watch) { WatchReleaseLeft = 2.5f; }
+	else if (State == ETakeCoworkerState::Watching && WatchReleaseLeft > 0.f) { WatchReleaseLeft -= DeltaSeconds; Watch = -1.f; }
 
 	// --- Augmented Fear: stop pretending ---------------------------------------
 	if (Player && Fear >= Watch)

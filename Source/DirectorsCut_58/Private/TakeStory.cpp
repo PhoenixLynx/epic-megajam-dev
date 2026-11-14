@@ -359,6 +359,7 @@ void UTakeGrabComponent::TickAct2(float DeltaTime)
 {
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (!GI || GI->CurrentAct() < 2) { return; }
+	if (!bAct2Revealed) { RevealAct2(); }   // lunch is out (also after loading an Act 2 save)
 	// Beat 2.6: after the clocks stop, Fear never quite leaves (checked about once a second)
 	FloorCheckIn -= DeltaTime;
 	if (GI->bClocksFrozen && FloorCheckIn <= 0.f)
