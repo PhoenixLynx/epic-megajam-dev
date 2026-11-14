@@ -273,6 +273,14 @@ private:
 	float MailCheckIn = 1.f;
 	void TickMail(float DeltaTime);
 	void NoteGlyphs(int32 Key, const FString& Source);
+	void SkipTasks();
+	// Energy (GameInstance->Energy): drains, coffee / food / the wisp refill it, low = a bit slower
+	float BaseWalkSpeed = -1.f;
+	bool bLowEnergyNoted = false;
+	void TickEnergy(float DeltaTime);
+	// Security cameras turn to follow you
+	TArray<TWeakObjectPtr<AActor>> Cams;
+	void TickCams(float DeltaTime);
 	void Fear0() { SetFearDebug(0.f); }
 	void Fear1() { SetFearDebug(0.25f); }
 	void Fear2() { SetFearDebug(0.5f); }

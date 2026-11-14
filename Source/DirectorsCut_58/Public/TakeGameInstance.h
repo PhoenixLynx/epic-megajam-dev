@@ -102,6 +102,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Take|HR") bool HRModuleDue() const { return HRModulesDone < HRModulesDue(); }
 	/** Fun: cups poured, vending snacks, paper toss baskets (best streak). */
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Fun") int32 CoffeesPoured = 0;
+	/** Energy (0..100): drains slowly; coffee and food bring it back; low = a little slower. Never a fail state. */
+	UPROPERTY(BlueprintReadWrite, Category = "Take") float Energy = 100.f;
+	void AddEnergy(float Amount) { Energy = FMath::Clamp(Energy + Amount, 0.f, 100.f); }
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Fun") int32 Baskets = 0;
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Fun") int32 BestTossStreak = 0;
 	/** You replied to the payroll email with your key (it wasn't payroll). */
@@ -130,5 +133,6 @@ public:
 	UFUNCTION(Exec) void TakeSeed();
 	UFUNCTION(Exec) void TakeNPCYaw(float Yaw);          // turn every rigged NPC's body (facing test)
 	UFUNCTION(Exec) void TakeBeat(int32 NewBeat);        // jump to a story beat: 0 morning, 1 meeting, 2 corridor, 3 return to desk, 4 lunch (Act 2)
-	UFUNCTION(Exec) void TakeTime(int32 HHMM);           // set the clock, e.g. TakeTime 1410 (four minutes before the clocks freeze)
+	UFUNCTION(Exec) void TakeTime(int32 HHMM);
+	UFUNCTION(Exec) void TakeSkip();                     // playtest: finish the tasks on the current list (morning -> lunch -> 2:14)           // set the clock, e.g. TakeTime 1410 (four minutes before the clocks freeze)
 };

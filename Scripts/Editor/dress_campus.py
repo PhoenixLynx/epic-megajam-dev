@@ -141,6 +141,21 @@ put("SM_ReceptionDesk", 2100, 1300, 0, 0)
 put("SM_Mannequin", 2100, 1400, 0, 0, ["NPC", "Receptionist"])   # behind the desk, facing the elevator
 put("SM_MannequinGuard", 2350, 650, 0, 200, ["NPC", "Guard_Lobby"])
 put("SM_ExitSign", 2100, 1688, 270, 0)
+# A little more "inviting": two armchairs, plants, a magazine, a rug, a promo screen (BOXES below)
+put("SM_MeetingChair", 1700, 1590, 0, 0)
+put("SM_MeetingChair", 1830, 1590, 0, 0)
+put("SM_PlantDesk", 1760, 1430, 44)
+put("SM_PlantTall", 1440, 1650)
+put("SM_WaterCooler", 2740, 1180, 0, -90)
+# Security desk by the elevator: two monitors showing the camera feeds (one of them is you, from behind)
+put("SM_Desk", 2560, 610, 0, 180)
+put("SM_Monitor", 2525, 585, 75, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])
+put("SM_Monitor", 2595, 585, 75, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])
+put("SM_OfficeChair", 2560, 690, 0, 0)
+# Security cameras (they turn to follow you; C++ 'SecurityCam')
+for x, y, z, yaw in ((2785, 515, 265, -45), (1415, 515, 265, 45), (815, 1715, 265, 45), (3385, 3685, 265, -135),
+                     (3785, 515, 265, -45), (1385, 3715, 265, 45), (215, 515, 265, 45)):
+    put("SM_SecurityCam", x, y, z, yaw + 180, ["SecurityCam"])
 
 # --- Kitchen (the old break room) ------------------------------------------------
 # North wall run, west to east, no gaps: short 3175-3295 | main (sink) 3295-3535 | short 3535-3655 | fridge
@@ -176,25 +191,20 @@ put("SM_TeaBox", 3572, 530, 99, 3)
 put("SM_FruitBowl", 3630, 540, 91)
 for i, x in enumerate((3225, 3250, 3275)):
     put("SM_CoffeeBag", x, 805, 91, rnd.uniform(-15, 15))
-put("SM_SnackBag", 3320, 800, 91, 20)
-put("SM_SnackBag", 3345, 820, 91, -10)
-put("SM_SnackBag", 3330, 855, 91, 75)
-put("SM_SnackBox", 3375, 805, 91, 0)
-put("SM_SnackBox", 3375, 855, 91, 15)
+put("SM_SnackBag", 3085, 1135, 104, 20)          # (snacks live on the cafe tables; the island is for lunch)
+put("SM_SnackBag", 3110, 1170, 104, -10)
+put("SM_SnackBox", 3470, 1235, 104, 0)
+put("SM_SnackBox", 3430, 1262, 104, 15)
 put("SM_SodaCan", 3240, 860, 91)
 put("SM_SodaCan", 3260, 862, 91)
 put("SM_WaterBottle", 3290, 860, 91)
 put("SM_SodaCan", 3100, 1150, 103)        # on the cafe tables
 put("SM_WaterBottle", 3470, 1240, 103)
 put("SM_SnackBag", 3430, 1270, 103, 60)
-# Lunch is served (Act 2): a catering table and lunch on the cafe tables, hidden until 12:00 (C++ reveals 'Act2Reveal')
-put("SM_CafeTable", 3500, 1020, 0, 0, ["Act2Reveal"])
-LUNCH = [("SM_PizzaSlice", 3470, 1000), ("SM_PizzaSlice", 3500, 995), ("SM_Sandwich", 3530, 1010),
-         ("SM_Donut", 3475, 1040), ("SM_Donut", 3505, 1045), ("SM_SaladBowl", 3535, 1045)]
-for mesh, x, y in LUNCH:
-    put(mesh, x, y, 104, rnd.uniform(0, 360), ["Act2Reveal"])
-for mesh, x, y in (("SM_Sandwich", 3080, 1140), ("SM_SaladBowl", 3125, 1165), ("SM_PizzaSlice", 3440, 1230), ("SM_Donut", 3465, 1260)):
-    put(mesh, x, y, 104, rnd.uniform(0, 360), ["Act2Reveal"])
+# Lunch is served (Act 2): on the kitchen island (top 90 cm), under a TODAY'S SPECIALS board. Hidden until 12:00.
+for mesh, x, y in (("SM_PizzaSlice", 3305, 800), ("SM_PizzaSlice", 3308, 848), ("SM_Sandwich", 3345, 800),
+                   ("SM_Sandwich", 3348, 848), ("SM_SaladBowl", 3378, 805), ("SM_Donut", 3378, 852)):
+    put(mesh, x, y, 91, rnd.uniform(-20, 20), ["Act2Reveal"])
 
 # --- Conference room ------------------------------------------------------------
 for x in (600, 800, 1000):
@@ -261,6 +271,23 @@ for r in range(3):
 # --- Janitor closet: SW corner of the open office, door in its east wall --------------
 #     walls/lintel are engine cubes (BOXES), the door is SM_Door on its hinge (Openable)
 BOXES = []   # (label, x, y, z_centre, sx, sy, sz, material path, tags)
+PM = "/Game/Props/Materials/"
+BOXES += [
+    # Lunch board on the island (Act 2)
+    ("LunchSpecials", 3245, 860, 115, 34, 2, 48, PM + "MI_LunchSpecials", ["Act2Reveal", "Inspectable"]),
+    # Reception: the sign-in clipboard, and a sign
+    ("SignInSheet", 1985, 1285, 109.6, 23, 32, 0.4, PM + "MI_SignInSheet", ["Inspectable"]),
+    ("Sign_Wait", 2230, 1262, 125, 30, 2, 30, PM + "MI_Sign_Wait", []),
+    # Lobby: rug, magazine, promo screen on the west wall
+    ("Lobby_Rug", 1760, 1450, 0.6, 360, 240, 1, PM + "MI_Rug", []),
+    ("Magazine", 1720, 1415, 44.4, 21, 27, 0.6, PM + "MI_Magazine", ["Inspectable"]),
+    ("Lobby_PromoScreen", 1412, 1450, 175, 3, 160, 90, PM + "MI_Screen_Promo", []),
+    # Elevator: a button panel inside (E), emergency signs
+    ("ElevatorPanel_In", 2388, 380, 120, 2, 24, 48, PM + "MI_ElevatorPanel", ["Use=Elevator"]),
+    ("Sign_ElevatorFire", 1812, 380, 150, 2, 40, 40, PM + "MI_Sign_ElevatorFire", []),
+    ("Sign_ElevatorFire_Out", 1935, 512, 150, 30, 2, 30, PM + "MI_Sign_ElevatorFire", []),
+    ("Sign_Emergency", 2100, 12, 170, 40, 2, 40, PM + "MI_Sign_Emergency", []),
+]
 BOXES += [("RestroomWall_W1", 3050, 1825, 150, 20, 250, 300, "/Game/Fear/MI_Greybox_Walls", []),
           ("RestroomWall_W2", 3050, 2080, 150, 20, 80, 300, "/Game/Fear/MI_Greybox_Walls", []),
           ("RestroomLintel", 3050, 1995, 255, 20, 90, 90, "/Game/Fear/MI_Greybox_Walls", []),
@@ -380,6 +407,8 @@ def main():
             comp.set_simulate_physics(True)
             comp.set_notify_rigid_body_collision(True)
             all_tags.append("Throwable")
+        if "SecurityCam" in tags:
+            comp.set_mobility(unreal.ComponentMobility.MOVABLE)   # turned by C++ to follow you
         if "Openable" in tags:
             comp.set_mobility(unreal.ComponentMobility.MOVABLE)   # swung open by the interact system
         if "Act2Reveal" in tags:

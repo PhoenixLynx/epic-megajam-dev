@@ -120,6 +120,7 @@ void UTakeGrabComponent::BindKeys()
 		IC->BindKey(EKeys::Two, IE_Pressed, this, &UTakeGrabComponent::Fear2);
 		IC->BindKey(EKeys::Three, IE_Pressed, this, &UTakeGrabComponent::Fear3);
 		IC->BindKey(EKeys::Four, IE_Pressed, this, &UTakeGrabComponent::Fear4);
+		IC->BindKey(EKeys::F8, IE_Pressed, this, &UTakeGrabComponent::SkipTasks);   // playtest: finish the current task list
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Keys bound: E = use / pick up, Right Mouse = throw, 1-4/0 = Fear"));
 }
@@ -559,6 +560,7 @@ void UTakeGrabComponent::Eat()
 	else if (bDrink) { ShowSubtitle(TEXT(""), Drinks[Eaten % int32(UE_ARRAY_COUNT(Drinks))], 2.5f); }
 	else { ShowSubtitle(TEXT(""), Bites[Eaten % int32(UE_ARRAY_COUNT(Bites))], 2.5f); }
 	++Eaten;
+	if (UTakeGameInstance* EatGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { EatGI->AddEnergy(bDrink ? 12.f : 20.f); }
 	Handle->ReleaseComponent();
 	if (AActor* Food = Comp->GetOwner())
 	{
@@ -590,6 +592,7 @@ void UTakeGrabComponent::Sip()
 	};
 	ShowSubtitle(TEXT(""), Lines[Sips % int32(UE_ARRAY_COUNT(Lines))], 2.5f);
 	++Sips;
+	GI->AddEnergy(10.f);
 }
 
 int32 UTakeGrabComponent::PassNeeded(const AActor* Door) const
@@ -681,7 +684,7 @@ void UTakeGrabComponent::BindPropImpacts()
 		if (SM->GetStaticMesh()->GetName().Contains(TEXT("Monitor")))
 		{
 			const int32 Slot = SM->GetMaterialIndex(FName(TEXT("M_Screen")));
-			if (Slot != INDEX_NONE && WorkScreens.Num() > 0)
+			if (Slot != INDEX_NONE && WorkScreens.Num() > 0 && !It->ActorHasTag(TEXT("FixedScreen")))   // security monitors keep their feeds
 			{
 				FScreen Scr;
 				Scr.Comp = SM;
@@ -909,6 +912,9 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		{ TEXT("Polaroid_4470"), TEXT("DESK 4471 - DAY 1"), TEXT("Your desk. Someone sitting at it, in a mint suit.\nThe face has been scribbled out. Hard. The pen went through the photo."), 0 },
 		{ TEXT("Sticky_4470"), TEXT("A NOTE"), TEXT("\"if you're reading this it's not your first day. LOOK CLOSER. - 4470\"\nThe handwriting looks a lot like yours."), 0 },
 		{ TEXT("Nameplate_4471"), TEXT("YOUR NAMEPLATE"), TEXT("4471, on a sticker. It doesn't quite cover the number underneath.\nPeel back the corner and it says 4470."), 0 },
+		{ TEXT("SignInSheet"), TEXT("VISITOR SIGN-IN"), TEXT("4471, 9:00. 4471, 9:00. 4471, 9:00. Every line, the same handwriting.\nOne line says 4470, OUT: wrapped. The last line is waiting for you."), 0 },
+		{ TEXT("Magazine"), TEXT("HALCYON QUARTERLY"), TEXT("Employee of the Take: 4471. The photo is you, at your desk.\nIssue date: tomorrow."), 0 },
+		{ TEXT("LunchSpecials"), TEXT("TODAY'S SPECIALS"), TEXT("Pizza, delivered 12:00. Turkey, because you asked for turkey.\nSoup of the day: yesterday's."), 0 },
 		{ TEXT("Mirror"), TEXT("THE MIRROR"), TEXT("You, in a mint suit. Your reflection blinks a moment after you do.\nThere are fingerprints on the glass. On the inside."), 0 },
 		{ TEXT("Chairman"), TEXT("THE CHAIRMAN"), TEXT("Founder. Visionary. Always just out of frame.\nThe plaque says he's proud of you. It doesn't say for what."), 0 },
 		{ TEXT("CallSheet"), TEXT("CALL SHEET"), TEXT("Today's date. A shooting schedule for an office.\nOne line is highlighted: EMPLOYEE 4471. You."), 0 },
@@ -1081,7 +1087,12 @@ void UTakeGrabComponent::TickClock(float DeltaTime)
 	const int32 M = FMath::FloorToInt(GI->WorkdayMinutes);
 	const int32 H24 = M / 60;
 	const int32 H12 = (H24 + 11) % 12 + 1;
-	Prompt->SetClock(FString::Printf(TEXT("%d:%02d %s\nTAKE %d   \u00B7   PASS %d / 3"), H12, M % 60, H24 < 12 ? TEXT("AM") : TEXT("PM"), GI->TakeNumber, GI->SoulBits));
+	// Energy: ten little cells under the clock ("Your energy is our greatest asset")
+	FString Cells;
+	const int32 Lit = FMath::Clamp(FMath::CeilToInt(GI->Energy / 10.f), 0, 10);
+	for (int32 C = 0; C < 10; ++C) { Cells += C < Lit ? TEXT("\u25A0") : TEXT("\u25A1"); }
+	Prompt->SetClock(FString::Printf(TEXT("%d:%02d %s\nTAKE %d   \u00B7   PASS %d / 3\nENERGY  %s"), H12, M % 60, H24 < 12 ? TEXT("AM") : TEXT("PM"),
+		GI->TakeNumber, GI->SoulBits, *Cells));
 }
 
 void UTakeGrabComponent::UpdateTasks()
@@ -1197,6 +1208,8 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickFun(DeltaTime);
 	TickMail(DeltaTime);
 	TickFearReveals();
+	TickEnergy(DeltaTime);
+	TickCams(DeltaTime);
 	UpdatePrompt();
 	UpdateTasks();
 	if (SubtitleLeft > 0.f)

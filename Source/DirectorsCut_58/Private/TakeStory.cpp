@@ -296,6 +296,7 @@ void UTakeGrabComponent::CollectWisp(ATakeWisp* Wisp)
 	Wisp->Collect();
 	PlaySfx2D(TEXT("sfx_lock_solved"), 0.8f);
 	if (ATakeFearDirector* FearDir = FindFearDirector()) { FearDir->Calm(2.5f); }
+	if (UTakeGameInstance* WispGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { WispGI->AddEnergy(100.f); }   // soul energy: full
 	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
 	{
 		GI->bGotWisp = true;

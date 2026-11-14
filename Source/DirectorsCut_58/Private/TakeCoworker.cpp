@@ -118,17 +118,25 @@ void ATakeCoworker::SetupSkeletal()
 	// Faces (Sol's ART-001): the head's "M_Face" card shows the calm face; the Fear face when they stare
 	FaceCalm = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Calm.MI_Face_Calm"));
 	FaceFear = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Fear.MI_Face_Fear"));
-	bFaceIsFear = true;
+	// Security and the custodian don't smile (neutral face, when Sol's export is in); a frown when you hit someone
+	if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase) || NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase))
+	{
+		if (UMaterialInterface* Neutral = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Neutral.MI_Face_Neutral"))) { FaceCalm = Neutral; }
+	}
+	FaceFrown = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Frown.MI_Face_Frown"));
+	FaceMode = -1;
 	SetFace(false);
 	PlayAnim(bSitsAtDesk && AnimSit ? AnimSit.Get() : AnimIdle.Get());
 }
 
 void ATakeCoworker::SetFace(bool bFear)
 {
-	if (!bSkeletal || bFear == bFaceIsFear) { return; }
-	UMaterialInterface* Mat = bFear ? FaceFear.Get() : FaceCalm.Get();
+	// 0 calm (or neutral), 1 Fear, 2 frown (just hit, outside Fear)
+	const int32 Mode = bFear ? 1 : (FrownHold > 0.f && FaceFrown ? 2 : 0);
+	if (!bSkeletal || Mode == FaceMode) { return; }
+	UMaterialInterface* Mat = Mode == 1 ? FaceFear.Get() : Mode == 2 ? FaceFrown.Get() : FaceCalm.Get();
 	if (!Mat) { return; }
-	bFaceIsFear = bFear;
+	FaceMode = Mode;
 	GetMesh()->SetMaterialByName(FName(TEXT("M_Face")), Mat);
 }
 
@@ -234,6 +242,7 @@ void ATakeCoworker::HitByProp(float Speed)
 		if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { ++GI->GuardComplaints; }
 	}
 	CooldownLeft = 0.f;   // they always answer this
+	FrownHold = 4.f;      // a frown, for a moment
 	if (GetFear() >= 0.4f) { FaceFearHold = 2.5f; }   // uneasy already: for a moment, the other face
 	if (HitLines.Num() > 0) { SayLine(HitLines[FMath::RandRange(0, HitLines.Num() - 1)]); return; }
 	if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { SayLine(TEXT("That's going in my report.")); }
@@ -528,6 +537,7 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 	}
 
 	FaceFearHold = FMath::Max(0.f, FaceFearHold - DeltaSeconds);
+	FrownHold = FMath::Max(0.f, FrownHold - DeltaSeconds);
 	SetFace(State == ETakeCoworkerState::Watching || FaceFearHold > 0.f);
 
 	AAIController* AI = Cast<AAIController>(GetController());

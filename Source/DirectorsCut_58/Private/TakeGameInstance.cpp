@@ -162,7 +162,7 @@ FString UTakeGameInstance::TaskListText() const
 		return FString::Printf(TEXT("%s  Join 12:30 call\n%s  Attend 1:00 meeting\n%s  Check in with 3 coworkers  (%d/3)\n%s  Reply to the Chairman"),
 		                       Box(bJoinedCall), Box(bAttendedMeeting), Box(Met >= 3), Met, Box(bRepliedChairman));
 	}
-	return FString::Printf(TEXT("%s  Check email\n%s  Get coffee\n%s  Complete Compliance Training"),
+	return FString::Printf(TEXT("%s  Read your email (inbox zero)\n%s  Get coffee\n%s  Complete Compliance Training"),
 	                       Box(bReadEmail), Box(bGotCoffee), Box(bTrainingComplete));
 }
 
@@ -188,4 +188,24 @@ bool UTakeGameInstance::AddGlyphNote(int32 Key, const FString& Source, int32 Val
 	for (const FString& N : GlyphNotes) { if (N.StartsWith(Prefix)) { return false; } }
 	GlyphNotes.Add(FString::Printf(TEXT("%s  \u00B7  %s"), *Prefix, *GlyphString(Value, Bits)));
 	return true;
+}
+
+void UTakeGameInstance::TakeSkip()
+{
+	if (CurrentAct() < 2)
+	{
+		if (!MorningTasksDone())
+		{
+			bReadEmail = bGotCoffee = bTrainingComplete = bMetReceptionist = true;
+			if (SoulBits < 1) { SetSoulBits(1); }
+			SetObjective(ObjectiveForBeat());
+			return;
+		}
+		TakeBeat(4);   // morning done: straight to lunch (beat 1.10)
+		return;
+	}
+	bJoinedCall = bAttendedMeeting = bRepliedChairman = true;
+	CoworkersCheckedIn = 3;
+	WorkdayMinutes = FMath::Max(WorkdayMinutes, 14.f * 60.f + 10.f);   // four minutes to 2:14
+	SetObjective(ObjectiveForBeat());
 }

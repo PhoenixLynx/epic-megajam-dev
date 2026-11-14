@@ -27,6 +27,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Misc/App.h"
+#include "Components/MultiLineEditableTextBox.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "HAL/FileManager.h"
 
 namespace
 {
@@ -34,7 +38,7 @@ namespace
 	const FLinearColor PMuted(0.33f, 0.40f, 0.45f);
 	const FLinearColor PMint(0.50f, 0.83f, 0.77f);
 	const FLinearColor PSoft(0.93f, 0.96f, 0.97f);
-	enum EItem { Resume, Tasks, Settings, Save, Load, Quit };
+	enum EItem { Resume, Tasks, Settings, Save, Load, Quit, Notes };
 }
 
 UTextBlock* UTakePauseMenu::MakeText(const FString& Text, int32 Size, const FLinearColor& Color, bool bBold)
@@ -96,10 +100,12 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 		// Left: menu
 		UVerticalBox* Menu = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
 		Row->AddChildToHorizontalBox(Menu)->SetPadding(FMargin(0.f, 0.f, 30.f, 0.f));
-		const TCHAR* Items[] = { TEXT("Resume"), TEXT("Tasks"), TEXT("Settings"), TEXT("Save"), TEXT("Load"), TEXT("Quit to desktop") };
-		for (int32 I = 0; I < int32(UE_ARRAY_COUNT(Items)); ++I)
+		struct FItem { int32 Id; const TCHAR* Label; };
+		const FItem Items[] = { { Resume, TEXT("Resume") }, { Tasks, TEXT("Tasks") }, { Notes, TEXT("Playtest notes") }, { Settings, TEXT("Settings") },
+		                        { Save, TEXT("Save") }, { Load, TEXT("Load") }, { Quit, TEXT("Quit to desktop") } };
+		for (const FItem& It : Items)
 		{
-			UTakeIndexedButton* B = MakeButton(Items[I], I, I == Resume);
+			UTakeIndexedButton* B = MakeButton(It.Label, It.Id, It.Id == Resume);
 			B->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnMenu);
 			Menu->AddChildToVerticalBox(B)->SetPadding(FMargin(0.f, 0.f, 0.f, 8.f));
 		}
@@ -170,6 +176,24 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 			TEXT("E  use / talk / pick up / drop      Click or Right Mouse  throw\n")
 			TEXT("E or Tab  log out of your terminal      Esc or P  pause"), 15, PInk))->SetPadding(FMargin(0.f, 6.f, 0.f, 0.f));
 		Pages->AddChild(SetPage);
+
+		// Page 2: playtest notes (saved to Saved/PlaytestNotes.txt with the time, take and place) + skip
+		UVerticalBox* NotesPage = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		NotesPage->AddChildToVerticalBox(MakeText(TEXT("PLAYTEST NOTES"), 13, PMuted, true));
+		NotesPage->AddChildToVerticalBox(MakeText(TEXT("Type a note, then Save note. It's stamped with the game clock, act and where you're standing."), 14, PMuted))->SetPadding(FMargin(0.f, 4.f, 0.f, 8.f));
+		NotesBox = WidgetTree->ConstructWidget<UMultiLineEditableTextBox>(UMultiLineEditableTextBox::StaticClass());
+		UVerticalBoxSlot* NoteSlot = NotesPage->AddChildToVerticalBox(NotesBox);
+		NoteSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+		UHorizontalBox* NoteButtons = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+		UTakeIndexedButton* SaveNote = MakeButton(TEXT("Save note"), 0, true);
+		SaveNote->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnSaveNote);
+		NoteButtons->AddChildToHorizontalBox(SaveNote)->SetPadding(FMargin(0.f, 0.f, 10.f, 0.f));
+		UTakeIndexedButton* Skip = MakeButton(TEXT("Skip current tasks"), 1);
+		Skip->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnSaveNote);
+		NoteButtons->AddChildToHorizontalBox(Skip);
+		NotesPage->AddChildToVerticalBox(NoteButtons)->SetPadding(FMargin(0.f, 10.f, 0.f, 0.f));
+		NotesPage->AddChildToVerticalBox(MakeText(TEXT("Skip (also F8 in game): finishes the tasks on your list, so you can see what comes next."), 13, PMuted))->SetPadding(FMargin(0.f, 8.f, 0.f, 0.f));
+		Pages->AddChild(NotesPage);
 	}
 	return Super::RebuildWidget();
 }
@@ -222,6 +246,7 @@ void UTakePauseMenu::OnMenu(int32 Item)
 	case Resume:   OnResumeRequested.Broadcast(); break;
 	case Tasks:    if (Pages) { Pages->SetActiveWidgetIndex(0); } RefreshTasks(); break;
 	case Settings: if (Pages) { Pages->SetActiveWidgetIndex(1); } break;
+	case Notes:    if (Pages) { Pages->SetActiveWidgetIndex(2); } if (NotesBox) { NotesBox->SetKeyboardFocus(); } break;
 	case Save:     SetStatus(SaveProgress(this) ? TEXT("Saved. HALCYON remembers.") : TEXT("Save failed.")); RefreshSaveInfo(); break;
 	case Load:
 		if (LoadProgress(this)) { SetStatus(TEXT("Loaded.")); RefreshTasks(); OnResumeRequested.Broadcast(); }
@@ -389,10 +414,38 @@ bool UTakePauseMenu::LoadProgress(const UObject* WorldContext)
 
 FReply UTakePauseMenu::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-	if (!InKeyEvent.IsRepeat() && (InKeyEvent.GetKey() == EKeys::Escape || InKeyEvent.GetKey() == EKeys::P))
+	const bool bTyping = NotesBox && NotesBox->HasKeyboardFocus();   // a "p" in a note isn't "pause"
+	if (!InKeyEvent.IsRepeat() && (InKeyEvent.GetKey() == EKeys::Escape || (InKeyEvent.GetKey() == EKeys::P && !bTyping)))
 	{
 		OnResumeRequested.Broadcast();
 		return FReply::Handled();
 	}
 	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
+void UTakePauseMenu::OnSaveNote(int32 Which)
+{
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (Which == 1)   // skip
+	{
+		if (GI) { GI->TakeSkip(); }
+		RefreshTasks();
+		SetStatus(TEXT("Skipped: tasks done."));
+		return;
+	}
+	if (!NotesBox || NotesBox->GetText().IsEmpty()) { SetStatus(TEXT("Nothing to save.")); return; }
+	FString Where;
+	if (const APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+	{
+		const FVector L = P->GetActorLocation();
+		Where = FString::Printf(TEXT("x %.0f y %.0f"), L.X, L.Y);
+	}
+	const int32 M = GI ? FMath::FloorToInt(GI->WorkdayMinutes) : 0;
+	const FString Stamp = FString::Printf(TEXT("[%s | game %d:%02d | Act %d | Take %d | %s]"), *FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M")),
+		(M / 60 + 11) % 12 + 1, M % 60, GI ? GI->CurrentAct() : 1, GI ? GI->TakeNumber : 1, *Where);
+	const FString Line = Stamp + TEXT("\n") + NotesBox->GetText().ToString() + TEXT("\n\n");
+	const FString Path = FPaths::ProjectSavedDir() / TEXT("PlaytestNotes.txt");
+	const bool bOk = FFileHelper::SaveStringToFile(Line, *Path, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM, &IFileManager::Get(), FILEWRITE_Append);
+	SetStatus(bOk ? TEXT("Note saved (Saved/PlaytestNotes.txt).") : TEXT("Couldn't save the note."));
+	if (bOk) { NotesBox->SetText(FText::GetEmpty()); }
 }

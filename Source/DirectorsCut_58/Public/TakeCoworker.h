@@ -136,7 +136,9 @@ private:
 	// Faces: calm normally, the Fear face while staring or just after being hit in Fear
 	UPROPERTY() TObjectPtr<class UMaterialInterface> FaceCalm;
 	UPROPERTY() TObjectPtr<class UMaterialInterface> FaceFear;
-	bool bFaceIsFear = false;
+	UPROPERTY() TObjectPtr<class UMaterialInterface> FaceFrown;
+	int32 FaceMode = -1;
+	float FrownHold = 0.f;
 	float FaceFearHold = 0.f;
 	void SetFace(bool bFear);
 };

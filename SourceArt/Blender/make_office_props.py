@@ -928,6 +928,17 @@ def sign_plaque():
     return p.finish(0.003, fit_uv={"M_SignFace": (-0.14, 0.14, 0.01, 0.29)})
 
 
+def security_cam():
+    """Wall camera. Pivot = the wall mount; the lens looks along -Y (Unreal +Y). C++ turns the whole actor to follow you."""
+    p = Prop("SM_SecurityCam")
+    p.box((0.08, 0.04, 0.08), (0, 0.06, 0), "M_PlasticWhite")                    # wall plate
+    p.box((0.03, 0.08, 0.03), (0, 0.0, 0), "M_PlasticWhite")                     # arm
+    p.box((0.1, 0.22, 0.1), (0, -0.12, -0.02), "M_PlasticWhite", rot_x=-0.25)    # body, tilted down
+    p.cyl(0.035, 0.03, (0, -0.235, -0.05), "M_PlasticBlack", segs=16, axis="Y")  # lens
+    p.sphere(0.01, (0.035, -0.2, 0.02), "M_RedPaint", segs=8)                    # recording light
+    return p.finish(0.004)
+
+
 def fruit_bowl():
     p = Prop("SM_FruitBowl")
     p.cyl(0.14, 0.07, (0, 0, 0.035), "M_Ceramic", segs=24, radius2=0.1)
@@ -955,7 +966,7 @@ BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabine
             reception_desk, fridge_body, fridge_door, door, door_frame, utility_shelf,
             coffee_bag, tea_box, cup_stack, snack_bag, snack_box, soda_can, water_bottle, milk_carton,
             lunch_box, fruit_bowl, sandwich, pizza_slice, salad_bowl, donut,
-            toilet, sink, mirror, hand_dryer, stall_door, shoes, sign_plaque]
+            toilet, sink, mirror, hand_dryer, stall_door, shoes, sign_plaque, security_cam]
 
 
 def export_fbx(obj):

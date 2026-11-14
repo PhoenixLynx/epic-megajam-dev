@@ -453,8 +453,18 @@ void UTakeTerminalWidget::ShowEmail(int32 Index)
 	OpenMail = Index;
 	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
 	{
-		GI->bReadEmail = true;
 		GI->ReadMail.AddUnique(M.Id);
+		// The morning task is inbox zero: every email that has arrived, read
+		bool bAllRead = true;
+		for (const FMail& Each : Mails) { if (!GI->ReadMail.Contains(Each.Id)) { bAllRead = false; break; } }
+		if (bAllRead && !GI->bReadEmail)
+		{
+			GI->bReadEmail = true;
+			if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+			{
+				if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>()) { Hands->ShowSubtitle(TEXT(""), TEXT("Inbox zero. HALCYON is proud of you."), 3.f); }
+			}
+		}
 	}
 	ReaderHeader->SetText(FText::FromString(M.Subject));
 	Reader->SetText(FText::FromString(FString::Printf(TEXT("From: %s\n\n%s"), *M.Sender, *M.Body)));

@@ -850,3 +850,40 @@ A running record of every AI tool used and what it did.
   2. The crumpled paper by your desk only appears after lunch (Act2Reveal), so the morning starts clean.
   3. Faces: the log said *"Material with missing usage flag was applied to skeletal mesh"*. The face material wasn't marked for use on rigged meshes, so Unreal silently drew the default instead. `M_FaceTexture` now sets **Used with Skeletal Mesh**.
 - **AI tools used:** Claude (log diagnosis, C++, scripts).
+
+### Session 54: Sat Nov 14, 2026, 14:55 MST: Lunch island, lobby, elevator, cameras, energy, playtest tools
+
+- **My list (14:30):** faces work now ![faces](screenshots/Screenshot%202026-11-14%20142357_facesworknow.png). Notes:
+  1. Lunch is on a small table and falls off; it should go on the main island with a lunch sign and daily specials ![lunch](screenshots/Screenshot%202026-11-14%20140710_theyneed%20lucnh%20sign%20and%20it%20is%20falling%20off%20table.png)
+  2. Security cameras, maybe a security desk
+  3. Make the lobby more "inviting"
+  4. The elevator is too blank ![elevator](screenshots/Screenshot%202026-11-14%20140058_fleshingoutelevator.png): buttons inside, emergency signs
+  5. A sign-in clipboard at the front desk
+  6. Sol is making neutral faces (security, janitor) and a frown for when you hit someone
+  7. New screenshots
+  8. Sol is making a title background placeholder
+  9. A training movie (nice to have)
+  10. A way to skip puzzles for playtests, and a way to take notes in game
+  11. An energy bar
+  12. The email task should need inbox zero
+- **Done:**
+  - **Lunch** sits on the kitchen island under a **LUNCH IS SERVED · TODAY'S SPECIALS** board (*"Turkey sandwich (you asked for turkey)"*, *"Soup of the day: yesterday's"*). The catering table is gone, and the snacks moved to the cafe tables.
+  - **Reception:** a visitor sign-in clipboard: *4471, 9:00* on every line, one *4470: wrapped*, and an empty line *"sign here →"*. A sign: *"Please wait to be called. You will be called."*
+  - **Lobby:**
+    - a rug with the HALCYON sun
+    - two armchairs, a plant and a water cooler
+    - a **HALCYON QUARTERLY** magazine (*Employee of the Take: 4471. Issue date: tomorrow.*)
+    - a promo screen (*"Your energy. Our future. Now hiring: 4472."*)
+  - **Security desk** by the elevator: two monitors with four CCTV feeds. Feed 4 is **DESK 4471: YOU (FROM BEHIND)**. **Seven security cameras** around the campus slowly turn to follow you.
+  - **Elevator:**
+    - a button panel inside (E): *"You press 2. The light comes on, then goes out. 2 hasn't happened yet."* / *"FLOOR 3 IS IN POST-PRODUCTION"* / *"C: AUTHORISED PERSONNEL ONLY. ...YET."* / *"B4 IS NOT A FLOOR"*
+    - signs: *"IN CASE OF FIRE, DO NOT USE THE ELEVATOR. IN CASE OF RETAKE, REMAIN WHERE YOU ARE."* and *"EMERGENCY: There is no emergency. Remain calm. Remain."*
+  - **Energy:** ten cells under the clock. It drains over about 15 minutes. A coffee sip gives +10, food +20, a drink +12, and the wisp fills it. Under 25% you walk 20% slower and get a nudge toward coffee. It's never a fail state.
+  - **Email task = inbox zero** (*"Inbox zero. HALCYON is proud of you."*).
+  - **Playtest tools:**
+    - **F8** (or Pause → Playtest notes → *Skip current tasks*) finishes the current task list: morning → lunch → 2:14.
+    - **Pause → Playtest notes** saves typed notes to `Saved/PlaytestNotes.txt`, stamped with the real time, game clock, act, take and position.
+  - **Faces:** the code looks for `MI_Face_Neutral` (guards, custodian) and `MI_Face_Frown` (4 s after a hit outside Fear) and uses them as soon as Sol's exports are in. Asked in the handoff.
+  - Later: the title screen with Sol's placeholder background (with Act 3), the training movie (nice to have).
+- **New:** SM_SecurityCam; 10 textures (lunch board, sign-in sheet, CCTV, promo, magazine, rug, elevator panel, 3 signs). ![textures](screenshots/2026-11-14_lobby_textures.png)
+- **AI tools used:** Claude (HTML/SVG textures via headless Chrome, Blender camera, C++, level dressing). Sol / ChatGPT (faces, title background in progress).

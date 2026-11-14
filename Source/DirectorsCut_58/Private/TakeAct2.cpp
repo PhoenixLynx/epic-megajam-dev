@@ -23,6 +23,8 @@
 #include "GameFramework/PlayerController.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 namespace
 {
@@ -281,6 +283,7 @@ void UTakeGrabComponent::CollectFunProps()
 			}
 		}
 		if (It->ActorHasTag(TEXT("FearReveal"))) { FearReveals.Add(*It); }
+		if (It->ActorHasTag(TEXT("SecurityCam"))) { Cams.Add(*It); }
 		if (N.Contains(TEXT("TrashBin"))) { Bins.Add(*It); }
 		else if (IsFoodMesh(N) && It->ActorHasTag(TEXT("Throwable")))
 		{
@@ -469,6 +472,20 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 	const FVector Where = Thing->GetActorLocation() + FVector(0.f, 0.f, 80.f);
 	const float Fear = FindFearDirector() ? FindFearDirector()->Fear : 0.f;
 	auto Pick = [N](std::initializer_list<const TCHAR*> L) { return FString(*(L.begin() + FMath::Min<int32>(N, int32(L.size()) - 1))); };
+	if (Key == TEXT("Elevator"))
+	{
+		PlaySfx(TEXT("sfx_badge_ok"), Where, 0.5f);
+		static const TCHAR* Presses[] = {
+			TEXT("You press 2. The light comes on, then goes out. 2 hasn't happened yet."),
+			TEXT("You press 3. The display: FLOOR 3 IS IN POST-PRODUCTION."),
+			TEXT("You press C. The display: AUTHORISED PERSONNEL ONLY. ...YET."),
+			TEXT("You press 1. The display: YOU ARE ON 1. YOU HAVE ALWAYS BEEN ON 1."),
+			TEXT("You press B4. The display: B4 IS NOT A FLOOR. (The vending machine hums, somewhere.)"),
+			TEXT("You press the alarm. Nothing. Then, very quietly, the PA: \"We heard you.\""),
+		};
+		ShowSubtitle(TEXT(""), Presses[N % int32(UE_ARRAY_COUNT(Presses))], 4.f);
+		return;
+	}
 	if (Key == TEXT("Sink"))
 	{
 		PlaySfx(TEXT("sfx_tap_water"), Where, 0.7f);
@@ -504,5 +521,49 @@ void UTakeGrabComponent::TickFearReveals()
 			Act->SetActorHiddenInGame(!bShow);   // the shoes under the stall: there only when you're afraid
 			Act->SetActorEnableCollision(false);
 		}
+	}
+}
+
+// ------------------------------------------------------------------ energy, cameras, skip
+void UTakeGrabComponent::TickEnergy(float DeltaTime)
+{
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	ACharacter* Me = Cast<ACharacter>(GetOwner());
+	if (!GI || !Me || PauseMenu || SlateT >= 0.f) { return; }
+	if (BaseWalkSpeed < 0.f) { BaseWalkSpeed = Me->GetCharacterMovement()->MaxWalkSpeed; }
+	GI->Energy = FMath::Max(0.f, GI->Energy - DeltaTime * (100.f / 900.f));   // full to empty in about 15 minutes
+	const bool bLow = GI->Energy < 25.f;
+	Me->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * (bLow ? 0.8f : 1.f);
+	if (bLow && !bLowEnergyNoted)
+	{
+		bLowEnergyNoted = true;
+		QueueSubtitle(TEXT(""), TEXT("You're running low. Your energy is their greatest asset. Coffee? A snack?"));
+	}
+	if (GI->Energy > 40.f) { bLowEnergyNoted = false; }
+}
+
+void UTakeGrabComponent::TickCams(float DeltaTime)
+{
+	const APawn* Me = Cast<APawn>(GetOwner());
+	if (!Me || Cams.Num() == 0) { return; }
+	for (const TWeakObjectPtr<AActor>& C : Cams)
+	{
+		AActor* Cam = C.Get();
+		if (!Cam) { continue; }
+		const FVector To = Me->GetActorLocation() - Cam->GetActorLocation();
+		if (To.Size2D() > 1800.f) { continue; }
+		// The lens looks along the actor's +Y: yaw = direction to you - 90. It turns slowly, like it's thinking about it.
+		const float Want = To.Rotation().Yaw - 90.f;
+		const FRotator Now = Cam->GetActorRotation();
+		Cam->SetActorRotation(FRotator(Now.Pitch, FMath::FixedTurn(Now.Yaw, Want, 40.f * DeltaTime), Now.Roll));
+	}
+}
+
+void UTakeGrabComponent::SkipTasks()
+{
+	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		GI->TakeSkip();
+		ShowSubtitle(TEXT(""), TEXT("(Playtest skip: tasks done.)"), 2.f);
 	}
 }
