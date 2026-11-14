@@ -57,6 +57,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-13 16:19 | Claude (Anthropic) | Wrote the C++ gameplay module (Fear Director, grab/throw/telekinesis, Corridor B loop, stalker, rewind, Key Lock library, game instance + console commands), ported and tested the Key Lock core with g++, added auto-wiring, poster materials, place_cpp_actors.py and docs/CPP_SYSTEMS.md. |
 | 2026-11-13 17:35–18:25 | Claude (Anthropic) | Read my editor logs to confirm each step, wrote add_daylight.py (exposure fix), switched the project to C++ (.uproject module, game instance, start map, GameFeatureData entry, with backups), confirmed the first C++ build and auto-wiring from the log. |
 | 2026-11-13 18:28 | Claude (Anthropic) | Wrote add_ceilings.py: modern ceilings, recessed LED panels that dim with Fear, 60 shadowless panel lights (replacing the over-bright point lights), doorway signs incl. KITCHEN. |
+| 2026-11-13 18:32–18:55 | Claude (Anthropic) | Fixed prop facing (YAW_FIX) + a few chairs wrong-way on purpose; wishlist batch 1: UVs on all props, 16 new props (reception desk, fridge body + hinged door, door + frame, utility shelf, kitchen stock), HALCYON logo + fridge notes, janitor closet, 4 ambient loops + placement script. |
 
 ---
 
@@ -467,3 +468,16 @@ A running record of every AI tool used and what it did.
   - **Hospital ward has no ceiling slab** so the Act 3 trust fall from the Wellness Center can drop into it; its panels hang in the dark.
   - Builder now runs daylight + ceilings automatically on a rebuild.
 - **AI tools used:** Claude (ceilings script).
+
+### Session 27: Fri Nov 13, 2026, 18:32 MST: Wishlist batch 1 (level + art)
+
+- **My wishlist:** sit at my desk and log into the terminal · planter blocks the kitchen entrance · lobby desk should say HALCYON + a company logo · open the fridge · stock the kitchen (snacks, coffee, tea) · snarky fridge note · microwave · pick up items · no default Unreal model · ambient noises · a janitor closet that opens/closes. Also: every chair faced the wrong way (a few can, not all), and mannequins should move around during the workday (working, checking email, getting coffee) and say random dialogue when you bump into them.
+- **Done (batch 1):**
+  - **Facing fix:** `YAW_FIX = 180` (Blender fronts arrive backwards in Unreal); 2 of 19 chairs turned the wrong way on purpose.
+  - **Props 49 → 65, all with UVs now** (fixes the "degenerate tangent" warnings): reception desk, fridge body + **hinged** fridge door, door + frame, utility shelf, coffee bags, tea box, cup stack, snack bags/boxes, soda can, water bottle, milk carton, lunch box, fruit bowl.
+  - **HALCYON logo** (half-sun mark + wordmark) + a wide mint panel for the reception desk front; **fridge notes**: a handwritten sticky (*"TO WHOEVER KEEPS TAKING MY YOGURT: I've seen every take. I KNOW it's you. - Accounting"*) and a People Team memo (*"Unlabelled items will be re-cast. Fridge clean-out is every Friday. It is always Friday."*). Call sheet re-rendered with real marker handwriting.
+  - **Dressing:** planter moved out of the kitchen doorway; reception desk with logo, receptionist behind it; fridge door on its hinge with the notes attached (they swing with it) and food inside; kitchen counter stocked; **janitor closet** in the office's SW corner (walls, frame, hinged door, shelf, mop bucket, custodian). 240 props, 137 pick-up-able.
+  - **Ambience:** 4 seamless placeholder loops (office room tone, fridge hum, lobby air + too-calm chord, Corridor B hum) + the fluorescent buzz, placed per room by `add_ambience.py`.
+  - Fonts used in textures are open-licensed and listed as sourced in RESOURCES.md.
+- **AI tools used:** Claude (props, textures, dressing, ambience).
+- **Next:** batch 2 C++: interact (E: use or pick up), terminal/desk login with HALCYON Mail, openable doors/fridge, hide template arms, Fear debug keys, **wandering coworker mannequins with bump dialogue**.

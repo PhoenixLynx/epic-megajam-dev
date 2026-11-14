@@ -28,13 +28,14 @@ SCALE_FIX = 1.0
 DESK_TOP = 76.0  # cm
 
 # Throwable meshes get physics
-THROWABLE = {"SM_Mug", "SM_Keyboard", "SM_OfficeChair", "SM_ReamOfPaper", "SM_FireExtinguisher", "SM_WetFloorSign",
+THROWABLE = {"SM_CoffeeBag", "SM_TeaBox", "SM_CupStack", "SM_SnackBag", "SM_SnackBox", "SM_SodaCan",
+             "SM_WaterBottle", "SM_MilkCarton", "SM_LunchBox", "SM_FruitBowl", "SM_Mug", "SM_Keyboard", "SM_OfficeChair", "SM_ReamOfPaper", "SM_FireExtinguisher", "SM_WetFloorSign",
              "SM_MopBucket", "SM_Binder", "SM_BinderMint", "SM_BinderRed", "SM_Stapler", "SM_TapeDispenser",
              "SM_PenCup", "SM_DeskLamp", "SM_DeskPhone", "SM_Laptop", "SM_PCTower", "SM_TrashBin", "SM_PlantDesk",
              "SM_Kettle", "SM_Microwave", "SM_Monitor", "SM_MeetingChair", "SM_BarStool", "SM_CoffeeMachine"}
 
 # Grey-box cubes these meshes replace
-REPLACE = ["GB_Desk_4471", "GB_Monitor_4471", "GB_FileCabinet_A", "GB_FileCabinet_B", "GB_BreakCounter",
+REPLACE = ["GB_ReceptionDesk", "GB_Desk_4471", "GB_Monitor_4471", "GB_FileCabinet_A", "GB_FileCabinet_B", "GB_BreakCounter",
            "GB_CoffeeMachine", "GB_WaterCooler", "GB_WellnessBed_1", "GB_WellnessBed_2", "GB_WellnessBed_3",
            "GB_Mug_4471", "GB_Keyboard_4471", "GB_Chair_4471", "GB_ReamOfPaper_A", "GB_ReamOfPaper_B",
            "GB_CoffeePot", "GB_WetFloorSign", "GB_FireExtinguisher", "GB_MopBucket"]
@@ -97,10 +98,11 @@ put("SM_CoffeeTable", 1760, 1430)
 put("SM_PlantTall", 1480, 580)
 put("SM_PlantTall", 2720, 580)
 put("SM_PlantTall", 2720, 1620)
-put("SM_PlanterBox", 2700, 1000, 0, 90)
+put("SM_PlanterBox", 2700, 1450, 0, 90)   # clear of the kitchen doorway (y 900-1100)
 put("SM_WallClock", 1700, 512, 240, 180)
 put("SM_PassReader", 1900, 512, 120, 180)
-put("SM_Mannequin", 2100, 1220, 0, 180, ["NPC", "Receptionist"])
+put("SM_ReceptionDesk", 2100, 1300, 0, 0)
+put("SM_Mannequin", 2100, 1400, 0, 0, ["NPC", "Receptionist"])   # behind the desk, facing the elevator
 put("SM_MannequinGuard", 2350, 650, 0, 200, ["NPC", "Guard_Lobby"])
 put("SM_ExitSign", 2100, 1688, 270, 0)
 
@@ -111,7 +113,8 @@ put("SM_Microwave", 3400, 525, 90, 180)
 put("SM_Kettle", 3500, 545, 90, 180)
 put("SM_Mug", 3200, 560, 90)
 put("SM_Mug", 3230, 575, 90)
-put("SM_Fridge", 3710, 545, 0, 180)
+put("SM_FridgeBody", 3710, 545, 0, 180)
+FRIDGE = (3710, 545, 180)   # door, notes and food are placed relative to this below
 put("SM_VendingMachine", 3750, 900, 0, -90)
 put("SM_WaterCooler", 3730, 1250, 0, -90)
 for tx, ty in ((3100, 1150), (3450, 1250)):
@@ -123,6 +126,20 @@ put("SM_TrashBin", 2850, 1450)
 put("SM_PlantTall", 2870, 580)
 put("SM_WallClock", 3300, 1488, 240, 0)
 put("SM_Mannequin", 3300, 1000, 0, 0, ["NPC", "Coworker_Kitchen"])
+# Stock the counter (top at 90 cm): coffee, tea, cups, snacks, fruit
+for i, x in enumerate((3060, 3085, 3110)):
+    put("SM_CoffeeBag", x, 545, 90, rnd.uniform(-15, 15))
+put("SM_TeaBox", 3460, 525, 90, 10)
+put("SM_TeaBox", 3462, 525, 97, -5)
+put("SM_CupStack", 3260, 530, 90)
+put("SM_CupStack", 3280, 545, 90)
+put("SM_FruitBowl", 3540, 540, 90)
+put("SM_SnackBag", 3600, 530, 90, 20)
+put("SM_SnackBag", 3625, 545, 90, -10)
+put("SM_SnackBox", 3330, 520, 90, 0)
+put("SM_SodaCan", 3100, 1150, 103)        # on the cafe tables
+put("SM_WaterBottle", 3470, 1240, 103)
+put("SM_SnackBag", 3430, 1270, 103, 60)
 
 # --- Conference room ------------------------------------------------------------
 for x in (600, 800, 1000):
@@ -157,6 +174,51 @@ for r in range(3):
     for c in range(5):
         put("SM_HospitalBed", 800 + c * 500, 5800 + r * 650, -1500)
 
+
+# --- Janitor closet: SW corner of the open office, door in its east wall --------------
+#     walls/lintel are engine cubes (BOXES), the door is SM_Door on its hinge (Openable)
+BOXES = []   # (label, x, y, z_centre, sx, sy, sz, material path, tags)
+WALL_MAT = "/Game/Fear/MI_Greybox_Walls"
+BOXES += [("JanitorWall_N", 950, 3350, 150, 320, 20, 300, WALL_MAT, []),
+          ("JanitorWall_E1", 1100, 3415, 150, 20, 130, 300, WALL_MAT, []),
+          ("JanitorWall_E2", 1100, 3635, 150, 20, 130, 300, WALL_MAT, []),
+          ("JanitorLintel", 1100, 3525, 255, 20, 90, 90, WALL_MAT, [])]
+put("SM_DoorFrame", 1100, 3525, 0, -90)
+put("SM_Door", 1100, 3480, 0, -90, ["Openable", "OpenYaw=90", "JanitorDoor"])     # hinge at y 3480, swings in
+put("SM_UtilityShelf", 835, 3525, 0, -90)
+put("SM_MopBucket", 1000, 3420)
+put("SM_WetFloorSign", 1040, 3640, 0, 15)
+put("SM_TrashBin", 870, 3660)
+for i in range(3):
+    put(["SM_ReamOfPaper", "SM_SnackBox", "SM_TeaBox"][i], 835, 3470 + i * 40, 61)   # odd things stored on the shelf
+put("SM_MannequinCustodian", 960, 3560, 0, 90, ["NPC", "Custodian_Closet"])
+
+# --- Boards (engine cube + texture material): logo, notes ---------------------------
+PROPMAT = "/Game/Props/Materials/"
+BOXES += [("Logo_ReceptionFront", 2100, 1261, 62, 250, 1, 62, PROPMAT + "MI_HalcyonLogoPanel", []),
+          ("Logo_LobbyWall", 1412, 800, 190, 1, 110, 110, PROPMAT + "MI_HalcyonLogo", []),
+          ("Logo_Kitchen", 3300, 1488, 200, 90, 1, 90, PROPMAT + "MI_HalcyonLogo", [])]
+
+
+def local_to_world(px, py, yaw, lx, ly):
+    """Offset (lx, ly) in a prop's own frame (as Unreal sees it) -> world, for a prop at yaw (+YAW_FIX)."""
+    import math
+    a = math.radians(yaw + YAW_FIX)
+    return px + lx * math.cos(a) - ly * math.sin(a), py + lx * math.sin(a) + ly * math.cos(a)
+
+
+# Fridge door on its hinge (front-left corner), notes stuck on it, food inside
+fx, fy, fyaw = FRIDGE
+dx, dy = local_to_world(fx, fy, fyaw, -35, 35)
+put("SM_FridgeDoor", dx, dy, 0, fyaw, ["Openable", "OpenYaw=100", "FridgeDoor"])
+nx, ny = local_to_world(fx, fy, fyaw, -12, 41)
+mx, my = local_to_world(fx, fy, fyaw, 14, 41)
+BOXES += [("FridgeNote_Yogurt", nx, ny, 140, 20, 0.5, 20, PROPMAT + "MI_FridgeNote_Yogurt", ["AttachToFridgeDoor"]),
+          ("FridgeNote_Memo", mx, my, 112, 18, 0.5, 24, PROPMAT + "MI_FridgeNote_Memo", ["AttachToFridgeDoor"])]
+for (lx, ly, z, mesh) in ((-14, 5, 46, "SM_MilkCarton"), (10, 5, 46, "SM_SodaCan"), (16, -5, 46, "SM_SodaCan"),
+                          (-8, 2, 86, "SM_LunchBox"), (12, 0, 126, "SM_WaterBottle"), (-14, 0, 126, "SM_SnackBox")):
+    ix, iy = local_to_world(fx, fy, fyaw, lx, ly)
+    put(mesh, ix, iy, z, fyaw)
 
 # --- A few chairs turned the wrong way on purpose (about 1 in 7; never your own desk chair)
 wrong = random.Random(214)
@@ -201,11 +263,31 @@ def main():
             comp.set_simulate_physics(True)
             comp.set_notify_rigid_body_collision(True)
             all_tags.append("Throwable")
+        if "Openable" in tags:
+            comp.set_mobility(unreal.ComponentMobility.MOVABLE)   # swung open by the interact system
         if "Act2Reveal" in tags:
             a.set_actor_hidden_in_game(True)
         if all_tags:
             a.set_editor_property("tags", [unreal.Name(t) for t in all_tags])
         placed += 1
+
+    cube = asset_lib.load_asset("/Engine/BasicShapes/Cube.Cube")
+    fridge_door = None
+    for a in actor_sys.get_all_level_actors():
+        if a.get_actor_label().startswith(PREFIX) and "FridgeDoor" in [str(t) for t in a.tags]:
+            fridge_door = a
+    for k, (label, x, y, z, sx, sy, sz, mat_path, tags) in enumerate(BOXES):
+        b = actor_sys.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(x, y, z), unreal.Rotator(0, 0, 0))
+        b.static_mesh_component.set_static_mesh(cube)
+        b.set_actor_scale3d(unreal.Vector(sx / 100.0, sy / 100.0, sz / 100.0))
+        if asset_lib.does_asset_exist(mat_path):
+            b.static_mesh_component.set_material(0, asset_lib.load_asset(mat_path))
+        b.set_actor_label(f"{PREFIX}{label}_{k:02d}")
+        b.set_folder_path("Dressing/Campus/Boards")
+        if "AttachToFridgeDoor" in tags and fridge_door:
+            b.static_mesh_component.set_mobility(unreal.ComponentMobility.MOVABLE)
+            b.attach_to_actor(fridge_door, "", unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD,
+                              unreal.AttachmentRule.KEEP_WORLD, False)
 
     # Textures onto the grey-box boards. Posters 0-2 repeat as 3-5 so the loop looks identical.
     boards = {"GB_Poster_0": "MI_Poster_Energy", "GB_Poster_1": "MI_Poster_Present", "GB_Poster_2": "MI_Poster_CorridorB",

@@ -4,7 +4,7 @@ make_office_props.py: TAKE 4471 office props, built procedurally in Blender (5.2
 Run inside Blender: Scripting tab > Open > this file > Run Script
    or headless:      blender -b -P make_office_props.py
 
-Builds 49 low-poly props (office, supplies, plants, lobby, kitchen, mannequins), each with its pivot at the floor (bottom centre),
+Builds 65 low-poly props (office, supplies, plants, lobby, kitchen, mannequins), each with its pivot at the floor (bottom centre),
 real-world size in metres, bevelled edges, and named material slots.
 Saves SourceArt/Blender/OfficeProps.blend and one FBX per prop in
 SourceArt/Blender/Export/  (import into Unreal at /Game/Props/Meshes).
@@ -100,9 +100,19 @@ class Prop:
             rot = Vector((0, 0, 1)).rotation_difference(d.normalized()).to_matrix().to_4x4()
             self._add(r["verts"], mat, Matrix.Translation(Vector(loc) + mid) @ rot)
 
-    def finish(self, bevel=0.004):
+    def finish(self, bevel=0.004, origin=(0.0, 0.0, 0.0)):
         mesh = bpy.data.meshes.new(self.name)
         bmesh.ops.remove_doubles(self.bm, verts=self.bm.verts, dist=0.0001)
+        if any(origin):
+            bmesh.ops.translate(self.bm, vec=Vector(origin) * -1, verts=self.bm.verts)
+        # Box-projected UVs (1 UV unit = 1 m) so textures and tangents work in Unreal
+        uv = self.bm.loops.layers.uv.new("UVMap")
+        for f in self.bm.faces:
+            n = f.normal
+            ax = max(range(3), key=lambda i: abs(n[i]))
+            for loop in f.loops:
+                co = loop.vert.co
+                loop[uv].uv = (co.y, co.z) if ax == 0 else ((co.x, co.z) if ax == 1 else (co.x, co.y))
         self.bm.to_mesh(mesh)
         self.bm.free()
         obj = bpy.data.objects.new(self.name, mesh)
@@ -600,6 +610,147 @@ def stalker():
     return p.finish(0.0)
 
 
+# --------------------------------------------------------------------------
+# Wishlist batch: reception desk, fridge (body + hinged door), doors, kitchen stock
+# --------------------------------------------------------------------------
+def reception_desk():
+    p = Prop("SM_ReceptionDesk")   # front (logo panel) faces -Y; 2.8 m wide
+    p.box((2.8, 0.75, 1.05), (0, 0, 0.525), "M_PlasticWhite")
+    p.box((2.9, 0.85, 0.04), (0, 0, 1.07), "M_Wood")                                # top
+    p.box((2.4, 0.5, 0.04), (0, 0.15, 0.76), "M_DeskTop")                          # inner work surface
+    p.box((2.82, 0.02, 0.12), (0, -0.385, 0.08), "M_FabricMint")                   # glowing kick strip
+    return p.finish(0.01)
+
+
+def fridge_body():
+    p = Prop("SM_FridgeBody")      # open front faces -Y; shelves inside
+    w, d, h = 0.7, 0.7, 1.8
+    p.box((w, d, 0.04), (0, 0, 0.02), "M_Steel")
+    p.box((w, d, 0.04), (0, 0, h - 0.02), "M_Steel")
+    for x in (-w / 2 + 0.02, w / 2 - 0.02):
+        p.box((0.04, d, h), (x, 0, h / 2), "M_Steel")
+    p.box((w, 0.04, h), (0, d / 2 - 0.02, h / 2), "M_Steel")
+    p.box((w - 0.08, d - 0.1, h - 0.1), (0, 0.02, h / 2), "M_PlasticWhite")      # liner (back/inside)
+    for z in (0.45, 0.85, 1.25):
+        p.box((w - 0.1, d - 0.12, 0.012), (0, -0.02, z), "M_Glass")              # glass shelves
+    p.box((w - 0.08, 0.01, 0.6), (0, -d / 2 + 0.06, 1.45), "M_PlasticWhite")    # freezer divider lip
+    return p.finish(0.004)
+
+
+def fridge_door():
+    p = Prop("SM_FridgeDoor")      # PIVOT ON THE HINGE (left edge, seen from the front); door lies along +X
+    p.box((0.7, 0.05, 1.78), (0.35, -0.025, 0.9), "M_Steel")
+    p.box((0.02, 0.03, 0.4), (0.64, -0.065, 1.15), "M_MetalDark")                  # handle
+    for z in (0.5, 0.9, 1.3):
+        p.box((0.6, 0.08, 0.06), (0.35, 0.05, z), "M_PlasticWhite")              # door bins (inside)
+    return p.finish(0.004)
+
+
+def door():
+    p = Prop("SM_Door")            # 0.9 x 2.1 m, PIVOT ON THE HINGE; door lies along +X
+    p.box((0.9, 0.045, 2.1), (0.45, 0, 1.05), "M_PlasticWhite")
+    p.box((0.03, 0.06, 0.03), (0.8, -0.04, 1.0), "M_MetalLight")                  # handle front
+    p.box((0.03, 0.06, 0.03), (0.8, 0.04, 1.0), "M_MetalLight")                   # handle back
+    p.box((0.24, 0.002, 0.07), (0.45, -0.024, 1.55), "M_Paper")                    # name plate
+    return p.finish(0.003)
+
+
+def door_frame():
+    p = Prop("SM_DoorFrame")       # fits a 0.9 m door; pivot floor centre
+    for x in (-0.48, 0.48):
+        p.box((0.06, 0.16, 2.16), (x, 0, 1.08), "M_MetalLight")
+    p.box((1.02, 0.16, 0.06), (0, 0, 2.16), "M_MetalLight")
+    return p.finish(0.003)
+
+
+def utility_shelf():
+    p = Prop("SM_UtilityShelf")    # janitor closet / supply shelving
+    for x in (-0.58, 0.58):
+        for y in (-0.18, 0.18):
+            p.box((0.03, 0.03, 1.9), (x, y, 0.95), "M_MetalLight")
+    for z in (0.15, 0.6, 1.05, 1.5, 1.88):
+        p.box((1.2, 0.4, 0.02), (0, 0, z), "M_MetalLight")
+    return p.finish(0.002)
+
+
+def coffee_bag():
+    p = Prop("SM_CoffeeBag")
+    p.box((0.12, 0.07, 0.2), (0, 0, 0.1), "M_Wood")
+    p.box((0.121, 0.071, 0.05), (0, 0, 0.12), "M_FabricMint")                      # HALCYON band
+    p.box((0.1, 0.05, 0.03), (0, 0, 0.215), "M_Wood", rot_x=0.3)                  # folded top
+    return p.finish(0.003)
+
+
+def tea_box():
+    p = Prop("SM_TeaBox")
+    p.box((0.16, 0.08, 0.07), (0, 0, 0.035), "M_LeafLight")
+    p.box((0.161, 0.081, 0.02), (0, 0, 0.05), "M_PlasticWhite")
+    return p.finish(0.002)
+
+
+def cup_stack():
+    p = Prop("SM_CupStack")        # stacked paper cups
+    for i in range(8):
+        p.cyl(0.04, 0.03, (0, 0, 0.015 + i * 0.012), "M_Paper", segs=16, radius2=0.045)
+    p.cyl(0.045, 0.012, (0, 0, 0.11), "M_FabricMint", segs=16)
+    return p.finish(0.0)
+
+
+def snack_bag():
+    p = Prop("SM_SnackBag")
+    p.box((0.16, 0.05, 0.22), (0, 0, 0.11), "M_BinderRed")
+    p.box((0.162, 0.03, 0.02), (0, 0, 0.225), "M_BinderRed")                       # crimp
+    p.box((0.162, 0.051, 0.06), (0, 0, 0.1), "M_Yellow")
+    return p.finish(0.004)
+
+
+def snack_box():
+    p = Prop("SM_SnackBox")        # cereal / granola bar box
+    p.box((0.2, 0.07, 0.28), (0, 0, 0.14), "M_Yellow")
+    p.box((0.201, 0.071, 0.08), (0, 0, 0.2), "M_BinderBlue")
+    return p.finish(0.003)
+
+
+def soda_can():
+    p = Prop("SM_SodaCan")
+    p.cyl(0.033, 0.12, (0, 0, 0.06), "M_SkyBlue", segs=16)
+    p.cyl(0.03, 0.005, (0, 0, 0.122), "M_MetalLight", segs=16)
+    return p.finish(0.0)
+
+
+def water_bottle():
+    p = Prop("SM_WaterBottle")
+    p.cyl(0.035, 0.18, (0, 0, 0.09), "M_Glass", segs=16)
+    p.cyl(0.035, 0.04, (0, 0, 0.2), "M_Glass", segs=16, radius2=0.014)
+    p.cyl(0.015, 0.02, (0, 0, 0.23), "M_FabricMint", segs=10)
+    return p.finish(0.0)
+
+
+def milk_carton():
+    p = Prop("SM_MilkCarton")
+    p.box((0.09, 0.09, 0.2), (0, 0, 0.1), "M_PlasticWhite")
+    p.box((0.09, 0.02, 0.06), (0, 0, 0.22), "M_PlasticWhite", rot_x=0.6)
+    p.box((0.091, 0.091, 0.05), (0, 0, 0.12), "M_SkyBlue")
+    return p.finish(0.002)
+
+
+def lunch_box():
+    p = Prop("SM_LunchBox")        # labelled 4471 on the note in game
+    p.box((0.24, 0.16, 0.1), (0, 0, 0.05), "M_BinderMint")
+    p.box((0.08, 0.02, 0.02), (0, 0, 0.11), "M_PlasticBlack")
+    p.box((0.1, 0.002, 0.04), (0, -0.081, 0.05), "M_Paper")
+    return p.finish(0.004)
+
+
+def fruit_bowl():
+    p = Prop("SM_FruitBowl")
+    p.cyl(0.14, 0.07, (0, 0, 0.035), "M_Ceramic", segs=24, radius2=0.1)
+    for i, (dx, dy, col) in enumerate(((0.04, 0.0, "M_BinderRed"), (-0.04, 0.03, "M_Yellow"), (0.0, -0.05, "M_LeafLight"),
+                                       (-0.03, -0.02, "M_BinderRed"), (0.02, 0.05, "M_Yellow"))):
+        p.sphere(0.04, (dx, dy, 0.09 + (i % 2) * 0.02), col, segs=12)
+    return p.finish(0.0)
+
+
 BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabinet(2), monitor, keyboard,
             mug, fire_extinguisher, directors_chair, water_cooler, wet_floor_sign, cubicle_panel,
             ream_of_paper, hospital_bed, mop_bucket, coffee_machine,
@@ -612,7 +763,11 @@ BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabine
             # kitchen
             kitchen_counter, fridge, microwave, kettle, vending_machine, cafe_table, bar_stool,
             # figures
-            mannequin, mannequin_guard, mannequin_custodian, stalker]
+            mannequin, mannequin_guard, mannequin_custodian, stalker,
+            # wishlist batch
+            reception_desk, fridge_body, fridge_door, door, door_frame, utility_shelf,
+            coffee_bag, tea_box, cup_stack, snack_bag, snack_box, soda_can, water_bottle, milk_carton,
+            lunch_box, fruit_bowl]
 
 
 def export_fbx(obj):

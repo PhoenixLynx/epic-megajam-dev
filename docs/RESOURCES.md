@@ -38,3 +38,10 @@ Rule reminders:
 | **NetApp + AWS** | After the jam |
 
 ## Every AI tool used goes in the devlog's AI tool ledger
+
+## Sourced (third-party, open licence): list these at submission
+| Asset | Licence | Used for |
+|-------|---------|----------|
+| Inter, Poppins (fonts) | SIL Open Font License | UI mockups, HALCYON logo, posters, memos (baked into textures) |
+| Permanent Marker (font) | Apache 2.0 | Handwriting on the call sheet and fridge note |
+| Caveat (font) | SIL Open Font License | Handwriting on the fridge note |
