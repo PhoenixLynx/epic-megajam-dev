@@ -55,6 +55,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-13 15:45 | Claude (Anthropic) | Wrote a Blender 5.2 script that builds 16 office props and exports FBX (ran it in its own workspace with the bpy module and rendered a preview); generated the call sheet + 4 chart textures; wrote an Unreal import script for all generated assets. |
 | 2026-11-13 16:03 | Claude (Anthropic) | Added 33 props (supplies, plants, lobby, kitchen, mannequins, stalker) to the Blender script, wrote dress_campus.py (furnishes every room, adds a kitchen), assembled the dressed campus in Blender to check the layout, wrote docs/ART_DIRECTION.md. |
 | 2026-11-13 16:19 | Claude (Anthropic) | Wrote the C++ gameplay module (Fear Director, grab/throw/telekinesis, Corridor B loop, stalker, rewind, Key Lock library, game instance + console commands), ported and tested the Key Lock core with g++, added auto-wiring, poster materials, place_cpp_actors.py and docs/CPP_SYSTEMS.md. |
+| 2026-11-13 17:35–18:25 | Claude (Anthropic) | Read my editor logs to confirm each step, wrote add_daylight.py (exposure fix), switched the project to C++ (.uproject module, game instance, start map, GameFeatureData entry, with backups), confirmed the first C++ build and auto-wiring from the log. |
 
 ---
 
@@ -438,3 +439,20 @@ A running record of every AI tool used and what it did.
   - **Auto-wiring everywhere:** fewer editor steps tonight = more time playing.
 - **AI tools used:** Claude (C++ module, g++ tests, Python updates, docs).
 - **Next:** TONIGHT.md: scripts → switch on C++ → first chase. 📸
+
+### Session 25: Fri Nov 13, 2026, 17:35 MST: First build night: everything ran
+
+- **Goal:** Run the whole TONIGHT.md chain on my PC.
+- **Done:**
+  - Opened `DirectorsCut_58`: Unreal MCP, All Toolsets and the Python plugin loaded; `init_unreal.py` started the MCP server automatically.
+  - **Preflight: 52/52 PASS** (+ `.mcp.json` generated).
+  - **All scripts ran clean:** grey-box campus built · Fear material on 158 actors · **95/95 files imported**, 18 prop material instances · **208 props dressed**, 70 placeholders replaced.
+  - First script showed an auto-exposure warning (level too dark: no sun or sky). Claude wrote **`add_daylight.py`** (soft sun, sky atmosphere, real-time sky light, light fog, brighter room lights) and made the builder run it automatically.
+  - **Switched the project to C++** (editor closed): `Source_Pending` → `Source`, module added to the `.uproject`, `TakeGameInstance` set, both maps start on `L_Campus_Greybox`, GameFeatureData asset-manager entry added. Backups in `_to_delete/backup_before_cpp/`.
+  - **The C++ module compiled on the first try** (`UnrealEditor-DirectorsCut_58.dll`). Windows asked about .NET Host network access during the build (Unreal Build Tool); not needed.
+  - Ran `place_cpp_actors.py` and pressed Play. Log: `Fear Director: MPC ok, volume ok, fog ok, 1 loop(s), stalker ok, 8 light(s)` · `Loop trigger: 6 posters` · `Added Take Grab to BP_FirstPersonCharacter_C_0`.
+- **Decisions & why:**
+  - **Level notes, different mannequins and refinements wait for polish.** Gameplay first.
+- **Problems:** cosmetic import warnings (props have no UVs: "degenerate tangent bases"); fix in the Blender script before real materials.
+- **AI tools used:** Claude (log reading, daylight script, C++ switch).
+- **Next:** test Fear slider / creep / loop / stalker / grab / rewind 📸 → build Act 1 beats.

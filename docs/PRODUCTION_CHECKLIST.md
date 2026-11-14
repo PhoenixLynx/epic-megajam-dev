@@ -29,13 +29,14 @@ Claude updates this every session. `[x]` = done · **MVP** = must ship · *Stret
 - [x] Concept, storyboard, audio plan, resources: 🤝
 - [x] UE 5.8 project `DirectorsCut_58` (First Person template): 🎬
 - [x] Plugins enabled in .uproject (Python, Editor Scripting, Unreal MCP, All Toolsets): 🤖
-- [ ] Preflight script passes (`0 FAIL`): 🎬 runs → 🤖 fixes. **Fri**
+- [x] Preflight script passes (52/52): 🎬
 - [ ] Unreal MCP connected to Claude (desktop app or Claude Code): 🤝. **Fri**
 - [ ] Git on the PC: repo in `DirectorsCut_58`, first Unreal push with LFS: 🤝. **Fri**
 
 ## B. Core systems (prototype). MVP
-- [ ] Grey-box campus built (`build_greybox_campus.py`): 🎬 runs. **Fri** · Done: walk every room in Play.
-- [ ] Fear materials (`build_fear_assets.py`): 🎬 runs. **Fri**
+- [x] **C++ module compiled + auto-wired in the level** (first try): 🤝
+- [x] Grey-box campus built + daylight: 🎬
+- [x] Fear materials applied (158 actors): 🎬
 - [x] **Fear Director** written in C++ (auto-wired, editor preview, stages, lights, letterbox amount): 🤖
 - [ ] Fear Director compiled + tested in level: 🎬. **Fri** · Done: slider rots the campus.
 - [x] **Grab / throw / telekinesis** in C++, auto-added to the player: 🤖
@@ -92,7 +93,7 @@ Claude updates this every session. `[x]` = done · **MVP** = must ship · *Stret
 - [x] 33 more props: office supplies, plants, lobby, kitchen, wall clock, pass reader, mannequins (coworker/guard/custodian) + the stalker: 🤖 (49 total)
 - [x] Set-dressing script (`dress_campus.py`): every room furnished, kitchen added, 111 throwables: 🤖
 - [x] Art direction (`docs/ART_DIRECTION.md`): 🤖
-- [ ] Import + dress in Unreal (`import_jam_assets.py` → `dress_campus.py`): 🎬. **Fri**
+- [x] Imported (95/95) + dressed (208 props): 🎬
 - [ ] *Polish:* hero props refined in Blender / Rodin: 🎬
 - [x] Mannequin coworker / guard / custodian + stalker (grey placeholders): 🤖
 - [ ] *Polish:* nicer mannequins + stalker (Blender/Rodin): 🎬
