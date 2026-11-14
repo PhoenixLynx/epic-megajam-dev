@@ -707,3 +707,11 @@ A running record of every AI tool used and what it did.
 - **Not done:** beat 2.3 video call / 2.4 meeting / the reply to the Chairman (the tasks are listed but can't be ticked yet); mannequins turning to face you (2.6); real wall-clock hands; the device bridge had no connected folder again, so nothing is staged under `_to_delete/overnight_run2/`.
 - **AI tools used:** Claude (scheduled overnight run: code review of runs 1 + session 41, C++, 19 dialogue lines, an email re-timing, docs; ran `make_text_tables.py`; a small Python script to look for shadowed names).
 - **Next:** morning merge + compile (`docs/MORNING.md`), then play from the wisp to 2:14. 📸 the 12:00 jump with the Act 2 task list, and the frozen 2:14 clock, go in `devlog/screenshots`.
+
+### Session 44: Sat Nov 14, 2026, 08:35 MST: Good morning: merging the overnight runs
+
+- **Me:** good morning! Thanks for running last night. (Fable is included in my plan for 3 more days, which covers the jam.)
+- **Both overnight runs finished** and pushed their branches (`overnight-run1` 00:45, `overnight-run2` 03:15). The device bridge wasn't connected for them, so nothing was staged on the PC; the branches were the only copy, as designed.
+- **Merged:** `overnight-run2` (which contains run 1) fast-forwarded into `main`. 26 files, +1,415 lines.
+- **Pre-emptive fix:** run 2 flagged one line as likely to fail (`Glow->IntensityUnits = …` in the wisp); switched it to `Glow->SetIntensityUnits(ELightUnits::Lumens)`, the public setter.
+- **Next:** copy into the PC project, rebuild, run the scripts, play the morning from the cold open through lunch to 2:14.

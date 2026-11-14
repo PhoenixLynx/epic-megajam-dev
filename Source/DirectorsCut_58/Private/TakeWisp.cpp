@@ -28,7 +28,7 @@ ATakeWisp::ATakeWisp()
 
 	Glow = CreateDefaultSubobject<UPointLightComponent>(TEXT("Glow"));
 	Glow->SetupAttachment(SceneRoot);   // not under the scaled orb
-	Glow->IntensityUnits = ELightUnits::Lumens;
+	Glow->SetIntensityUnits(ELightUnits::Lumens);
 	Glow->Intensity = GlowLumens;
 	Glow->SetLightColor(GlowColor);
 	Glow->SetAttenuationRadius(650.f);
