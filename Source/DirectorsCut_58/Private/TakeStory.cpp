@@ -91,6 +91,7 @@ void UTakeGrabComponent::StartSlate(bool bRewind)
 	SlateTake = GI ? GI->TakeNumber : 1;
 	SlateT = 0.f;
 	bSlateRewind = bRewind;
+	bSlateTimeCard = false;
 	bSlateClap = false;
 	bSlatePA = false;
 	if (Prompt) { Prompt->SetSlate(1.f, FString(), 0.f); }   // black from the first frame
@@ -106,6 +107,18 @@ void UTakeGrabComponent::SetColdOpenFade(float Amount)
 	else { PC->PlayerCameraManager->StopCameraFade(); }
 }
 
+void UTakeGrabComponent::ShowTimeCard(const FString& Time, const FString& Scene)
+{
+	// Between times of day: quick black, a clapper, "12:00 PM / SCENE 2 · LUNCH", then straight back in.
+	SlateT = 0.f;
+	bSlateRewind = false;
+	bSlateTimeCard = true;
+	bSlateClap = false;
+	bSlatePA = true;   // no cold-open PA line
+	TimeCardText = FString::Printf(TEXT("%s\n%s"), *Time, *Scene);
+	if (Prompt) { Prompt->SetSlate(0.f, FString(), 0.f); }
+}
+
 void UTakeGrabComponent::HandleRewind(int32 NewTakeNumber)
 {
 	StartSlate(true);
@@ -118,12 +131,27 @@ void UTakeGrabComponent::TickSlate(float DeltaTime)
 	// The first frames after loading the map can take seconds: don't let that skip the black
 	SlateT += FMath::Min(DeltaTime, 1.f / 30.f);
 	const FString SlateLabel = FString::Printf(TEXT("TAKE %d"), SlateTake);
+	if (bSlateTimeCard)
+	{
+		// 0-0.25 s black in, clapper, card until 1.9 s, fade back to the scene by 2.5 s
+		if (!bSlateClap && SlateT >= 0.3f) { bSlateClap = true; PlaySfx2D(TEXT("sfx_clapper_snap"), 0.7f); }
+		const float Black = SlateT < 0.25f ? SlateT / 0.25f : (SlateT < 1.9f ? 1.f : FMath::Clamp(1.f - (SlateT - 1.9f) / 0.6f, 0.f, 1.f));
+		if (Prompt) { Prompt->SetSlate(Black, TimeCardText, Envelope(SlateT, 0.3f, 0.25f, 1.7f, 0.3f)); }
+		if (SlateT > 2.5f)
+		{
+			SlateT = -1.f;
+			bSlateTimeCard = false;
+			if (Prompt) { Prompt->SetSlate(0.f, FString(), 0.f); }
+		}
+		return;
+	}
 	if (!bSlateRewind)
 	{
 		// Cold open: black, a clapper snap, "TAKE n" for ~2 s, fade in at your desk, then the PA
 		if (!bSlateClap && SlateT >= 0.4f) { bSlateClap = true; PlaySfx2D(TEXT("sfx_clapper_snap"), 0.8f); }
 		const float Black = SlateT < 2.6f ? 1.f : FMath::Clamp(1.f - (SlateT - 2.6f) / 1.2f, 0.f, 1.f);
-		if (Prompt) { Prompt->SetSlate(Black, SlateLabel, Envelope(SlateT, 0.3f, 0.4f, 2.3f, 0.4f)); }
+		const FString ColdLabel = SlateTake <= 1 ? FString::Printf(TEXT("%s\n9:00 AM  \u00B7  SCENE 1  \u00B7  MORNING"), *SlateLabel) : SlateLabel;
+		if (Prompt) { Prompt->SetSlate(Black, ColdLabel, Envelope(SlateT, 0.3f, 0.4f, 2.3f, 0.4f)); }
 		SetColdOpenFade(Black);   // the camera fades with the HUD's black (covers the first frames, before the HUD draws)
 		if (!bSlatePA && SlateT >= 3.2f)
 		{
@@ -342,19 +370,12 @@ void UTakeGrabComponent::StartLunch()
 	GI->WorkdayMinutes = 12.f * 60.f;   // the clock jumps: 12:00
 	GI->bClocksFrozen = false;
 	if (ATakeFearDirector* FearDir = FindFearDirector()) { FearDir->Calm(2.f); }
-	// The jump cut: a short black blink, like a missing piece of film
-	if (APawn* Pawn = Cast<APawn>(GetOwner()))
-	{
-		if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
-		{
-			if (PC->PlayerCameraManager) { PC->PlayerCameraManager->StartCameraFade(1.f, 0.f, 0.6f, FLinearColor::Black, false, false); }
-		}
-	}
-	PlaySfx2D(TEXT("sfx_clapper_snap"), 0.5f);
-	ShowSubtitle(TEXT(""), TEXT("...Twelve? It was eleven a second ago."), 3.f);
+	// The jump cut: a time card, like a scene slate ("12:00 PM / SCENE 2: LUNCH")
+	ShowTimeCard(TEXT("12:00 PM"), TEXT("SCENE 2  \u00B7  LUNCH"));
+	QueueSubtitle(TEXT(""), TEXT("...Twelve? It was eleven a second ago."));
 	LunchPAPlayed = 0;
 	LunchPALeft = 1 + FMath::Max(0, LunchPAExtraRepeats);   // the first announcement + the word-for-word repeats
-	LunchPAIn = 3.2f;
+	LunchPAIn = 4.2f;   // after the card
 	GI->SetObjective(GI->ObjectiveForBeat());   // "Join the 12:30 call"; the cue queues behind the PA
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Beat -> Lunch (beat 1.10, Act 2 starts)"));
 }
@@ -408,6 +429,7 @@ void UTakeGrabComponent::FreezeClocks()
 		FearDir->FlickerBurst(1.2f);
 		FearDir->StartCreep(FMath::Max(FearDir->Fear, FrozenFearFloor + 0.1f), 6.f);
 	}
+	ShowTimeCard(TEXT("2:14 PM"), TEXT("SCENE 3  \u00B7  HOLD"));
 	PlaySfx2D(TEXT("sfx_pa_chime"), 0.7f);
 	ShowSubtitle(TEXT("PA"), TEXT("The time is two fourteen. The time is two fourteen."), 4.5f);
 	QueueSubtitle(TEXT(""), TEXT("The second hand isn't moving. None of them are."));

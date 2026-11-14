@@ -167,6 +167,10 @@ private:
 	bool bCorridorEntered = false;
 	FString ObjectiveShown;
 	void StartSlate(bool bRewind);
+	/** A scene card between times of day ("12:00 PM / SCENE 2 · LUNCH"), same look as the TAKE slate. */
+	void ShowTimeCard(const FString& Time, const FString& Scene);
+	bool bSlateTimeCard = false;
+	FString TimeCardText;
 	void SetColdOpenFade(float Amount);
 	void TickSlate(float DeltaTime);
 	void TickStory();

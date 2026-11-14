@@ -135,9 +135,9 @@ TSharedRef<SWidget> UTakePromptWidget::RebuildWidget()
 		SlateBlack->SetVisibility(ESlateVisibility::HitTestInvisible);   // black until the story says otherwise (no desk before the cold open)
 		SlateText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SlateText"));
 		FSlateFontInfo SlateFont = SlateText->GetFont();
-		SlateFont.Size = 64;
+		SlateFont.Size = 52;
 		SlateFont.TypefaceFontName = TEXT("Bold");
-		SlateFont.LetterSpacing = 300;
+		SlateFont.LetterSpacing = 200;
 		SlateText->SetFont(SlateFont);
 		SlateText->SetColorAndOpacity(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.f)));
 		SlateText->SetJustification(ETextJustify::Center);

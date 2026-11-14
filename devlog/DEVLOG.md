@@ -920,3 +920,10 @@ A running record of every AI tool used and what it did.
   - The reception sign now stands on the desk.
   - Prompts for the new things: Print / Get some water / Press a button.
 - **AI tools used:** Claude (notes and screenshot review, C++, textures, sound).
+
+### Session 57: Sat Nov 14, 2026, 15:35 MST: Scene cards between times of day
+
+- **My ask:** I like the TAKE transitions; use them between times of day too.
+- **Done:** the opening slate now reads **TAKE 1 / 9:00 AM · SCENE 1 · MORNING**. The jump to lunch is a quick scene card: black, clapper, **12:00 PM / SCENE 2 · LUNCH**, back in about 2.5 s, then *"...Twelve? It was eleven a second ago."* When the clocks stop: **2:14 PM / SCENE 3 · HOLD**. Act 3 gets its own card. Same look as the TAKE slate (one `ShowTimeCard` call).
+- Also: Sol's title background **v11** (lobby, director's chair on the X, no baked HUD) is in the project for the title screen, with v10 as an alternate. Sol is redoing the faces in the aesthetic we named **"uncanny minimalism"**.
+- **AI tools used:** Claude (C++). Sol / ChatGPT (title art).
