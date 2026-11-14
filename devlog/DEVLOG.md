@@ -56,6 +56,7 @@ A running record of every AI tool used and what it did.
 | 2026-11-13 16:03 | Claude (Anthropic) | Added 33 props (supplies, plants, lobby, kitchen, mannequins, stalker) to the Blender script, wrote dress_campus.py (furnishes every room, adds a kitchen), assembled the dressed campus in Blender to check the layout, wrote docs/ART_DIRECTION.md. |
 | 2026-11-13 16:19 | Claude (Anthropic) | Wrote the C++ gameplay module (Fear Director, grab/throw/telekinesis, Corridor B loop, stalker, rewind, Key Lock library, game instance + console commands), ported and tested the Key Lock core with g++, added auto-wiring, poster materials, place_cpp_actors.py and docs/CPP_SYSTEMS.md. |
 | 2026-11-13 17:35–18:25 | Claude (Anthropic) | Read my editor logs to confirm each step, wrote add_daylight.py (exposure fix), switched the project to C++ (.uproject module, game instance, start map, GameFeatureData entry, with backups), confirmed the first C++ build and auto-wiring from the log. |
+| 2026-11-13 18:28 | Claude (Anthropic) | Wrote add_ceilings.py: modern ceilings, recessed LED panels that dim with Fear, 60 shadowless panel lights (replacing the over-bright point lights), doorway signs incl. KITCHEN. |
 
 ---
 
@@ -456,3 +457,13 @@ A running record of every AI tool used and what it did.
 - **Problems:** cosmetic import warnings (props have no UVs: "degenerate tangent bases"); fix in the Blender script before real materials.
 - **AI tools used:** Claude (log reading, daylight script, C++ switch).
 - **Next:** test Fear slider / creep / loop / stalker / grab / rewind 📸 → build Act 1 beats.
+
+### Session 26: Fri Nov 13, 2026, 18:28 MST: Ceilings, panel lights, signs
+
+- **My feedback:** the elevator and other areas were very bright, and in the main office you could look up and see the sun. We need an office ceiling, modern to fit the bright aesthetic. I couldn't find the kitchen.
+- **Done:** `Scripts/Editor/add_ceilings.py`: flat white ceilings over every campus room; recessed linear LED panels on a 3 m grid (`M_CeilingPanel`, emissive, **dims with Fear**); 60 soft shadowless RectLights (40 tagged FearLight); Corridor B gets fewer, dimmer panels; hanging doorway signs (ELEVATOR, KITCHEN, CONFERENCE, OPEN OFFICE, LOBBY · KITCHEN, CORRIDOR B, SUPPLY, WELLNESS CENTER).
+- **Decisions & why:**
+  - The over-brightness was partly Claude's mistake: the daylight script had pushed room point lights to 20,000 cd. Those lights are removed; panels light the rooms now.
+  - **Hospital ward has no ceiling slab** so the Act 3 trust fall from the Wellness Center can drop into it; its panels hang in the dark.
+  - Builder now runs daylight + ceilings automatically on a rebuild.
+- **AI tools used:** Claude (ceilings script).

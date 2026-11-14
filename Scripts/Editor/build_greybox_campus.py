@@ -311,6 +311,10 @@ def build():
                             "Scripts", "Editor", "add_daylight.py")
     if os.path.exists(daylight):
         exec(compile(open(daylight, encoding="utf-8").read(), daylight, "exec"), {"__name__": "__main__"})
+    # Ceilings + LED panel lights + signs: same as running add_ceilings.py (replaces the room point lights)
+    ceilings = os.path.join(os.path.dirname(daylight), "add_ceilings.py")
+    if os.path.exists(ceilings):
+        exec(compile(open(ceilings, encoding="utf-8").read(), ceilings, "exec"), {"__name__": "__main__"})
 
 
 build()

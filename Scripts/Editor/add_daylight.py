@@ -10,7 +10,7 @@ Adds (or replaces, if re-run) in the current level:
   GB_SkyAtmosphere
   GB_SkyLight     real-time capture (so the sky light sees the real sky, not black)
   GB_HeightFog    light fog (the Fear Director thickens fog with Fear)
-and brightens the room point lights.
+Room lighting comes from add_ceilings.py (ceiling LED panels).
 
 Run: Tools > Execute Python Script... (with L_Campus_Greybox open). Safe to re-run.
 """
@@ -55,13 +55,5 @@ for a in actor_sys.get_all_level_actors():
     if a.get_actor_label() == "GB_SkyLight" and a != sky:
         actor_sys.destroy_actor(a)
 
-# Brighter office lights (still dim/flicker with Fear: they're tagged FearLight)
-n = 0
-for a in actor_sys.get_all_level_actors():
-    label = a.get_actor_label()
-    if label.startswith("GB_Light_") and isinstance(a, unreal.PointLight) and "Hospital" not in label:
-        a.point_light_component.set_intensity(20000.0)
-        n += 1
-
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
-unreal.log(f"[TAKE 4471] Daylight added (sun, sky atmosphere, real-time sky light, fog); {n} room lights brightened")
+unreal.log("[TAKE 4471] Daylight added (sun, sky atmosphere, real-time sky light, fog)")
