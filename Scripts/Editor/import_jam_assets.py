@@ -106,6 +106,7 @@ face_base = get_or_create("M_FaceTexture", MAT_DIR, unreal.Material, unreal.Mate
 mel.delete_all_material_expressions(face_base)
 face_base.set_editor_property("blend_mode", unreal.BlendMode.BLEND_MASKED)
 face_base.set_editor_property("opacity_mask_clip_value", 0.12)   # keeps the soft under-eye circles of the Fear face
+face_base.set_editor_property("used_with_skeletal_mesh", True)   # the face card is part of the rigged mannequins
 f_tex = mel.create_material_expression(face_base, unreal.MaterialExpressionTextureSampleParameter2D, -400, 0)
 f_tex.set_editor_property("parameter_name", "Tex")
 mel.connect_material_property(f_tex, "RGB", unreal.MaterialProperty.MP_BASE_COLOR)

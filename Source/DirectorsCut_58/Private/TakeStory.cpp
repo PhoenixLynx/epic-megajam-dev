@@ -94,6 +94,16 @@ void UTakeGrabComponent::StartSlate(bool bRewind)
 	bSlateClap = false;
 	bSlatePA = false;
 	if (Prompt) { Prompt->SetSlate(1.f, FString(), 0.f); }   // black from the first frame
+	if (!bRewind) { SetColdOpenFade(1.f); }   // and the camera itself, in case the HUD isn't drawn yet
+}
+
+void UTakeGrabComponent::SetColdOpenFade(float Amount)
+{
+	APawn* Pawn = Cast<APawn>(GetOwner());
+	APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+	if (!PC || !PC->PlayerCameraManager) { return; }
+	if (Amount > 0.f) { PC->PlayerCameraManager->SetManualCameraFade(Amount, FLinearColor::Black, false); }
+	else { PC->PlayerCameraManager->StopCameraFade(); }
 }
 
 void UTakeGrabComponent::HandleRewind(int32 NewTakeNumber)
@@ -105,7 +115,8 @@ void UTakeGrabComponent::HandleRewind(int32 NewTakeNumber)
 void UTakeGrabComponent::TickSlate(float DeltaTime)
 {
 	if (SlateT < 0.f) { return; }
-	SlateT += DeltaTime;
+	// The first frames after loading the map can take seconds: don't let that skip the black
+	SlateT += FMath::Min(DeltaTime, 1.f / 30.f);
 	const FString SlateLabel = FString::Printf(TEXT("TAKE %d"), SlateTake);
 	if (!bSlateRewind)
 	{
@@ -113,6 +124,7 @@ void UTakeGrabComponent::TickSlate(float DeltaTime)
 		if (!bSlateClap && SlateT >= 0.4f) { bSlateClap = true; PlaySfx2D(TEXT("sfx_clapper_snap"), 0.8f); }
 		const float Black = SlateT < 2.6f ? 1.f : FMath::Clamp(1.f - (SlateT - 2.6f) / 1.2f, 0.f, 1.f);
 		if (Prompt) { Prompt->SetSlate(Black, SlateLabel, Envelope(SlateT, 0.3f, 0.4f, 2.3f, 0.4f)); }
+		SetColdOpenFade(Black);   // the camera fades with the HUD's black (covers the first frames, before the HUD draws)
 		if (!bSlatePA && SlateT >= 3.2f)
 		{
 			bSlatePA = true;
@@ -127,6 +139,7 @@ void UTakeGrabComponent::TickSlate(float DeltaTime)
 		{
 			SlateT = -1.f;
 			if (Prompt) { Prompt->SetSlate(0.f, FString(), 0.f); }
+			SetColdOpenFade(0.f);
 		}
 		return;
 	}

@@ -167,6 +167,7 @@ private:
 	bool bCorridorEntered = false;
 	FString ObjectiveShown;
 	void StartSlate(bool bRewind);
+	void SetColdOpenFade(float Amount);
 	void TickSlate(float DeltaTime);
 	void TickStory();
 	void PlaySfx2D(const TCHAR* Name, float Volume = 1.f);

@@ -77,8 +77,8 @@ put("SM_Stapler", 1330, 2332, DESK_TOP, 75, ["DeskItem", "DeskFixed"])
 put("SM_PCTower", 1410, 2280, 0, 180)
 put("SM_OfficeChair", 1300, 2385, 0, 0, ["ChangeOnRewind"])
 put("SM_TrashBin", 1170, 2370)
-for i in range(5):                                          # a pile of crumpled drafts by your bin: the paper toss
-    put("SM_PaperBall", 1215 + i * 11, 2420 + (i % 2) * 9, 0)
+for i in range(5):                                          # a pile of crumpled drafts by your bin after lunch: the paper toss
+    put("SM_PaperBall", 1215 + i * 11, 2420 + (i % 2) * 9, 0, 0, ["Act2Reveal"])   # (only after lunch: a clean desk in the morning)
 put("SM_DirectorsChair", 1480, 2470, 0, 210, ["Act2Reveal"])  # hidden in game until Act 2
 cabinet(1700, 3500, 0, 4, {3: ["InspectTex=MI_File_4470"]})   # top drawer: 4470's personnel file
 cabinet(1760, 3500, 0, 2)

@@ -841,3 +841,12 @@ A running record of every AI tool used and what it did.
 - **In the game:** every rigged mannequin now has a thin curved **face card** on the front of its head (part of the skeletal mesh, skinned to the head bone, so it turns and stares with them). It shows the **calm face** normally and switches to the **Fear face** while they stare at you, for 4 s after you hit one during Fear, and briefly if you hit one while things are already uneasy. A masked material (`M_FaceTexture`) uses the texture's alpha, with a low cutoff so the soft under-eye circles survive.
   ![face](screenshots/2026-11-14_face_on_head.png)
 - **AI tools used:** Sol / ChatGPT (face images), Claude (rig face card, material, C++ face swap, Blender preview render).
+
+### Session 53: Sat Nov 14, 2026, 14:20 MST: First-frame black, a tidy morning, faces fixed
+
+- **My notes:** (1) at the start, the desk shows through before the opening; the start screen should come first; (2) strange items on the floor by my desk are distracting at first; save trash-like things for after lunch; (3) the face textures don't show on the people.
+- **Fixes:**
+  1. The cold open is black from the very first frame: the camera itself fades (not just the HUD), and a long first frame while the map loads can no longer skip the black.
+  2. The crumpled paper by your desk only appears after lunch (Act2Reveal), so the morning starts clean.
+  3. Faces: the log said *"Material with missing usage flag was applied to skeletal mesh"*. The face material wasn't marked for use on rigged meshes, so Unreal silently drew the default instead. `M_FaceTexture` now sets **Used with Skeletal Mesh**.
+- **AI tools used:** Claude (log diagnosis, C++, scripts).
