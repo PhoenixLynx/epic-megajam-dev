@@ -1,5 +1,28 @@
 # Saturday morning: merging the overnight runs
 
+## Overnight run 2 (branch `overnight-run2`): review + beat 1.10 + Act 2 doorway
+**Merge this branch, not run 1's:** it's built on `overnight-run1` and contains all of it. Not compiled. Nothing was copied to the PC (no folder was connected to the bridge), so the branch is the only copy.
+
+### Merge
+1. In Claude: "review and merge overnight-run2". Or by hand: `git fetch && git checkout main && git merge origin/overnight-run2`.
+2. Copy into `DirectorsCut_58`: all of `Source/DirectorsCut_58/` (run 1's new files + changed GameInstance, GrabComponent, Story, Coworker, Widgets, PauseMenu, SaveGame, FearDirector, LoopTrigger), `Data/Text/*.csv` + `make_text_tables.py`, `Scripts/Editor/place_cpp_actors.py`.
+3. Rebuild as in run 1's steps below (move the old DLL aside, open the .uproject, Yes). **If the wisp fails to compile** at `IntensityUnits`, change that line to `Glow->SetIntensityUnits(ELightUnits::Lumens);`.
+4. Run `place_cpp_actors.py` (re-imports DT_NPCLines with the 19 new lines and DT_Emails; places run 1's actors). Run 2 adds no actors.
+
+### Test run 2 (after run 1's tests below; Output Log filter `TAKE 4471`)
+1. **Shortcut:** console `TakeBeat 3` (just got the wisp), walk to desk #4471 → black blink + clapper, "...Twelve?", clock **12:00 PM**, PA "Lunch is served." ×3 (word for word), "...Didn't they just say that?". Log: `Beat -> Lunch`. (`TakeBeat 4` does the same without walking.)
+2. **Badge:** "MIDDAY" + 4 new tasks, NEXT · Join the 12:30 call. P → Tasks shows the same.
+3. **Check-ins:** receptionist / guard / custodian have a "!" again; E through 3 lines each → (1/3), (2/3), (3/3). Log: `Checked in with …`.
+4. **Conference Room:** "SYNC (12:30). Waiting for the organizer…" (the call itself is today's job).
+5. **Terminal:** header shows the time; *Lunch is served* + *Invite: Sync (12:30)* on top.
+6. **Frozen clocks:** `TakeTime 1410` → ~12 s later the clock stops at **2:14 PM**: flicker, PA "two fourteen", Fear stays ≥ 0.15 (press 0 and it creeps back). Log: `Clocks frozen at 2:14`. Facilities' *Re: the clocks* email arrives. A coworker may mention two fourteen.
+7. **Save/Load** after 2:14: clock frozen, tasks and check-ins kept.
+8. **Phone + objective:** answer a ringing phone just as an objective changes: the "New objective" line now plays after the call (it used to vanish).
+
+Knobs (Take Grab → Story): `DeskArriveRadius`, `LunchPAExtraRepeats`, `LunchPARepeatSeconds`, `LunchPAGapMin/Max`, `FrozenClockMinutes` (854 = 2:14 PM), `FrozenFearFloor`.
+
+---
+
 ## Overnight run 1 (branch `overnight-run1`): Act 1 progression
 Not compiled yet. Nothing was copied into the PC project (no folder was connected to the bridge tonight), so it only exists on the branch.
 

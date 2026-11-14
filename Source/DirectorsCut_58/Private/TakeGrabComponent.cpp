@@ -583,9 +583,12 @@ void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 
 void UTakeGrabComponent::ShowSubtitleSequence(const FString& Who, const TArray<FString>& Lines)
 {
-	SubQueue = Lines;
-	SubQueueWho.Reset();
-	for (int32 I = 0; I < Lines.Num(); ++I) { SubQueueWho.Add(Who); }
+	// The sequence starts now; anything that was already queued (an objective cue) plays after it
+	while (SubQueueWho.Num() < SubQueue.Num()) { SubQueueWho.Add(FString()); }
+	SubQueue.Insert(Lines, 0);
+	TArray<FString> Whos;
+	Whos.Init(Who, Lines.Num());
+	SubQueueWho.Insert(Whos, 0);
 	SubtitleLeft = 0.f;   // start now
 }
 
@@ -781,8 +784,21 @@ void UTakeGrabComponent::TickClock(float DeltaTime)
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (!GI || !Prompt) { return; }
 	// 1 game minute every 3 s. The morning stops at 11:59 until your tasks are done: it's always almost noon.
-	const float Cap = GI->MorningTasksDone() ? 12.f * 60.f + 0.f : 11.f * 60.f + 59.f;
-	{ GI->WorkdayMinutes = FMath::Min(GI->WorkdayMinutes + DeltaTime / 3.f, FMath::Max(Cap, GI->WorkdayMinutes)); }
+	// Act 2 starts at 12:00 (beat 1.10) and every clock stops at 2:14 (beat 2.6, FreezeClocks).
+	if (GI->CurrentAct() >= 2)
+	{
+		if (GI->bClocksFrozen) { GI->WorkdayMinutes = FrozenClockMinutes; }
+		else
+		{
+			GI->WorkdayMinutes = FMath::Clamp(GI->WorkdayMinutes + DeltaTime / 3.f, 12.f * 60.f, FrozenClockMinutes);
+			if (GI->WorkdayMinutes >= FrozenClockMinutes) { FreezeClocks(); }
+		}
+	}
+	else
+	{
+		const float Cap = GI->MorningTasksDone() ? 12.f * 60.f + 0.f : 11.f * 60.f + 59.f;
+		GI->WorkdayMinutes = FMath::Min(GI->WorkdayMinutes + DeltaTime / 3.f, FMath::Max(Cap, GI->WorkdayMinutes));
+	}
 	const int32 M = FMath::FloorToInt(GI->WorkdayMinutes);
 	const int32 H24 = M / 60;
 	const int32 H12 = (H24 + 11) % 12 + 1;
@@ -794,21 +810,19 @@ void UTakeGrabComponent::UpdateTasks()
 	if (!Prompt) { return; }
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (!GI) { return; }
-	const int32 Mask = (GI->bReadEmail ? 1 : 0) | (GI->bGotCoffee ? 2 : 0) | (GI->bTrainingComplete ? 4 : 0);
+	// TaskSignature changes whenever a task on the current act's list changes (and when the act changes)
+	const int32 Mask = GI->TaskSignature();
 	const bool bObjectiveChanged = GI->Objective != ObjectiveShown;
 	if (Mask == TasksShown && !bObjectiveChanged) { return; }
 	ObjectiveShown = GI->Objective;
-	const int32 NewlyDone = TasksShown < 0 ? 0 : (Mask & ~TasksShown);
+	const bool bMorningJustDone = GI->CurrentAct() == 1 && Mask == 7 && TasksShown >= 0 && TasksShown != 7;
 	TasksShown = Mask;
-	auto Box = [](bool bDone) { return bDone ? TEXT("[x]") : TEXT("[  ]"); };
-	FString Text = TEXT("TODAY  \u00B7  EMPLOYEE 4471\n");
-	Text += FString::Printf(TEXT("%s  Check email\n"), Box(GI->bReadEmail));
-	Text += FString::Printf(TEXT("%s  Get coffee\n"), Box(GI->bGotCoffee));
-	Text += FString::Printf(TEXT("%s  Complete Compliance Training"), Box(GI->bTrainingComplete));
+	FString Text = GI->CurrentAct() >= 2 ? TEXT("MIDDAY  \u00B7  EMPLOYEE 4471\n") : TEXT("TODAY  \u00B7  EMPLOYEE 4471\n");
+	Text += GI->TaskListText();
 	if (!GI->Objective.IsEmpty()) { Text += FString::Printf(TEXT("\n\nNEXT  \u00B7  %s"), *GI->Objective); }
 	else if (Mask == 7) { Text += TEXT("\n\nNext: 10:00 meeting, Conference Room"); }
 	Prompt->SetTasks(Text);
-	if (Mask == 7 && NewlyDone)
+	if (bMorningJustDone)
 	{
 		ShowSubtitle(TEXT("PA"), TEXT("Thank you, 4471. Your morning is complete. Please proceed to your 10:00 in the Conference Room."), 6.f);
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Morning tasks complete"));
@@ -872,6 +886,7 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickPhones(DeltaTime);
 	TickSlate(DeltaTime);
 	TickStory();
+	TickAct2(DeltaTime);
 	UpdatePrompt();
 	UpdateTasks();
 	if (SubtitleLeft > 0.f)

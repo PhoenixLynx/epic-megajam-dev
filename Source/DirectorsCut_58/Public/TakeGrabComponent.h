@@ -84,6 +84,20 @@ public:
 	/** Show this subtitle after whatever is showing now (and anything already queued). */
 	void QueueSubtitle(const FString& Who, const FString& Line);
 
+	// ---- Act 2 doorway (overnight run 2, TakeStory.cpp) ----
+	/** Beat 1.10 starts when you come back within this distance of desk #4471 (cm), after the wisp and training. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story") float DeskArriveRadius = 260.f;
+	/** Beat 2.1: "Lunch is served." is repeated word for word this many extra times, this many seconds apart. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story") int32 LunchPAExtraRepeats = 2;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story") float LunchPARepeatSeconds = 6.5f;
+	/** After that, the same announcement comes back now and then during Act 2 (random gap between these, seconds). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story") float LunchPAGapMin = 120.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story") float LunchPAGapMax = 200.f;
+	/** Beat 2.6: every clock stops at this time (minutes after midnight; 2:14 PM = 854). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story") float FrozenClockMinutes = 854.f;
+	/** When the clocks freeze, Fear never drops below this again in Act 2 ("Fear begins faster"). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story") float FrozenFearFloor = 0.15f;
+
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -151,6 +165,18 @@ private:
 	class ATakeFearDirector* FindFearDirector() const;
 	bool TryBreakLoopAt(AActor* Poster);
 	void BindStoryEvents();
+	// Act 2 doorway (TakeStory.cpp)
+	TWeakObjectPtr<AActor> MyDesk;          // the Monitor4471 actor (or the Desk4471 PlayerStart)
+	int32 LunchPALeft = 0;                  // word-for-word repeats still to play (beat 2.1)
+	float LunchPAIn = -1.f;                 // seconds until the next one (< 0 = none planned)
+	int32 LunchPAPlayed = 0;
+	bool bLunchRoomNoted = false;
+	float FloorCheckIn = 0.f;
+	void StartLunch();
+	void TickAct2(float DeltaTime);
+	void PlayLunchPA();
+	void FreezeClocks();
+	bool IsNearMyDesk();
 	UFUNCTION() void HandleRewind(int32 NewTakeNumber);
 	UFUNCTION() void HandleLooped(int32 Count);
 	void BindPropImpacts();

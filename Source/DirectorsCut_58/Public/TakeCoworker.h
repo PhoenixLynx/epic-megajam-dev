@@ -105,7 +105,10 @@ private:
 	TArray<int32> Bag;              // shuffled order of Lines still to say
 	int32 LastLine = -1;
 	bool bGreeted = false;
-	// Story conversations: set name ("", "Pass1", "Done", "Slip") -> lines in order
+	int32 LinesAct = 1;             // which act's small talk is loaded (switches at lunch, beat 1.10)
+	float ActCheckIn = 0.f;
+	bool bLinesClocksFrozen = false;  // the 2:14 lines are in
+	// Story conversations: set name ("", "Pass1", "Done", "Slip", "Lunch") -> lines in order
 	TMap<FString, TArray<FString>> StorySets;
 	TSet<FString> FinishedSets;
 	FString ActiveSet;

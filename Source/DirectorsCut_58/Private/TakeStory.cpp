@@ -7,6 +7,11 @@
 //   loop hints            : after loop 1 / 2 / 4; no changed poster at all -> the loop lets go after 3
 //   wisp (beat 1.8a)      : E -> Fear drains to 0, "Return to your desk."
 //   rewind                : "CUT. AGAIN." / "TAKE n" slate over the rewind's black
+// Act 2 doorway (overnight run 2):
+//   back at desk #4471    : after the wisp + training -> beat 1.10: 12:00, PA "Lunch is served.", Act 2 tasks
+//   repeating PA (2.1)    : "Lunch is served." word for word, twice more, then now and then all Act 2
+//   check in (2.2)        : finishing a story NPC's "Lunch" conversation = one coworker checked in (3 needed)
+//   frozen clocks (2.6)   : the clock reaches 2:14 and stops; PA, a shiver of Fear that never quite leaves
 #include "TakeGrabComponent.h"
 #include "DirectorsCut_58.h"
 #include "TakeGameInstance.h"
@@ -18,6 +23,10 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerStart.h"
+#include "GameFramework/PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
+#include "TakePauseMenu.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 
@@ -49,8 +58,10 @@ void UTakeGrabComponent::BindStoryEvents()
 
 ATakeFearDirector* UTakeGrabComponent::FindFearDirector() const
 {
-	for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { return *It; }
-	return nullptr;
+	UWorld* World = GetWorld();
+	if (!World) { return nullptr; }
+	TActorIterator<ATakeFearDirector> It(World);
+	return It ? *It : nullptr;
 }
 
 void UTakeGrabComponent::PlaySfx2D(const TCHAR* Name, float Volume)
@@ -151,6 +162,12 @@ void UTakeGrabComponent::TickStory()
 		GI->SetObjective(GI->ObjectiveForBeat());
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Beat -> Meeting"));
 	}
+	// Beat 1.10: back at your desk with the wisp, training done -> lunch (Act 2). TakeBeat 4 skips the walk.
+	// Not while you're logged in (the terminal covers the subtitles): it plays as you stand up.
+	if (GI->Beat == ETakeBeat::ReturnToDesk && GI->bTrainingComplete && SlateT < 0.f && !bSeated && !Inspecting && (GI->bDevLunchNow || IsNearMyDesk()))
+	{
+		StartLunch();
+	}
 }
 
 void UTakeGrabComponent::OnStoryTalkFinished(const FString& RoleName, const FString& SetName)
@@ -161,6 +178,13 @@ void UTakeGrabComponent::OnStoryTalkFinished(const FString& RoleName, const FStr
 	{
 		GI->bMetReceptionist = true;   // the morning brief
 		if (GI->Beat == ETakeBeat::Morning) { GI->SetObjective(GI->ObjectiveForBeat()); }
+	}
+	// Beat 2.2: "Check in with 3 coworkers" = finish a lunchtime conversation with each story NPC
+	if (SetName == TEXT("Lunch") && GI->CurrentAct() >= 2 && GI->CoworkersCheckedIn < 3)
+	{
+		++GI->CoworkersCheckedIn;
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Checked in with %s (%d/3)"), *RoleName, GI->CoworkersCheckedIn);
+		GI->SetObjective(GI->ObjectiveForBeat());
 	}
 }
 
@@ -182,6 +206,14 @@ void UTakeGrabComponent::OnBeatTrigger(FName TriggerName)
 		ShowSubtitle(TEXT(""), TEXT("...Where is everyone?"), 3.5f);
 		GI->SetObjective(GI->ObjectiveForBeat());   // "Something is at the end of Corridor B." (cue follows the line)
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Beat -> Corridor (the slip)"));
+		return;
+	}
+
+	// Act 2: the 12:30 call isn't built yet (beat 2.3). Say so in the fiction, once.
+	if (TriggerName == FName(TEXT("ConferenceRoom")) && GI->CurrentAct() >= 2 && !GI->bJoinedCall && !bLunchRoomNoted)
+	{
+		bLunchRoomNoted = true;
+		ShowSubtitle(TEXT(""), TEXT("The screen says: SYNC (12:30). Waiting for the organizer to start this meeting..."), 4.5f);
 		return;
 	}
 
@@ -259,4 +291,110 @@ void UTakeGrabComponent::CollectWisp(ATakeWisp* Wisp)
 	}
 	ShowSubtitle(TEXT(""), TEXT("Warm light runs up your arm. The hum stops. The colour comes back."), 4.5f);
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Wisp collected -> ReturnToDesk"));
+}
+
+// ------------------------------------------------------------------ Act 2 doorway (overnight run 2)
+bool UTakeGrabComponent::IsNearMyDesk()
+{
+	const AActor* Me = GetOwner();
+	if (!Me) { return false; }
+	if (!MyDesk.IsValid())
+	{
+		AActor* Found = nullptr;
+		for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+		{
+			if (It->ActorHasTag(TEXT("Desk4471"))) { Found = *It; break; }
+			if (!Found && It->ActorHasTag(TEXT("Monitor4471"))) { Found = *It; }
+		}
+		if (!Found)
+		{
+			for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+			{
+				if (It->PlayerStartTag == FName(TEXT("Desk4471"))) { Found = *It; break; }
+			}
+		}
+		if (!Found) { return false; }
+		MyDesk = Found;
+	}
+	return FVector::Dist2D(Me->GetActorLocation(), MyDesk->GetActorLocation()) <= DeskArriveRadius;
+}
+
+void UTakeGrabComponent::StartLunch()
+{
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!GI || GI->Beat == ETakeBeat::Lunch) { return; }
+	GI->Beat = ETakeBeat::Lunch;
+	GI->bDevLunchNow = false;
+	GI->WorkdayMinutes = 12.f * 60.f;   // the clock jumps: 12:00
+	GI->bClocksFrozen = false;
+	if (ATakeFearDirector* FearDir = FindFearDirector()) { FearDir->Calm(2.f); }
+	// The jump cut: a short black blink, like a missing piece of film
+	if (APawn* Pawn = Cast<APawn>(GetOwner()))
+	{
+		if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
+		{
+			if (PC->PlayerCameraManager) { PC->PlayerCameraManager->StartCameraFade(1.f, 0.f, 0.6f, FLinearColor::Black, false, false); }
+		}
+	}
+	PlaySfx2D(TEXT("sfx_clapper_snap"), 0.5f);
+	ShowSubtitle(TEXT(""), TEXT("...Twelve? It was eleven a second ago."), 3.f);
+	LunchPAPlayed = 0;
+	LunchPALeft = 1 + FMath::Max(0, LunchPAExtraRepeats);   // the first announcement + the word-for-word repeats
+	LunchPAIn = 3.2f;
+	GI->SetObjective(GI->ObjectiveForBeat());   // "Join the 12:30 call"; the cue queues behind the PA
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Beat -> Lunch (beat 1.10, Act 2 starts)"));
+}
+
+void UTakeGrabComponent::PlayLunchPA()
+{
+	++LunchPAPlayed;
+	PlaySfx2D(TEXT("sfx_pa_chime"), 0.7f);
+	// Word for word, every time (beat 2.1). Shown now, even over another line: the PA doesn't wait.
+	ShowSubtitle(TEXT("PA"), TEXT("Lunch is served."), FMath::Min(3.f, LunchPARepeatSeconds - 0.5f));
+	if (LunchPAPlayed == 3) { QueueSubtitle(TEXT(""), TEXT("...Didn't they just say that?")); }
+	if (LunchPAPlayed == 6) { QueueSubtitle(TEXT(""), TEXT("Same voice. Same breath before \"served\". Every time.")); }
+}
+
+void UTakeGrabComponent::TickAct2(float DeltaTime)
+{
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!GI || GI->CurrentAct() < 2) { return; }
+	// Beat 2.6: after the clocks stop, Fear never quite leaves (checked about once a second)
+	FloorCheckIn -= DeltaTime;
+	if (GI->bClocksFrozen && FloorCheckIn <= 0.f)
+	{
+		FloorCheckIn = 1.f;
+		ATakeFearDirector* FearDir = FindFearDirector();
+		if (FearDir && FearDir->TargetFear < FrozenFearFloor) { FearDir->StartCreep(FrozenFearFloor, 5.f); }
+	}
+	if (bSeated || Inspecting || PauseMenu) { return; }   // the PA waits until you can hear it
+	if (LunchPAIn < 0.f)   // nothing planned (e.g. after loading an Act 2 save): the next one comes later
+	{
+		LunchPAIn = FMath::FRandRange(LunchPAGapMin, LunchPAGapMax);
+	}
+	LunchPAIn -= DeltaTime;
+	if (LunchPAIn > 0.f) { return; }
+	PlayLunchPA();
+	if (LunchPALeft > 0) { --LunchPALeft; }
+	LunchPAIn = LunchPALeft > 0 ? LunchPARepeatSeconds : FMath::FRandRange(LunchPAGapMin, LunchPAGapMax);
+	if (LunchPALeft > 0) { return; }
+	// Between the word-for-word bursts, it comes back as one line, or as all three again
+	if (FMath::FRand() < 0.35f) { LunchPALeft = 1 + FMath::Max(0, LunchPAExtraRepeats); }
+}
+
+void UTakeGrabComponent::FreezeClocks()
+{
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!GI || GI->bClocksFrozen) { return; }
+	GI->bClocksFrozen = true;
+	GI->WorkdayMinutes = FrozenClockMinutes;
+	if (ATakeFearDirector* FearDir = FindFearDirector())
+	{
+		FearDir->FlickerBurst(1.2f);
+		FearDir->StartCreep(FMath::Max(FearDir->Fear, FrozenFearFloor + 0.1f), 6.f);
+	}
+	PlaySfx2D(TEXT("sfx_pa_chime"), 0.7f);
+	ShowSubtitle(TEXT("PA"), TEXT("The time is two fourteen. The time is two fourteen."), 4.5f);
+	QueueSubtitle(TEXT(""), TEXT("The second hand isn't moving. None of them are."));
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Clocks frozen at 2:14 (beat 2.6)"));
 }

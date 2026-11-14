@@ -102,6 +102,12 @@ FString UTakeGameInstance::ObjectiveForBeat() const
 	case ETakeBeat::Meeting:      return FString(TEXT("Attend the 10:00 meeting (Conference Room)"));
 	case ETakeBeat::Corridor:     return FString(TEXT("Something is at the end of Corridor B."));
 	case ETakeBeat::ReturnToDesk: return FString(TEXT("Return to your desk."));
+	case ETakeBeat::Lunch:
+		if (!bJoinedCall)            { return FString(TEXT("Join the 12:30 call (Conference Room)")); }
+		if (!bAttendedMeeting)       { return FString(TEXT("Attend the 1:00 meeting (Conference Room)")); }
+		if (CoworkersCheckedIn < 3)  { return FString(TEXT("Check in with your coworkers")); }
+		if (!bRepliedChairman)       { return FString(TEXT("Reply to the Chairman (your terminal)")); }
+		return FString(TEXT("Wait for further direction."));
 	default:                      return FString();
 	}
 }
@@ -119,8 +125,52 @@ void UTakeGameInstance::TakeBeat(int32 NewBeat)
 		bReadEmail = bGotCoffee = bTrainingComplete = bMetReceptionist = true;
 		if (SoulBits < 1) { SetSoulBits(1); }
 	}
-	Beat = static_cast<ETakeBeat>(Clamped);
+	// Act 2 state only exists from the lunch beat on
+	bJoinedCall = bAttendedMeeting = bRepliedChairman = bClocksFrozen = false;
+	CoworkersCheckedIn = 0;
+	bDevLunchNow = false;
+	if (Clamped >= static_cast<int32>(ETakeBeat::Lunch))
+	{
+		// Stop just before beat 1.10 and let the story code play it (12:00, "Lunch is served.", Act 2 tasks)
+		Beat = ETakeBeat::ReturnToDesk;
+		bDevLunchNow = true;
+	}
+	else
+	{
+		Beat = static_cast<ETakeBeat>(Clamped);
+		if (WorkdayMinutes > 12.f * 60.f) { WorkdayMinutes = 11.f * 60.f + 30.f; }
+	}
 	bGotWisp = Beat == ETakeBeat::ReturnToDesk;
 	SetObjective(ObjectiveForBeat());
-	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Beat -> %d"), Clamped);
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Beat -> %d%s"), Clamped, bDevLunchNow ? TEXT(" (beat 1.10 plays now)") : TEXT(""));
+}
+
+void UTakeGameInstance::TakeTime(int32 HHMM)
+{
+	const int32 Hours = FMath::Clamp(HHMM / 100, 0, 23);
+	const int32 Minutes = FMath::Clamp(HHMM % 100, 0, 59);
+	WorkdayMinutes = static_cast<float>(Hours * 60 + Minutes);
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Clock -> %02d:%02d"), Hours, Minutes);
+}
+
+FString UTakeGameInstance::TaskListText() const
+{
+	auto Box = [](bool bDone) { return bDone ? TEXT("[x]") : TEXT("[  ]"); };
+	if (CurrentAct() >= 2)
+	{
+		const int32 Met = FMath::Clamp(CoworkersCheckedIn, 0, 3);
+		return FString::Printf(TEXT("%s  Join 12:30 call\n%s  Attend 1:00 meeting\n%s  Check in with 3 coworkers  (%d/3)\n%s  Reply to the Chairman"),
+		                       Box(bJoinedCall), Box(bAttendedMeeting), Box(Met >= 3), Met, Box(bRepliedChairman));
+	}
+	return FString::Printf(TEXT("%s  Check email\n%s  Get coffee\n%s  Complete Compliance Training"),
+	                       Box(bReadEmail), Box(bGotCoffee), Box(bTrainingComplete));
+}
+
+int32 UTakeGameInstance::TaskSignature() const
+{
+	if (CurrentAct() >= 2)
+	{
+		return 0x100 | (bJoinedCall ? 1 : 0) | (bAttendedMeeting ? 2 : 0) | (bRepliedChairman ? 4 : 0) | (FMath::Clamp(CoworkersCheckedIn, 0, 3) << 4);
+	}
+	return (bReadEmail ? 1 : 0) | (bGotCoffee ? 2 : 0) | (bTrainingComplete ? 4 : 0);
 }

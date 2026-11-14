@@ -85,7 +85,7 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 		UVerticalBox* Col = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
 		Card->SetContent(Col);
 		const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
-		Col->AddChildToVerticalBox(MakeText(TEXT("HALCYON  ·  BREAK"), 13, PMint, true));
+		Col->AddChildToVerticalBox(MakeText(TEXT("HALCYON  \u00B7  BREAK"), 13, PMint, true));
 		Col->AddChildToVerticalBox(MakeText(FString::Printf(TEXT("Paused.  Take %d."), GI ? GI->TakeNumber : 1), 30, PInk, true));
 
 		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
@@ -186,9 +186,7 @@ void UTakePauseMenu::RefreshTasks()
 {
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (!TasksText || !GI) { return; }
-	auto Box = [](bool bDone) { return bDone ? TEXT("[x]") : TEXT("[  ]"); };
-	FString T = FString::Printf(TEXT("%s  Check email\n%s  Get coffee\n%s  Complete Compliance Training\n\n"),
-	                            Box(GI->bReadEmail), Box(GI->bGotCoffee), Box(GI->bTrainingComplete));
+	FString T = GI->TaskListText() + TEXT("\n\n");   // the current act's badge tasks
 	if (!GI->Objective.IsEmpty()) { T += FString::Printf(TEXT("Next:  %s"), *GI->Objective); }
 	else { T += GI->MorningTasksDone() ? TEXT("Next:  10:00 meeting, Conference Room.") : TEXT("Your desk is #4471, by the window."); }
 	T += FString::Printf(TEXT("\n\nAccess passes:  %d / 3"), GI->SoulBits);
@@ -307,6 +305,12 @@ bool UTakePauseMenu::SaveProgress(const UObject* WorldContext)
 	S->Objective = GI->Objective;
 	S->bMetReceptionist = GI->bMetReceptionist;
 	S->bGotWisp = GI->bGotWisp;
+	S->WorkdayMinutes = GI->WorkdayMinutes;
+	S->bJoinedCall = GI->bJoinedCall;
+	S->bAttendedMeeting = GI->bAttendedMeeting;
+	S->CoworkersCheckedIn = GI->CoworkersCheckedIn;
+	S->bRepliedChairman = GI->bRepliedChairman;
+	S->bClocksFrozen = GI->bClocksFrozen;
 	S->SavedAt = FDateTime::Now();
 	if (const APawn* P = UGameplayStatics::GetPlayerPawn(WorldContext, 0))
 	{
@@ -337,6 +341,13 @@ bool UTakePauseMenu::LoadProgress(const UObject* WorldContext)
 	GI->Beat = static_cast<ETakeBeat>(FMath::Clamp(S->BeatIndex, 0, static_cast<int32>(ETakeBeat::Count) - 1));
 	GI->bMetReceptionist = S->bMetReceptionist;
 	GI->bGotWisp = S->bGotWisp;
+	GI->WorkdayMinutes = S->WorkdayMinutes;
+	GI->bJoinedCall = S->bJoinedCall;
+	GI->bAttendedMeeting = S->bAttendedMeeting;
+	GI->CoworkersCheckedIn = FMath::Clamp(S->CoworkersCheckedIn, 0, 3);
+	GI->bRepliedChairman = S->bRepliedChairman;
+	GI->bClocksFrozen = S->bClocksFrozen;
+	GI->bDevLunchNow = false;
 	GI->SetObjective(S->Objective.IsEmpty() ? GI->ObjectiveForBeat() : S->Objective);
 	if (APawn* P = UGameplayStatics::GetPlayerPawn(WorldContext, 0))
 	{

@@ -17,6 +17,7 @@ About 2,300 lines. The Key Lock core is tested outside Unreal (`Scripts/Referenc
 | `ATakeBeatTrigger` | *(overnight run 1)* Invisible box with a `BeatName`; tells the player's Take Grab "you walked into ConferenceRoom / CorridorB". The story code decides what happens (the 10:00 slip, the Corridor B PA + creep). | `place_cpp_actors.py` places two |
 | `ATakeWisp` | *(overnight run 1)* Soul-energy wisp: emissive sphere + point light, bobbing. Only there during its beat (`VisibleDuring`, default Corridor). E picks it up: Fear drains, objective "Return to your desk." | `place_cpp_actors.py` (on `GB_SoulEnergy_Act1`, makes `M_Wisp`) |
 | Story (`TakeStory.cpp`) | *(overnight run 1)* The story half of `UTakeGrabComponent`: cold open slate + PA, objectives (`UTakeGameInstance::Objective`, `ETakeBeat`), story NPC conversations (`ATakeCoworker::Talk`, DT_NPCLines `Story1..`, `Pass1Story1..`, `DoneStory1..`, `SlipStory1..`), loop hints + breaking the loop by looking closer at the changed poster, rewind slate. | None |
+| Act 2 doorway (`TakeStory.cpp`) | *(overnight run 2)* Beat 1.10: back at desk #4471 after the wisp + training → clock jumps to **12:00**, PA **"Lunch is served."** (then word for word twice more, and again now and then all Act 2: beat 2.1), the badge switches to the **Act 2 task list** (12:30 call, 1:00 meeting, check in with 3 coworkers, reply to the Chairman: beat 2.2). Story NPCs get a `LunchStory` conversation; finishing each = one check-in. Coworkers switch to Act 2 small talk. Act 2 mail arrives on the terminal (`ArrivesAfter`). The clock runs to **2:14** and stops for good (beat 2.6): PA, a flicker, and Fear never drops below `FrozenFearFloor` again. Knobs on Take Grab → Story. | None |
 | `UTakeKeyLockLibrary` | Blueprint nodes: `GenerateKeyLockForRun`, `EvaluateKeyLock` (Wrong / Solved / Corrupted), `CurrentResult`, `SightCheck`, `IsGlyphLit`, `IsGlyphHidden`, `GlyphRowString`. | None |
 
 ## Console commands (press ` during Play)
@@ -28,7 +29,8 @@ About 2,300 lines. The Key Lock core is tested outside Unreal (`Scripts/Referenc
 | `TakeStalker` | Wake the stalker now |
 | `TakeRewind` | "CUT. AGAIN." |
 | `TakeLoop 1` | Force the Corridor B loop on (otherwise it only runs during the Corridor B beat) |
-| `TakeBeat 1` | Jump to a story beat: 0 morning, 1 meeting (all tasks done), 2 Corridor B, 3 after the wisp |
+| `TakeBeat 1` | Jump to a story beat: 0 morning, 1 meeting (all tasks done), 2 Corridor B, 3 after the wisp, 4 lunch (plays beat 1.10 now: Act 2) |
+| `TakeTime 1410` | Set the clock (HHMM). In Act 2, 1410 = four game minutes (12 s) before the clocks freeze at 2:14 |
 | `TakeSoulBits 1` | Pretend you have 1 soul bit (telekinesis reach) |
 | `TakeSeed` | Print this run's seed and all three Key Locks to the log |
 

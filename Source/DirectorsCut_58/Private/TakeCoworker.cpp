@@ -136,6 +136,10 @@ void ATakeCoworker::LoadLines()
 	Greetings.Reset();
 	CoffeeLines.Reset();
 	StorySets.Reset();
+	const UTakeGameInstance* GameInst = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	LinesAct = GameInst ? GameInst->CurrentAct() : 1;
+	bLinesClocksFrozen = GameInst && GameInst->bClocksFrozen;
+	TArray<FString> MorningLines;   // Act 1 small talk, used in a later act if that act has none for this role
 	auto Matches = [this](const FString& RowRole) { return RowRole.Equals(NPCRole, ESearchCase::IgnoreCase); };
 	if (const UDataTable* Table = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_NPCLines.DT_NPCLines")))
 	{
@@ -144,8 +148,9 @@ void ATakeCoworker::LoadLines()
 		TMap<FString, TArray<TPair<int32, FString>>> Story;   // set -> (order, line)
 		for (const FTakeNPCLineRow* R : Rows)
 		{
-			if (!R || R->Act != 1 || !Matches(R->Role) || (R->IsAgent && !bIsAgent)) { continue; }
-			// Story conversations ("Story1", "Pass1Story2", ...): only story NPCs use them, never as small talk
+			if (!R || R->Act < 1 || R->Act > LinesAct || !Matches(R->Role) || (R->IsAgent && !bIsAgent)) { continue; }
+			// Story conversations ("Story1", "Pass1Story2", "LunchStory1", ...): only story NPCs use them, never as small talk.
+			// Every act up to the current one is loaded, so a conversation you're part-way through survives the act change.
 			const int32 StoryAt = R->Context.Find(TEXT("Story"), ESearchCase::CaseSensitive);
 			if (StoryAt != INDEX_NONE && R->Context.Mid(StoryAt + 5).IsNumeric())
 			{
@@ -155,6 +160,14 @@ void ATakeCoworker::LoadLines()
 				}
 				continue;
 			}
+			if (R->Act != LinesAct)
+			{
+				if (R->Act == 1 && R->Context != TEXT("Greeting") && R->Context != TEXT("BadgeCheck") && R->Context != TEXT("AfterCoffee")) { MorningLines.Add(R->Line); }
+				continue;
+			}
+			// Lines written for a specific scene (the call, the meeting, after a rewind) aren't small talk
+			if (R->Context == TEXT("VideoCall") || R->Context == TEXT("Meeting") || R->Context == TEXT("AfterRewind") || R->Context == TEXT("AfterMeeting")) { continue; }
+			if (R->Context == TEXT("AfterClocks") && !bLinesClocksFrozen) { continue; }   // only once every clock reads 2:14
 			if (R->Context == TEXT("Greeting") || R->Context == TEXT("BadgeCheck")) { Greetings.Add(R->Line); }
 			else if (R->Context == TEXT("AfterCoffee")) { CoffeeLines.Add(R->Line); }
 			else { Lines.Add(R->Line); }
@@ -166,6 +179,7 @@ void ATakeCoworker::LoadLines()
 			for (const TPair<int32, FString>& L : Set.Value) { Ordered.Add(L.Value); }
 		}
 	}
+	if (Lines.Num() == 0) { Lines = MorningLines; }
 	if (Lines.Num() == 0)   // fallback until the DataTable is imported
 	{
 		Lines = { TEXT("Oh! Sorry, didn't see you there."), TEXT("Big day. Everyone knows their marks."),
@@ -274,6 +288,7 @@ bool ATakeCoworker::CurrentStorySet(FString& OutSet) const
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (GI)
 	{
+		if (GI->Beat >= ETakeBeat::Lunch && StorySets.Contains(TEXT("Lunch")))  { OutSet = TEXT("Lunch"); return true; }
 		if (GI->Beat >= ETakeBeat::Corridor && StorySets.Contains(TEXT("Slip"))) { OutSet = TEXT("Slip"); return true; }
 		if (GI->MorningTasksDone() && StorySets.Contains(TEXT("Done")))   { OutSet = TEXT("Done"); return true; }
 		if (GI->HasPass(1) && StorySets.Contains(TEXT("Pass1")))          { OutSet = TEXT("Pass1"); return true; }
@@ -428,6 +443,14 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	CooldownLeft = FMath::Max(0.f, CooldownLeft - DeltaSeconds);
 	NearCooldownLeft = FMath::Max(0.f, NearCooldownLeft - DeltaSeconds);
+	// New act (lunch, or loading a save): switch to that act's small talk and conversations
+	ActCheckIn -= DeltaSeconds;
+	if (ActCheckIn <= 0.f)
+	{
+		ActCheckIn = 1.f;
+		const UTakeGameInstance* GameInst = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		if (GameInst && (GameInst->CurrentAct() != LinesAct || GameInst->bClocksFrozen != bLinesClocksFrozen)) { LoadLines(); }
+	}
 	if (SpeechLeft > 0.f)
 	{
 		SpeechLeft -= DeltaSeconds;

@@ -17,6 +17,7 @@ enum class ETakeBeat : uint8
 	Meeting,        // all three tasks done: go to the 10:00 in the Conference Room
 	Corridor,       // the slip happened: something is at the end of Corridor B (the loop is allowed now)
 	ReturnToDesk,   // picked up the wisp: go back to your desk (beat 1.10 is next)
+	Lunch,          // beat 1.10 done: 12:00, "Lunch is served.", Act 2 task list (beats 2.1-2.2)
 	Count UMETA(Hidden)
 };
 
@@ -69,6 +70,26 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bMetReceptionist = false;
 	/** You picked up the soul-energy wisp at the end of Corridor B (beat 1.8a). */
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bGotWisp = false;
+	/** Act 1 = the morning, Act 2 = midday (from beat 1.10 on). */
+	UFUNCTION(BlueprintPure, Category = "Take") int32 CurrentAct() const { return Beat >= ETakeBeat::Lunch ? 2 : 1; }
+
+	/** Act 2 badge tasks (beat 2.2). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Act2") bool bJoinedCall = false;
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Act2") bool bAttendedMeeting = false;
+	/** Story NPCs you've had a lunchtime conversation with (0..3). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Act2") int32 CoworkersCheckedIn = 0;
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Act2") bool bRepliedChairman = false;
+	/** Every clock stopped at 2:14 (beat 2.6). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Act2") bool bClocksFrozen = false;
+	UFUNCTION(BlueprintPure, Category = "Take|Act2") bool Act2TasksDone() const { return bJoinedCall && bAttendedMeeting && CoworkersCheckedIn >= 3 && bRepliedChairman; }
+
+	/** The badge task list for the current act, one "[x]  Task" per line (HUD + pause menu). */
+	UFUNCTION(BlueprintPure, Category = "Take") FString TaskListText() const;
+	/** Changes whenever anything on the task list changes (the HUD redraws only then). */
+	int32 TaskSignature() const;
+
+	/** Dev: TakeBeat 4 starts beat 1.10 right away instead of waiting for you to reach your desk. */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") bool bDevLunchNow = false;
 	/** Dev: TakeLoop 1 forces the Corridor B loop on outside its beat. */
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") bool bDevForceLoop = false;
 
@@ -84,5 +105,6 @@ public:
 	UFUNCTION(Exec) void TakeLoop(bool bEnable);         // force the Corridor B loop on/off
 	UFUNCTION(Exec) void TakeSeed();
 	UFUNCTION(Exec) void TakeNPCYaw(float Yaw);          // turn every rigged NPC's body (facing test)
-	UFUNCTION(Exec) void TakeBeat(int32 NewBeat);        // jump to a story beat: 0 morning, 1 meeting, 2 corridor, 3 return to desk
+	UFUNCTION(Exec) void TakeBeat(int32 NewBeat);        // jump to a story beat: 0 morning, 1 meeting, 2 corridor, 3 return to desk, 4 lunch (Act 2)
+	UFUNCTION(Exec) void TakeTime(int32 HHMM);           // set the clock, e.g. TakeTime 1410 (four minutes before the clocks freeze)
 };

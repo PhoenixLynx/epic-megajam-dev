@@ -212,12 +212,25 @@ void UTakeTerminalWidget::LoadMail()
 	{
 		TArray<FTakeEmailRow*> Rows;
 		Table->GetAllRows<FTakeEmailRow>(TEXT("TakeTerminal"), Rows);
+		// Act 1 mail is always there. Later mail arrives with the story (ArrivesAfter) and goes on top, newest first.
+		const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		const int32 Act = GI ? GI->CurrentAct() : 1;
+		auto Arrived = [GI](const FString& When)
+		{
+			if (!GI) { return false; }
+			if (When == TEXT("Act2Start"))    { return GI->CurrentAct() >= 2; }
+			if (When == TEXT("ClocksFreeze")) { return GI->bClocksFrozen; }
+			if (When == TEXT("AfterCall"))    { return GI->bJoinedCall; }
+			if (When == TEXT("AfterMeeting")) { return GI->bAttendedMeeting; }
+			return false;
+		};
+		int32 NewMail = 0;
 		for (const FTakeEmailRow* R : Rows)
 		{
-			if (R && R->Act == 1)
-			{
-				Mails.Add({ TakeText::Fill(this, R->Sender), TakeText::Fill(this, R->Subject), TakeText::Fill(this, R->Body), R->IsPhishing });
-			}
+			if (!R) { continue; }
+			const FMail Mail = { TakeText::Fill(this, R->Sender), TakeText::Fill(this, R->Subject), TakeText::Fill(this, R->Body), R->IsPhishing };
+			if (R->Act == 1) { Mails.Add(Mail); }
+			else if (R->Act <= Act && Arrived(R->ArrivesAfter)) { Mails.Insert(Mail, NewMail++); }
 		}
 	}
 	if (Mails.Num() == 0)   // fallback until the DataTable is imported
@@ -254,7 +267,14 @@ TSharedRef<SWidget> UTakeTerminalWidget::RebuildWidget()
 		Bar->SetContent(BarRow);
 		UHorizontalBoxSlot* TitleSlot = BarRow->AddChildToHorizontalBox(MakeText(TEXT("HALCYON MAIL"), 20, FLinearColor::White, true));
 		TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-		BarRow->AddChildToHorizontalBox(MakeText(TEXT("Employee 4471  \u00B7  9:02 AM"), 14, FLinearColor::White));
+		FString ClockLabel = TEXT("9:02 AM");
+		if (const UTakeGameInstance* ClockGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+		{
+			const int32 Minutes = FMath::FloorToInt(ClockGI->WorkdayMinutes);
+			const int32 H24 = Minutes / 60;
+			ClockLabel = FString::Printf(TEXT("%d:%02d %s"), (H24 + 11) % 12 + 1, Minutes % 60, H24 < 12 ? TEXT("AM") : TEXT("PM"));
+		}
+		BarRow->AddChildToHorizontalBox(MakeText(FString::Printf(TEXT("Employee 4471  \u00B7  %s"), *ClockLabel), 14, FLinearColor::White));
 		Page->AddChildToVerticalBox(Bar);
 
 		// Tabs: Inbox | Training

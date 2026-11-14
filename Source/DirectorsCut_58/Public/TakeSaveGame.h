@@ -30,6 +30,13 @@ public:
 	UPROPERTY() FString Objective;
 	UPROPERTY() bool bMetReceptionist = false;
 	UPROPERTY() bool bGotWisp = false;
+	// Act 2 (overnight run 2)
+	UPROPERTY() float WorkdayMinutes = 540.f;
+	UPROPERTY() bool bJoinedCall = false;
+	UPROPERTY() bool bAttendedMeeting = false;
+	UPROPERTY() int32 CoworkersCheckedIn = 0;
+	UPROPERTY() bool bRepliedChairman = false;
+	UPROPERTY() bool bClocksFrozen = false;
 
 	// settings
 	UPROPERTY() float MasterVolume = 1.f;
