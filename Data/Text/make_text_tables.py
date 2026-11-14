@@ -62,13 +62,49 @@ EMAILS = [
     ("A1_HRIncident", 1, "HALCYON People Team", "A gentle reminder about workplace conduct :)",
      "Hi {EMP}!\n\nWe've received several reports of office supplies travelling at speed.\n"
      "At HALCYON, every object has its place, and so does every employee.\n\n"
-     "Please complete Respectful Workplace Module 2 at your earliest convenience.\n"
-     "(There is no Module 2. Please stop.)\n\nWarmly,\nPeople Team",
+     "Please complete Respectful Workplace Module 2 at your earliest convenience (your terminal, Training tab).\n"
+     "It takes about a minute. It has always taken about a minute.\n\nWarmly,\nPeople Team",
      False, False, "HRIncident"),
+    ("A1_HRIncident2", 1, "HALCYON People Team", "Following up :)",
+     "Hi again {EMP}!\n\nThe reports are still coming in. So are the staplers.\n\n"
+     "Respectful Workplace Module 3 has been assigned to you. There is no Module 4.\n\nWarmly (less),\nPeople Team",
+     False, False, "HRIncident2"),
+    ("A1_HRCertificate", 1, "HALCYON Learning", "Certificate of Completion",
+     "Congratulations, {EMP}!\n\nYou have completed RESPECTFUL WORKPLACE.\nThis certificate is valid for the rest of the day.\n\n"
+     "Your coworkers have been notified and feel safer already.",
+     False, False, "HRModuleDone"),
+    ("A1_CaffeineNoReply", 1, "HALCYON Wellness", "About your caffeine intake",
+     "Hi {EMP}!\n\nOur sensors noticed you've had five coffees today. That's wonderful!\n"
+     "Energy is our greatest asset, and yours is looking great.\n\nPlease don't stop.\n\n- Wellness",
+     False, False, "Coffee5"),
+    ("A1_MoraleToss", 1, "HALCYON Morale Team", "Three in a row!",
+     "{EMP},\n\nThree baskets in a row! The Morale Team noticed. The Morale Team notices everything.\n\n"
+     "You have been entered into the Employee of the Take draw. You are the only entry. You have always been the only entry.",
+     False, False, "Toss3"),
+    ("A1_KeyLock2NoReply", 1, "HALCYON Access", "New sign-in: Supply Closet",
+     "A new sign-in was detected on the Supply Closet terminal.\n\nUser: 4470\nBadge: 4471\n\n"
+     "If this was you, no action is needed. It was you.",
+     False, False, "KeyLock2"),
     ("A1_MailboxMigration", 1, "HALCYON IT", "Mailbox migration complete",
      "Hi {EMP},\n\nYour mailbox migration is complete. Mail addressed to 4470 will now be delivered to you.\n"
      "Please do not reply to 4470's correspondence. 4470 is no longer with the production.\n\n- IT",
      False, False, ""),
+    ("A2_Wellness", 2, "HALCYON Wellness", "Quick wellness check-in :)",
+     "Hi {EMP}!\n\nIt's lunchtime, and we care about how you're feeling.\n\nHow are you today? Just hit reply.\n\n"
+     "(This check-in is anonymous. It is addressed to you by name.)",
+     False, False, "Act2Start"),
+    ("A2_WellnessFollowUp", 2, "HALCYON Wellness", "Re: Quick wellness check-in :)",
+     "{EMP},\n\nThank you for telling us something is wrong. Nothing is wrong.\n\n"
+     "We've booked you into the Wellness Center (end of Corridor B). Rest. Recharge. Return.\n\nAre you feeling better now?",
+     False, False, "WellnessWrong"),
+    ("A2_ITSecurityNoReply", 2, "HALCYON IT Security", "You replied to a phishing email",
+     "{EMP},\n\nYou sent your key signature to \"Payro11 Department\". Please note the two ones.\n\n"
+     "This is your one warning. (It isn't your one warning. You've had this warning before.)\n\n- IT Security",
+     False, False, "RepliedPhish"),
+    ("A2_ITThanksNoReply", 2, "HALCYON IT Security", "Thanks for reporting!",
+     "{EMP},\n\nThank you for reporting that phishing email. Good catch!\n\n"
+     "Most people send their key. Most people are still here.\n\n- IT Security",
+     False, False, "ReportedPhish"),
     ("A2_PayrollPhish", 2, "Payro11 Department", "ACTION REQUIRED: verify your key",
      "Dear Employee,\n\nTo keep receiving your energy allocation, reply with your key signature below. "
      "This is the correct one. Trust this one.\n\n{GLYPHS_B}",

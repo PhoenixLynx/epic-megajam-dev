@@ -28,7 +28,7 @@ SCALE_FIX = 1.0
 DESK_TOP = 76.0  # cm
 
 # Throwable meshes get physics
-THROWABLE = {"SM_CoffeeBag", "SM_TeaBox", "SM_CupStack", "SM_SnackBag", "SM_SnackBox", "SM_SodaCan",
+THROWABLE = {"SM_PaperBall", "SM_CoffeeBag", "SM_TeaBox", "SM_CupStack", "SM_SnackBag", "SM_SnackBox", "SM_SodaCan",
              "SM_WaterBottle", "SM_MilkCarton", "SM_LunchBox", "SM_FruitBowl", "SM_Mug", "SM_Keyboard", "SM_OfficeChair", "SM_ReamOfPaper", "SM_FireExtinguisher", "SM_WetFloorSign",
              "SM_MopBucket", "SM_Binder", "SM_BinderMint", "SM_BinderRed", "SM_Stapler", "SM_TapeDispenser",
              "SM_PenCup", "SM_DeskLamp", "SM_DeskPhone", "SM_Laptop", "SM_PCTower", "SM_TrashBin", "SM_PlantDesk",
@@ -75,6 +75,8 @@ put("SM_Stapler", 1330, 2332, DESK_TOP, 75, ["DeskItem", "DeskFixed"])
 put("SM_PCTower", 1410, 2280, 0, 180)
 put("SM_OfficeChair", 1300, 2385, 0, 0, ["ChangeOnRewind"])
 put("SM_TrashBin", 1170, 2370)
+for i in range(5):                                          # a pile of crumpled drafts by your bin: the paper toss
+    put("SM_PaperBall", 1215 + i * 11, 2420 + (i % 2) * 9, 0)
 put("SM_DirectorsChair", 1480, 2470, 0, 210, ["Act2Reveal"])  # hidden in game until Act 2
 cabinet(1700, 3500, 0, 4, {3: ["InspectTex=MI_File_4470"]})   # top drawer: 4470's personnel file
 cabinet(1760, 3500, 0, 2)
@@ -101,6 +103,8 @@ for row in range(3):
                 rnd.uniform(0, 360))
         if rnd.random() < 0.3:
             put("SM_TrashBin", cx + 60, cy + 30)
+        if (row + col) % 2 == 0:                            # paper to throw (paper toss)
+            put("SM_PaperBall", cx - 40, cy - 70, DESK_TOP)
 # coworkers standing a little too still
 for i, (cx, cy) in enumerate([(1800, 2100), (2500, 2100), (2150, 2550), (2850, 3000), (1800, 3000)]):
     put("SM_Mannequin", cx + 70, cy + 70, 0, rnd.uniform(140, 220), ["NPC", f"Coworker_{i}"])
@@ -133,7 +137,7 @@ put("SM_Kettle", 3515, 545, 91, 180)          # sink is 3440-3490
 put("SM_KitchenIsland", 3300, 830, 0, 180)         # more worktop; ~2 m aisle to the counter
 put("SM_FridgeBody", 3710, 545, 0, 180)
 FRIDGE = (3710, 545, 180)   # door, notes and food are placed relative to this below
-put("SM_VendingMachine", 3750, 900, 0, -90)
+put("SM_VendingMachine", 3750, 900, 0, -90, ["Vending"])          # E = a snack (always the same one)
 put("SM_WaterCooler", 3730, 1250, 0, -90)
 for tx, ty in ((3100, 1150), (3450, 1250)):
     put("SM_CafeTable", tx, ty)
@@ -173,7 +177,7 @@ for x in (600, 800, 1000):
 put("SM_DirectorsChair", 1150, 1100, 0, 90)          # at the head of the table, empty
 TABLE_Z = 75
 for (x, y, yaw) in ((600, 1030, 180), (800, 1030, 180), (1000, 1170, 0)):
-    put("SM_Laptop", x, y, TABLE_Z, yaw)
+    put("SM_Laptop", x, y, TABLE_Z, yaw, ["CallScreen"])          # E = join the 12:30 call / 1:00 meeting (Act 2)
 for (x, y) in ((660, 1060), (950, 1080), (720, 1150), (1060, 1130)):
     put("SM_Mug", x, y, TABLE_Z, rnd.uniform(0, 360))
 for (x, y) in ((880, 1090), (900, 1110), (520, 1100)):
@@ -373,6 +377,9 @@ def main():
             if not mi_name.startswith("MI_Screen"):
                 tags = [t for t in a.tags if str(t) != "Inspectable"] + [unreal.Name("Inspectable")]   # E: look closer
                 a.set_editor_property("tags", tags)
+        extra = {"GB_CallScreen": "CallScreen", "GB_KeyLock2_Panel": "KeyLockPanel"}.get(a.get_actor_label())
+        if extra and unreal.Name(extra) not in a.tags:                         # E: join the call / log in (Key Lock 2)
+            a.set_editor_property("tags", list(a.tags) + [unreal.Name(extra)])
 
     unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
     unreal.log(f"[TAKE 4471] Dressed campus: placed {placed}, removed {removed} old actors")

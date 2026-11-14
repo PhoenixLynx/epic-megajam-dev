@@ -55,6 +55,7 @@ void UTakeGrabComponent::BeginPlay()
 		if (USoundBase* Snd = LoadObject<USoundBase>(nullptr, *FString::Printf(TEXT("/Game/Audio/Placeholder/%s.%s"), *Name, *Name))) { StepSounds.Add(Snd); }
 	}
 	BindPropImpacts();
+	CollectFunProps();
 	if (bAutoBindKeys)
 	{
 		// Input component exists once the pawn is possessed; try now and shortly after.
@@ -81,6 +82,7 @@ void UTakeGrabComponent::EndPlay(const EEndPlayReason::Type Reason)
 	if (Terminal) { Terminal->RemoveFromParent(); Terminal = nullptr; }
 	if (PauseMenu) { PauseMenu->RemoveFromParent(); PauseMenu = nullptr; }
 	if (Inspecting) { Inspecting->RemoveFromParent(); Inspecting = nullptr; }
+	if (LockPanel) { LockPanel->RemoveFromParent(); LockPanel = nullptr; }
 	StopRinging();
 	Super::EndPlay(Reason);
 }
@@ -192,6 +194,7 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 	}
 	const FVector End = Loc + Rot.Vector() * FMath::Max(CurrentRange(), UseRange);
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(TakeLook), false, GetOwner());
+	if (IsHolding()) { Params.AddIgnoredActor(Handle->GetGrabbedComponent()->GetOwner()); }   // see past what's in your hands
 	if (!GetWorld()->LineTraceSingleByChannel(Hit, Loc, End, ECC_Visibility, Params)) { return ETakeLookKind::None; }
 	AActor* A = Hit.GetActor();
 	UPrimitiveComponent* Comp = Hit.GetComponent();
@@ -205,6 +208,9 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 		if (A->ActorHasTag(TEXT("Terminal"))) { return ETakeLookKind::Terminal; }
 		if (A->ActorHasTag(TEXT("Openable"))) { return ETakeLookKind::Openable; }
 		if (A->ActorHasTag(TEXT("CoffeeMachine"))) { return ETakeLookKind::Coffee; }
+		if (A->ActorHasTag(TEXT("Vending"))) { return ETakeLookKind::Vending; }
+		if (A->ActorHasTag(TEXT("CallScreen")) && CanJoinCall()) { return ETakeLookKind::Call; }
+		if (A->ActorHasTag(TEXT("KeyLockPanel"))) { return ETakeLookKind::LockPanel; }
 		if (RingingPhone.IsValid() && A == RingingPhone.Get()) { return ETakeLookKind::Phone; }
 		if (A->ActorHasTag(TEXT("Inspectable"))) { return ETakeLookKind::Inspect; }
 		if (const ATakeWisp* W = Cast<ATakeWisp>(A)) { return W->IsAvailable() ? ETakeLookKind::Wisp : ETakeLookKind::None; }
@@ -219,8 +225,13 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 void UTakeGrabComponent::Interact()
 {
 	if (bSeated) { LogOut(); return; }
-	if (IsHolding()) { Drop(); return; }
 	FHitResult Hit;
+	if (IsHolding())
+	{
+		if (IsHoldingMug() && Look(Hit) == ETakeLookKind::Coffee) { PourCoffee(); return; }   // refill the mug you're holding
+		Drop();
+		return;
+	}
 	switch (Look(Hit))
 	{
 	case ETakeLookKind::Coworker:  if (ATakeCoworker* C = Cast<ATakeCoworker>(Hit.GetActor())) { C->Talk(); } break;
@@ -229,6 +240,9 @@ void UTakeGrabComponent::Interact()
 	case ETakeLookKind::Coffee:    PourCoffee(); break;
 	case ETakeLookKind::Phone:     AnswerPhone(Hit.GetActor()); break;
 	case ETakeLookKind::Inspect:   Inspect(Hit.GetActor()); break;
+	case ETakeLookKind::Call:      JoinCall(); break;
+	case ETakeLookKind::Vending:   Vend(Hit.GetActor()); break;
+	case ETakeLookKind::LockPanel: OpenLockPanel(2); break;
 	case ETakeLookKind::Wisp:      CollectWisp(Cast<ATakeWisp>(Hit.GetActor())); break;
 	case ETakeLookKind::Prop:      TryGrabOrDrop(); break;
 	default: break;
@@ -269,6 +283,8 @@ void UTakeGrabComponent::Throw()
 	Comp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);   // pawns include coworkers: let it hit them
 	Comp->AddImpulse(Rot.Vector() * ThrowStrength, NAME_None, /*bVelChange=*/true);
 	PlaySfx(TEXT("sfx_throw"), Comp->GetComponentLocation(), 0.7f);
+	TossProp = Comp;   // paper toss: watch where it lands
+	TossLeft = 3.5f;
 	OnThrown.Broadcast(Comp);
 }
 
@@ -430,7 +446,7 @@ void UTakeGrabComponent::TogglePause()
 {
 	APawn* Pawn = Cast<APawn>(GetOwner());
 	APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
-	if (!PC || bSeated || Inspecting) { return; }
+	if (!PC || bSeated || Inspecting || LockPanel) { return; }
 	if (PauseMenu)   // resume
 	{
 		PauseMenu->RemoveFromParent();
@@ -467,21 +483,6 @@ void UTakeGrabComponent::SetFearDebug(float Value)
 }
 
 // ------------------------------------------------------------------ Tick
-void UTakeGrabComponent::PourCoffee()
-{
-	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
-	static const TCHAR* Pours[] = {
-		TEXT("You pour a coffee. It's exactly the right temperature. It always is."),
-		TEXT("Another cup. The mug already has your name on it."),
-		TEXT("The machine hums the HALCYON jingle while it pours."),
-	};
-	const int32 Count = UE_ARRAY_COUNT(Pours);
-	ShowSubtitle(TEXT(""), Pours[(GI && GI->bGotCoffee) ? FMath::RandRange(1, Count - 1) : 0], 4.f);
-	if (GI) { GI->bGotCoffee = true; }
-	FHitResult Hit;
-	if (Look(Hit) == ETakeLookKind::Coffee) { PlaySfx(TEXT("sfx_coffee_pour"), Hit.ImpactPoint); }
-}
-
 void UTakeGrabComponent::PlaySfx(const TCHAR* Name, const FVector& Where, float Volume)
 {
 	if (USoundBase* Snd = LoadObject<USoundBase>(nullptr, *FString::Printf(TEXT("/Game/Audio/Placeholder/%s.%s"), Name, Name)))
@@ -531,6 +532,7 @@ void UTakeGrabComponent::Eat()
 		Food->SetActorHiddenInGame(true);       // gone from the kitchen
 		Food->SetActorEnableCollision(false);
 		Comp->SetSimulatePhysics(false);
+		FoodEaten(Food);                         // ...and back on the shelf later (the kitchen is always stocked)
 	}
 }
 
@@ -684,12 +686,7 @@ void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 	if (ATakeCoworker* Victim = Cast<ATakeCoworker>(OtherActor))
 	{
 		Victim->HitByProp(Speed);
-		const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
-		if (GI && (GI->GuardComplaints == 1 || GI->CoworkersHit == 3) && !bMailChimed)
-		{
-			bMailChimed = true;
-			ShowSubtitle(TEXT(""), TEXT("(Somewhere, your computer chimes. New email.)"), 3.f);
-		}
+		// (the new-mail chime comes from TickMail when Security / HR write to you)
 	}
 }
 
@@ -728,7 +725,16 @@ void UTakeGrabComponent::TickPhones(float DeltaTime)
 	{
 		if (!bSeated) { RingLeft -= DeltaTime; }   // it waits for you to log out
 		RingCycle -= DeltaTime;
-		if (RingLeft <= 0.f) { StopRinging(); NextRingIn = FMath::FRandRange(60.f, 120.f); return; }
+		if (RingLeft <= 0.f)
+		{
+			const bool bWasMine = P == MyPhone.Get();
+			StopRinging();
+			// Missed your own phone? It calls back soon (reminders sooner), like a real office. Other desks give up.
+			bCallBackMine = bWasMine;
+			NextRingIn = bWasMine ? (ReminderRinging > 0 ? FMath::FRandRange(15.f, 25.f) : FMath::FRandRange(30.f, 45.f)) : FMath::FRandRange(60.f, 120.f);
+			ReminderRinging = 0;
+			return;
+		}
 		if (RingCycle <= 0.f)
 		{
 			RingCycle = 3.f;
@@ -741,10 +747,12 @@ void UTakeGrabComponent::TickPhones(float DeltaTime)
 	}
 	if (PauseMenu) { return; }
 	NextRingIn -= DeltaTime;
+	if (TickReminders()) { NextRingIn = FMath::Max(NextRingIn, FMath::FRandRange(60.f, 120.f)); return; }   // the calendar calls about the 12:30 / 1:00
 	if (NextRingIn > 0.f) { return; }
 	NextRingIn = FMath::FRandRange(60.f, 120.f);
-	// Your phone the first time, then mostly other people's (yours now and then)
-	const bool bMine = MyPhone.IsValid() && (MyCalls == 0 || (MyCalls < 5 && FMath::FRand() < 0.35f));
+	// Your phone the first time (and again if you missed it), then mostly other people's (yours now and then)
+	const bool bMine = MyPhone.IsValid() && (MyCalls == 0 || bCallBackMine || (MyCalls < 5 && FMath::FRand() < 0.35f));
+	bCallBackMine = false;
 	RingPhone(bMine ? MyPhone.Get() : Phones[FMath::RandRange(0, Phones.Num() - 1)].Get());
 }
 
@@ -767,6 +775,24 @@ void UTakeGrabComponent::AnswerPhone(AActor* Phone)
 	PlaySfx(TEXT("sfx_phone_pickup"), Where, 0.8f);
 	PlaySfx(TEXT("sfx_phone_static"), Where, 0.5f);   // the line crackles under the voices (voices coming later)
 	TArray<FString> Lines;
+	if (bMine && ReminderRinging > 0)
+	{
+		if (ReminderRinging == 1)
+		{
+			bCallReminded = true;
+			Lines = { TEXT("HALCYON Calendar. This is a reminder for: Sync. Twelve thirty. Conference Room."),
+			          TEXT("Your camera is optional. Theirs is not."), TEXT("Press E on the big screen to join. *click*") };
+		}
+		else
+		{
+			bMeetingReminded = true;
+			Lines = { TEXT("HALCYON Calendar. Your one o'clock is starting. Conference Room."),
+			          TEXT("It is the same as your twelve thirty. Please attend both."), TEXT("*click*") };
+		}
+		ReminderRinging = 0;
+		ShowSubtitleSequence(TEXT("Calendar"), Lines);
+		return;
+	}
 	if (bMine)
 	{
 		switch (MyCalls++)
@@ -884,6 +910,7 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 	{
 		const FTakeKeyLock Lock = UTakeKeyLockLibrary::GenerateKeyLockForRun(this, GlyphKey, 0);
 		Inspecting->SetGlyphs(Lock.Target, Lock.Bits);
+		NoteGlyphs(GlyphKey, Title.IsEmpty() ? FString(TEXT("a poster")) : FString::Printf(TEXT("poster \"%s\""), *Title.Left(28)));
 	}
 	Inspecting->SetIsFocusable(true);
 	Inspecting->OnCloseRequested.AddDynamic(this, &UTakeGrabComponent::CloseInspect);
@@ -995,7 +1022,14 @@ void UTakeGrabComponent::TickClock(float DeltaTime)
 		if (GI->bClocksFrozen) { GI->WorkdayMinutes = FrozenClockMinutes; }
 		else
 		{
-			GI->WorkdayMinutes = FMath::Clamp(GI->WorkdayMinutes + DeltaTime / 3.f, 12.f * 60.f, FrozenClockMinutes);
+			// The afternoon keeps time with the story too: it's always almost 12:30 until you join the call,
+			// almost 1:00 until you've sat through the meeting, and 2:13 until the rest of your list is done.
+			float Cap = FrozenClockMinutes;
+			if (!GI->bJoinedCall) { Cap = 12.f * 60.f + 29.f; }
+			else if (!GI->bAttendedMeeting) { Cap = 12.f * 60.f + 59.f; }
+			else if (!GI->Act2TasksDone()) { Cap = FrozenClockMinutes - 1.f; }
+			if (CallLeft > 0.f) { Cap = FMath::Min(Cap, GI->WorkdayMinutes); }   // nobody checks the time during a call
+			GI->WorkdayMinutes = FMath::Clamp(FMath::Min(GI->WorkdayMinutes + DeltaTime / 3.f, FMath::Max(Cap, GI->WorkdayMinutes)), 12.f * 60.f, FrozenClockMinutes);
 			if (GI->WorkdayMinutes >= FrozenClockMinutes) { FreezeClocks(); }
 		}
 	}
@@ -1058,6 +1092,8 @@ void UTakeGrabComponent::UpdatePrompt()
 	if (bSeated) { Prompt->SetPrompt(TEXT("")); return; }
 	if (IsHolding())
 	{
+		FHitResult MugHit;
+		if (IsHoldingMug() && Look(MugHit) == ETakeLookKind::Coffee) { Prompt->SetPrompt(TEXT("E  Refill        F  Sip        Click  Throw")); return; }
 		Prompt->SetPrompt(IsHoldingMug() ? TEXT("F  Sip        E  Drop        Click  Throw")
 			: IsHoldingSnack() ? TEXT("F  Eat        E  Drop        Click  Throw") : TEXT("E  Drop        Click  Throw"));
 		return;
@@ -1083,6 +1119,14 @@ void UTakeGrabComponent::UpdatePrompt()
 	case ETakeLookKind::Coffee:   Prompt->SetPrompt(TEXT("E  Pour a coffee")); break;
 	case ETakeLookKind::Phone:    Prompt->SetPrompt(TEXT("E  Answer the phone")); break;
 	case ETakeLookKind::Inspect:  Prompt->SetPrompt(TEXT("E  Look closer")); break;
+	case ETakeLookKind::Call:
+	{
+		const UTakeGameInstance* CallGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		Prompt->SetPrompt((CallGI && CallGI->bJoinedCall) ? TEXT("E  Join the 1:00 meeting") : TEXT("E  Join the call  (Sync 12:30)"));
+		break;
+	}
+	case ETakeLookKind::Vending:  Prompt->SetPrompt(TEXT("E  Buy a snack")); break;
+	case ETakeLookKind::LockPanel: Prompt->SetPrompt(TEXT("E  Log in")); break;
 	case ETakeLookKind::Wisp:     Prompt->SetPrompt(TEXT("E  Reach for the light")); break;
 	case ETakeLookKind::Prop:     Prompt->SetPrompt(TEXT("E  Pick up")); break;
 	case ETakeLookKind::TooHeavy: Prompt->SetPrompt(TEXT("Too heavy")); break;
@@ -1103,6 +1147,9 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickSlate(DeltaTime);
 	TickStory();
 	TickAct2(DeltaTime);
+	TickCall(DeltaTime);
+	TickFun(DeltaTime);
+	TickMail(DeltaTime);
 	UpdatePrompt();
 	UpdateTasks();
 	if (SubtitleLeft > 0.f)

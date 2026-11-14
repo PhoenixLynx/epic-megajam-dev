@@ -33,3 +33,5 @@
 |------------|--------|
 | 2026-11-12 19:17 | Checklist created. Nothing ticked yet. |
 | 2026-11-12 19:40 | Added rule items found while checking the asset rules: pre-jam declaration, human submits, rating/IP, Glass Box dev log. |
+
+- Note (Sat 12:10): rebuild with `Rebuild.bat` (project folder) after C++ changes; package again after this batch compiles and at end of Saturday.

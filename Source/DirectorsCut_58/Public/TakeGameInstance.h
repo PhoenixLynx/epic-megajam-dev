@@ -86,6 +86,27 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Act2") bool bClocksFrozen = false;
 	UFUNCTION(BlueprintPure, Category = "Take|Act2") bool Act2TasksDone() const { return bJoinedCall && bAttendedMeeting && CoworkersCheckedIn >= 3 && bRepliedChairman; }
 
+	/** Mail: which emails you've opened (unread ones are bold) and what you replied (Id -> reply). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Mail") TArray<FString> ReadMail;
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Mail") TMap<FString, FString> MailReplies;
+	UFUNCTION(BlueprintPure, Category = "Take|Mail") bool HasReplied(const FString& Id) const { return MailReplies.Contains(Id); }
+	/** Glyph notes: every Key Lock signature you've found, one line each ("Key 2 · Energy poster · glyphs"). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Notes") TArray<FString> GlyphNotes;
+	/** Adds a note once per source. Returns true if it was new. */
+	bool AddGlyphNote(int32 Key, const FString& Source, int32 Value, int32 Bits);
+	static FString GlyphString(int32 Value, int32 Bits);
+	/** HR: Respectful Workplace modules done (one is due for every 3 hits). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|HR") int32 HRModulesDone = 0;
+	UPROPERTY(BlueprintReadWrite, Category = "Take|HR") int32 HRSlide = 0;
+	UFUNCTION(BlueprintPure, Category = "Take|HR") int32 HRModulesDue() const { return FMath::Min(CoworkersHit / 3, 2); }
+	UFUNCTION(BlueprintPure, Category = "Take|HR") bool HRModuleDue() const { return HRModulesDone < HRModulesDue(); }
+	/** Fun: cups poured, vending snacks, paper toss baskets (best streak). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Fun") int32 CoffeesPoured = 0;
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Fun") int32 Baskets = 0;
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Fun") int32 BestTossStreak = 0;
+	/** You replied to the payroll email with your key (it wasn't payroll). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Mail") bool bRepliedPhish = false;
+
 	/** The badge task list for the current act, one "[x]  Task" per line (HUD + pause menu). */
 	UFUNCTION(BlueprintPure, Category = "Take") FString TaskListText() const;
 	/** Changes whenever anything on the task list changes (the HUD redraws only then). */

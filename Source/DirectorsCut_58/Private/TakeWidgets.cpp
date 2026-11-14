@@ -24,6 +24,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DataTable.h"
 #include "InputCoreTypes.h"
+#include "Sound/SoundBase.h"
 
 namespace
 {
@@ -205,17 +206,20 @@ UTextBlock* UTakeTerminalWidget::MakeText(const FString& Text, int32 Size, const
 	return T;
 }
 
-void UTakeTerminalWidget::LoadMail()
+void UTakeTerminalWidget::BuildMail(const UObject* WorldContext, TArray<FMail>& Out)
 {
-	Mails.Reset();
+	Out.Reset();
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(WorldContext));
 	if (const UDataTable* Table = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_Emails.DT_Emails")))
 	{
-		TArray<FTakeEmailRow*> Rows;
-		Table->GetAllRows<FTakeEmailRow>(TEXT("TakeTerminal"), Rows);
 		// Act 1 mail is always there. Later mail arrives with the story (ArrivesAfter) and goes on top, newest first.
-		const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 		const int32 Act = GI ? GI->CurrentAct() : 1;
-		auto Arrived = [GI](const FString& When)
+		auto Replied = [GI](const TCHAR* Id, const TCHAR* Contains)
+		{
+			const FString* R = GI ? GI->MailReplies.Find(Id) : nullptr;
+			return R && (!Contains || R->Contains(Contains));
+		};
+		auto Arrived = [GI, &Replied](const FString& When)
 		{
 			if (!GI) { return false; }
 			if (When == TEXT("Act2Start"))    { return GI->CurrentAct() >= 2; }
@@ -224,28 +228,91 @@ void UTakeTerminalWidget::LoadMail()
 			if (When == TEXT("AfterCheckIn")) { return GI->CoworkersCheckedIn >= 1 || GI->bJoinedCall; }
 			if (When == TEXT("GuardComplaint")) { return GI->GuardComplaints >= 1; }
 			if (When == TEXT("HRIncident"))     { return GI->CoworkersHit >= 3; }
+			if (When == TEXT("HRIncident2"))    { return GI->CoworkersHit >= 6; }
+			if (When == TEXT("HRModuleDone"))   { return GI->HRModulesDone >= 1; }
 			if (When == TEXT("AfterMeeting")) { return GI->bAttendedMeeting; }
+			if (When == TEXT("RepliedChairman")) { return GI->bRepliedChairman; }
+			if (When == TEXT("RepliedPhish"))  { return GI->bRepliedPhish; }
+			if (When == TEXT("ReportedPhish")) { return Replied(TEXT("A2_PayrollPhish"), TEXT("Report")); }
+			if (When == TEXT("WellnessWrong")) { return Replied(TEXT("A2_Wellness"), TEXT("wrong")); }
+			if (When == TEXT("Coffee5"))      { return GI->CoffeesPoured >= 5; }
+			if (When == TEXT("Toss3"))        { return GI->BestTossStreak >= 3; }
+			if (When == TEXT("KeyLock2"))     { return GI->SoulBits >= 2; }
 			return false;
 		};
 		int32 NewMail = 0;
-		for (const FTakeEmailRow* R : Rows)
+		for (const TPair<FName, uint8*>& Pair : Table->GetRowMap())
 		{
+			const FTakeEmailRow* R = reinterpret_cast<const FTakeEmailRow*>(Pair.Value);
 			if (!R) { continue; }
-			const FMail Mail = { TakeText::Fill(this, R->Sender), TakeText::Fill(this, R->Subject), TakeText::Fill(this, R->Body), R->IsPhishing };
+			FMail Mail;
+			Mail.Id = Pair.Key.ToString();
+			Mail.Sender = TakeText::Fill(WorldContext, R->Sender);
+			Mail.Subject = TakeText::Fill(WorldContext, R->Subject);
+			Mail.Body = TakeText::Fill(WorldContext, R->Body);
+			Mail.bPhishing = R->IsPhishing;
+			const FString& When = R->ArrivesAfter;
 			if (R->Act == 1)
 			{
-				const FString& When = R->ArrivesAfter;
-				if (When.IsEmpty() || When == TEXT("Start") || When == TEXT("AfterEmails")) { Mails.Add(Mail); }
-				else if (Arrived(When)) { Mails.Insert(Mail, NewMail++); }   // things that happened today, newest on top
+				if (When.IsEmpty() || When == TEXT("Start") || When == TEXT("AfterEmails")) { Out.Add(Mail); }
+				else if (Arrived(When)) { Out.Insert(Mail, NewMail++); }   // things that happened today, newest on top
 			}
-			else if (R->Act <= Act && Arrived(R->ArrivesAfter)) { Mails.Insert(Mail, NewMail++); }
+			else if (R->Act <= Act && Arrived(When)) { Out.Insert(Mail, NewMail++); }
 		}
 	}
-	if (Mails.Num() == 0)   // fallback until the DataTable is imported
+	if (Out.Num() == 0)   // fallback until the DataTable is imported
 	{
-		Mails.Add({ TEXT("HALCYON People Team"), TEXT("Welcome back, 4471!"), TEXT("Good morning, 4471!\n\nYour task list is on your badge.\n\nRemember: you are exactly where you need to be.") });
-		Mails.Add({ TEXT("The Chairman"), TEXT("Places, everyone."), TEXT("Team,\n\nBig day. Everyone knows their marks.\n\nLet's get it in one take this time.\n\n- C") });
+		Out.Add({ TEXT("A1_Welcome"), TEXT("HALCYON People Team"), TEXT("Welcome back, 4471!"), TEXT("Good morning, 4471!\n\nYour task list is on your badge.\n\nRemember: you are exactly where you need to be.") });
+		Out.Add({ TEXT("A1_ChairmanMemo"), TEXT("The Chairman"), TEXT("Places, everyone."), TEXT("Team,\n\nBig day. Everyone knows their marks.\n\nLet's get it in one take this time.\n\n- C") });
 	}
+}
+
+int32 UTakeTerminalWidget::CountUnread(const UObject* WorldContext, int32* OutTotal)
+{
+	TArray<FMail> All;
+	BuildMail(WorldContext, All);
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(WorldContext));
+	int32 Unread = 0;
+	for (const FMail& M : All) { if (!GI || !GI->ReadMail.Contains(M.Id)) { ++Unread; } }
+	if (OutTotal) { *OutTotal = All.Num(); }
+	return Unread;
+}
+
+void UTakeTerminalWidget::LoadMail()
+{
+	BuildMail(this, Mails);
+}
+
+void UTakeTerminalWidget::SetBold(UTextBlock* T, bool bBold)
+{
+	if (!T) { return; }
+	FSlateFontInfo Font = T->GetFont();
+	Font.TypefaceFontName = bBold ? FName(TEXT("Bold")) : FName(TEXT("Regular"));
+	T->SetFont(Font);
+}
+
+void UTakeTerminalWidget::RefreshInboxLabels()
+{
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	int32 Unread = 0;
+	for (int32 I = 0; I < Mails.Num(); ++I)
+	{
+		const bool bUnread = !GI || !GI->ReadMail.Contains(Mails[I].Id);
+		Unread += bUnread ? 1 : 0;
+		if (SubjectTexts.IsValidIndex(I) && SubjectTexts[I])
+		{
+			SetBold(SubjectTexts[I], bUnread);   // unread mail is bold, like every inbox you've ever had
+			SubjectTexts[I]->SetText(FText::FromString(bUnread ? TEXT("\u25CF  ") + Mails[I].Subject : Mails[I].Subject));
+			SubjectTexts[I]->SetColorAndOpacity(FSlateColor(bUnread ? Ink : Muted));
+		}
+		if (SenderTexts.IsValidIndex(I) && SenderTexts[I])
+		{
+			const bool bReplied = GI && GI->MailReplies.Contains(Mails[I].Id);
+			SetBold(SenderTexts[I], bUnread);
+			SenderTexts[I]->SetText(FText::FromString(bReplied ? Mails[I].Sender + TEXT("   \u21A9 replied") : Mails[I].Sender));
+		}
+	}
+	if (InboxTabLabel) { InboxTabLabel->SetText(FText::FromString(Unread > 0 ? FString::Printf(TEXT("Inbox  (%d)"), Unread) : TEXT("Inbox"))); }
 }
 
 TSharedRef<SWidget> UTakeTerminalWidget::RebuildWidget()
@@ -292,6 +359,7 @@ TSharedRef<SWidget> UTakeTerminalWidget::RebuildWidget()
 		UHorizontalBox* Tabs = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
 		TabBar->SetContent(Tabs);
 		UTakeIndexedButton* InboxTab = MakeButton(TEXT("Inbox"), 0, FLinearColor::White, Ink);
+		InboxTabLabel = Cast<UTextBlock>(InboxTab->GetChildAt(0));
 		InboxTab->OnIndexedClicked.AddDynamic(this, &UTakeTerminalWidget::ShowTab);
 		Tabs->AddChildToHorizontalBox(InboxTab)->SetPadding(FMargin(0.f, 0.f, 8.f, 0.f));
 		UTakeIndexedButton* TrainTab = MakeButton(TEXT("Training"), 1, FLinearColor::White, Ink);
@@ -326,8 +394,12 @@ TSharedRef<SWidget> UTakeTerminalWidget::RebuildWidget()
 			B->Init(I);
 			B->OnIndexedClicked.AddDynamic(this, &UTakeTerminalWidget::ShowEmail);
 			UVerticalBox* Entry = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-			Entry->AddChildToVerticalBox(MakeText(Mails[I].Sender, 13, Muted));
-			Entry->AddChildToVerticalBox(MakeText(Mails[I].Subject, 15, Ink, true));
+			UTextBlock* SenderText = MakeText(Mails[I].Sender, 13, Muted);
+			UTextBlock* SubjectText = MakeText(Mails[I].Subject, 15, Ink, true);
+			SenderTexts.Add(SenderText);
+			SubjectTexts.Add(SubjectText);
+			Entry->AddChildToVerticalBox(SenderText);
+			Entry->AddChildToVerticalBox(SubjectText);
 			B->AddChild(Entry);
 			List->AddChild(B);
 		}
@@ -341,6 +413,8 @@ TSharedRef<SWidget> UTakeTerminalWidget::RebuildWidget()
 		UScrollBox* ReadScroll = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass());
 		Reader = MakeText(TEXT(""), 16, Ink);
 		ReadScroll->AddChild(Reader);
+		ReplyBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		ReadScroll->AddChild(ReplyBox);
 		UVerticalBoxSlot* ScrollSlot = ReadPane->AddChildToVerticalBox(ReadScroll);
 		ScrollSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 		ScrollSlot->SetPadding(FMargin(0.f, 14.f, 0.f, 0.f));
@@ -349,7 +423,7 @@ TSharedRef<SWidget> UTakeTerminalWidget::RebuildWidget()
 		UBorder* Foot = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
 		Foot->SetBrushColor(FLinearColor(0.90f, 0.93f, 0.95f));
 		Foot->SetPadding(FMargin(24.f, 10.f));
-		Foot->SetContent(MakeText(TEXT("Click an email to read it.     E / Tab  -  log out   (E answers your phone when it rings)"), 13, Muted));
+		Foot->SetContent(MakeText(TEXT("Click an email to read it. Bold = unread.     E / Tab  -  log out"), 13, Muted));
 		LoadTraining();
 		RebuildSlide();
 		Page->AddChildToVerticalBox(Foot);
@@ -361,16 +435,156 @@ void UTakeTerminalWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	SetIsFocusable(true);
-	if (Mails.Num() > 0) { ShowEmail(0); }
+	RefreshInboxLabels();
+	if (Reader && ReaderHeader)
+	{
+		int32 Unread = 0;
+		const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		for (const FMail& M : Mails) { if (!GI || !GI->ReadMail.Contains(M.Id)) { ++Unread; } }
+		ReaderHeader->SetText(FText::FromString(Unread > 0 ? FString::Printf(TEXT("%d unread"), Unread) : TEXT("You're all caught up.")));
+		Reader->SetText(FText::FromString(Unread > 0 ? TEXT("Select an email on the left to read it.") : TEXT("Inbox zero. HALCYON is proud of you.")));
+	}
 }
 
 void UTakeTerminalWidget::ShowEmail(int32 Index)
 {
 	if (!Mails.IsValidIndex(Index) || !Reader || !ReaderHeader) { return; }
 	const FMail& M = Mails[Index];
-	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { GI->bReadEmail = true; }
+	OpenMail = Index;
+	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		GI->bReadEmail = true;
+		GI->ReadMail.AddUnique(M.Id);
+	}
 	ReaderHeader->SetText(FText::FromString(M.Subject));
 	Reader->SetText(FText::FromString(FString::Printf(TEXT("From: %s\n\n%s"), *M.Sender, *M.Body)));
+	RefreshInboxLabels();
+	RefreshReplyBox();
+}
+
+TArray<FString> UTakeTerminalWidget::ReplyOptions(const FString& Id)
+{
+	struct FSet { const TCHAR* Id; const TCHAR* A; const TCHAR* B; const TCHAR* C; };
+	static const FSet Sets[] = {
+		{ TEXT("A1_Welcome"), TEXT("Thanks! Happy to be here."), TEXT("Have we met?"), nullptr },
+		{ TEXT("A1_ChairmanMemo"), TEXT("Ready when you are."), TEXT("What take is this?"), nullptr },
+		{ TEXT("A1_ITNotice"), TEXT("Noted. I won't report it."), TEXT("I think I've walked this way before."), nullptr },
+		{ TEXT("A1_Coffee"), TEXT("Thank you, Break Room Bot!"), nullptr, nullptr },
+		{ TEXT("A1_SecurityIncident"), TEXT("Sorry. It slipped."), TEXT("You were standing in the way."), nullptr },
+		{ TEXT("A1_HRIncident"), TEXT("Understood. Starting the module now."), TEXT("They started it."), nullptr },
+		{ TEXT("A1_HRIncident2"), TEXT("I'll do it."), nullptr, nullptr },
+		{ TEXT("A1_MailboxMigration"), TEXT("Who was 4470?"), nullptr, nullptr },
+		{ TEXT("A2_Lunch"), TEXT("Thanks!"), TEXT("You said that already."), nullptr },
+		{ TEXT("A2_CallInvite"), TEXT("Accept"), TEXT("Decline"), nullptr },
+		{ TEXT("A2_PayrollPhish"), TEXT("Here is my key signature."), TEXT("Report as phishing"), nullptr },
+		{ TEXT("A2_Facilities"), TEXT("My clock says something else. ...Doesn't it?"), nullptr, nullptr },
+		{ TEXT("A2_ChairmanMemo"), TEXT("Understood. I'll go again."), TEXT("What camera?"), nullptr },
+		{ TEXT("A2_Wellness"), TEXT("Great!"), TEXT("Fine."), TEXT("Something is wrong.") },
+		{ TEXT("A2_WellnessFollowUp"), TEXT("Yes. I'm fine."), TEXT("No."), nullptr },
+	};
+	TArray<FString> Out;
+	for (const FSet& S : Sets)
+	{
+		if (Id != S.Id) { continue; }
+		for (const TCHAR* O : { S.A, S.B, S.C }) { if (O) { Out.Add(O); } }
+		return Out;
+	}
+	if (Id.Contains(TEXT("NoReply")) || Id.Contains(TEXT("Certificate")) || Id.Contains(TEXT("Bounce"))) { return Out; }   // automated mail
+	Out.Add(TEXT("Thanks!"));
+	Out.Add(TEXT("Got it."));
+	return Out;
+}
+
+void UTakeTerminalWidget::RefreshReplyBox()
+{
+	if (!ReplyBox) { return; }
+	ReplyBox->ClearChildren();
+	if (!Mails.IsValidIndex(OpenMail)) { return; }
+	const FMail& M = Mails[OpenMail];
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (const FString* Sent = GI ? GI->MailReplies.Find(M.Id) : nullptr)
+	{
+		ReplyBox->AddChildToVerticalBox(MakeText(TEXT("\u2014 \u2014 \u2014"), 14, Muted))->SetPadding(FMargin(0.f, 18.f, 0.f, 0.f));
+		ReplyBox->AddChildToVerticalBox(MakeText(*Sent, 15, Muted))->SetPadding(FMargin(0.f, 4.f, 0.f, 0.f));
+		return;
+	}
+	const TArray<FString> Options = ReplyOptions(M.Id);
+	if (Options.Num() == 0) { return; }
+	ReplyBox->AddChildToVerticalBox(MakeText(TEXT("REPLY"), 13, Muted, true))->SetPadding(FMargin(0.f, 22.f, 0.f, 4.f));
+	for (int32 O = 0; O < Options.Num(); ++O)
+	{
+		UTakeIndexedButton* B = MakeButton(FString::Printf(TEXT("  %s  "), *Options[O]), O, O == 0 ? Mint : Soft, O == 0 ? FLinearColor::White : Ink);
+		B->OnIndexedClicked.AddDynamic(this, &UTakeTerminalWidget::ReplyTo);
+		ReplyBox->AddChildToVerticalBox(B)->SetPadding(FMargin(0.f, 6.f, 0.f, 0.f));
+	}
+}
+
+void UTakeTerminalWidget::ReplyTo(int32 Option)
+{
+	if (!Mails.IsValidIndex(OpenMail)) { return; }
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!GI) { return; }
+	const FMail M = Mails[OpenMail];
+	const TArray<FString> Options = ReplyOptions(M.Id);
+	if (!Options.IsValidIndex(Option)) { return; }
+	UTakeGrabComponent* Hands = nullptr;
+	if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0)) { Hands = P->FindComponentByClass<UTakeGrabComponent>(); }
+	ATakeFearDirector* FearDir = nullptr;
+	for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { FearDir = *It; break; }
+	auto Say = [Hands](const FString& Who, const FString& Line) { if (Hands) { Hands->ShowSubtitle(Who, Line, 4.f); } };
+
+	FString Sent = FString::Printf(TEXT("You replied:  \"%s\""), *Options[Option]);
+	if (M.Id == TEXT("A2_ChairmanMemo"))
+	{
+		GI->bRepliedChairman = true;
+		if (Option == 1)
+		{
+			Sent += TEXT("\n\nC:  The one behind you.");
+			if (FearDir) { FearDir->StartCreep(FMath::Max(FearDir->Fear, 0.3f), 3.f); }
+		}
+		else { Sent += TEXT("\n\nC:  Good. From the top."); }
+	}
+	else if (M.Id == TEXT("A2_PayrollPhish"))
+	{
+		if (Option == 0)
+		{
+			GI->bRepliedPhish = true;
+			Sent += TEXT("\n\nPayro11 Department:  Thank you. Your key has been updated.");
+			if (FearDir) { FearDir->FlickerBurst(1.f); FearDir->StartCreep(FMath::Max(FearDir->Fear, 0.55f), 3.f); }
+			Say(TEXT("PA"), TEXT("Thank you for verifying, 4471."));
+		}
+		else
+		{
+			Sent += TEXT("\n\n(Reported. IT thanks you. IT is watching too.)");
+			Say(TEXT(""), TEXT("Payro11. With two ones. Nice try."));
+		}
+	}
+	else if (M.Id == TEXT("A2_Wellness") && Option == 2)
+	{
+		Sent += TEXT("\n\nHALCYON Wellness:  Thank you for your honesty! An appointment has been booked for you.");
+		if (FearDir) { FearDir->StartCreep(FMath::Max(FearDir->Fear, 0.35f), 4.f); }
+		Say(TEXT(""), TEXT("...They answered before I finished typing."));
+	}
+	else if (M.Id == TEXT("A2_CallInvite") && Option == 1)
+	{
+		Sent = TEXT("You clicked Decline.\n\n(Declining is not available for this meeting. Accepted.)");
+	}
+	else if (M.Id == TEXT("A1_MailboxMigration"))
+	{
+		Sent += TEXT("\n\nMail Delivery Subsystem:  Undeliverable. 4470 is no longer with the production.");
+	}
+	else if (M.Id == TEXT("A1_HRIncident") || M.Id == TEXT("A1_HRIncident2"))
+	{
+		Sent += TEXT("\n\n(Your training is waiting in the Training tab.)");
+	}
+	else if (M.Id == TEXT("A1_SecurityIncident") && Option == 1)
+	{
+		Sent += TEXT("\n\nHALCYON Security:  Noted.");
+	}
+	GI->MailReplies.Add(M.Id, Sent);
+	if (USoundBase* Snd = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/Placeholder/sfx_badge_ok.sfx_badge_ok"))) { UGameplayStatics::PlaySound2D(this, Snd, 0.4f); }
+	RefreshInboxLabels();
+	RefreshReplyBox();
 }
 
 FReply UTakeTerminalWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
@@ -399,17 +613,34 @@ UTakeIndexedButton* UTakeTerminalWidget::MakeButton(const FString& Text, int32 I
 int32 UTakeTerminalWidget::GetSlide() const
 {
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
-	return GI ? GI->TrainingSlide : 0;
+	return GI ? (bHRMode ? GI->HRSlide : GI->TrainingSlide) : 0;
 }
 
 void UTakeTerminalWidget::SetSlide(int32 Slide)
 {
-	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { GI->TrainingSlide = Slide; }
+	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { (bHRMode ? GI->HRSlide : GI->TrainingSlide) = Slide; }
 }
 
 void UTakeTerminalWidget::LoadTraining()
 {
 	Slides.Reset();
+	const UTakeGameInstance* TGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	// HR: after Module 1, every 3 hits on a coworker assigns a Respectful Workplace module (it replaces the finished one)
+	bHRMode = TGI && TGI->bTrainingComplete && TGI->HRModuleDue();
+	if (bHRMode && TGI->HRModulesDone == 0)
+	{
+		Slides.Add({ TEXT("Respectful Workplace"), TEXT("Hi 4471!\n\nA colleague reported being hit by an object today. That's okay! Everyone learns differently.\n\nThis module takes about a minute. It has always taken about a minute."), TEXT("Slide"), {} });
+		Slides.Add({ TEXT("Words, not objects"), TEXT("At HALCYON we communicate with words.\nWords are free. Staplers are company property.\n\nIf you feel the urge to throw something, try saying the thing instead.\nFor example: \"I would like to throw this.\""), TEXT("Slide"), {} });
+		Slides.Add({ TEXT("Check your understanding"), TEXT("A coworker is speaking to you. You:"), TEXT("Quiz"), { TEXT("Listen"), TEXT("Nod and smile"), TEXT("Throw a mug at them") } });
+		Slides.Add({ TEXT("Please stop."), TEXT(""), TEXT("Slide"), {} });
+	}
+	else if (bHRMode)
+	{
+		Slides.Add({ TEXT("Respectful Workplace"), TEXT("We've noticed a pattern.\n\nSo has Security. So has the mug."), TEXT("Slide"), {} });
+		Slides.Add({ TEXT("One question"), TEXT("Will you stop?"), TEXT("Quiz"), { TEXT("Yes"), TEXT("Yes") } });
+		Slides.Add({ TEXT("Thank you."), TEXT("Your coworkers have been told you said yes.\n\nThey don't believe you either."), TEXT("Slide"), {} });
+	}
+	if (!bHRMode)
 	if (const UDataTable* Table = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_ComplianceTraining.DT_ComplianceTraining")))
 	{
 		TArray<FTakeTrainingRow*> Rows;
@@ -441,7 +672,7 @@ void UTakeTerminalWidget::LoadTraining()
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (TrainingTabLabel)
 	{
-		TrainingTabLabel->SetText(FText::FromString((GI && GI->bTrainingComplete) ? TEXT("Training  (done)") : TEXT("Training  (1 due)")));
+		TrainingTabLabel->SetText(FText::FromString((GI && GI->bTrainingComplete && !bHRMode) ? TEXT("Training  (done)") : TEXT("Training  (1 due)")));
 	}
 }
 
@@ -477,7 +708,7 @@ void UTakeTerminalWidget::RebuildSlide()
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	auto Add = [this](UWidget* W, float Top = 0.f) { TrainingBox->AddChildToVerticalBox(W)->SetPadding(FMargin(0.f, Top, 0.f, 0.f)); };
 
-	if (GI && GI->bTrainingComplete)
+	if (GI && GI->bTrainingComplete && !bHRMode)
 	{
 		Add(MakeText(TEXT("HALCYON LEARNING"), 13, Mint, true));
 		Add(MakeText(TEXT("Module complete."), 30, Ink, true), 6.f);
@@ -487,8 +718,10 @@ void UTakeTerminalWidget::RebuildSlide()
 
 	const int32 Index = FMath::Clamp(GetSlide(), 0, Slides.Num() - 1);
 	const FSlide& S = Slides[Index];
-	Add(MakeText(FString::Printf(TEXT("HALCYON LEARNING  \u00B7  DATA INTEGRITY MODULE 1  \u00B7  %d / %d"), Index + 1, Slides.Num()), 13, Mint, true));
-	Add(MakeText(S.Title, 30, Ink, true), 6.f);
+	const FString Module = !bHRMode ? FString(TEXT("DATA INTEGRITY MODULE 1"))
+		: FString::Printf(TEXT("RESPECTFUL WORKPLACE MODULE %d"), GI ? GI->HRModulesDone + 2 : 2);
+	Add(MakeText(FString::Printf(TEXT("HALCYON LEARNING  \u00B7  %s  \u00B7  %d / %d"), *Module, Index + 1, Slides.Num()), 13, bHRMode ? Warn : Mint, true));
+	Add(MakeText(S.Title, (bHRMode && S.Body.IsEmpty()) ? 64 : 30, Ink, true), 6.f);
 	Add(MakeText(S.Body, 17, Ink), 14.f);
 
 	bool bCanContinue = true;
@@ -555,6 +788,7 @@ void UTakeTerminalWidget::ShowTab(int32 Tab)
 void UTakeTerminalWidget::TrainingNav(int32 Direction)
 {
 	QuizFeedback.Reset();
+	if (Direction > 0 && GetSlide() >= Slides.Num() - 1) { FinishTraining(); return; }   // "Next" on the last slide
 	const int32 Next = FMath::Clamp(GetSlide() + Direction, 0, Slides.Num() - 1);
 	SetSlide(Next);
 	RebuildSlide();
@@ -574,7 +808,14 @@ void UTakeTerminalWidget::AnswerQuiz(int32 Option)
 	const FSlide& S = Slides[Index];
 	const FString Picked = S.Options.IsValidIndex(Option) ? S.Options[Option] : FString();
 	// The malware question has a right answer; HALCYON prefers you didn't find it.
-	if (Picked.Contains(TEXT("Trust")))
+	if (Picked.Contains(TEXT("mug")))
+	{
+		if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+		{
+			if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>()) { Hands->ShowSubtitle(TEXT("HALCYON Learning"), TEXT("Correct! (Your answer has been recorded.)"), 3.5f); }
+		}
+	}
+	else if (Picked.Contains(TEXT("Trust")))
 	{
 		QuizFeedback = TEXT("Correct! Every fragment is a friend.");
 	}
@@ -594,6 +835,21 @@ void UTakeTerminalWidget::AnswerQuiz(int32 Option)
 void UTakeTerminalWidget::FinishTraining()
 {
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (bHRMode && GI)
+	{
+		GI->HRModulesDone = FMath::Min(GI->HRModulesDone + 1, 2);
+		GI->HRSlide = 0;
+		if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+		{
+			if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>())
+			{
+				Hands->ShowSubtitle(TEXT("PA"), TEXT("Thank you for completing Respectful Workplace. Your coworkers feel safer already."), 4.5f);
+			}
+		}
+		LoadTraining();   // back to the finished Module 1 page (or the next HR module, if you've earned it)
+		RebuildSlide();
+		return;
+	}
 	if (GI && !GI->bTrainingComplete)
 	{
 		GI->bTrainingComplete = true;
@@ -714,4 +970,172 @@ FReply UTakeInspectWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, 
 {
 	OnCloseRequested.Broadcast();
 	return FReply::Handled();
+}
+
+// ================================================================ Key Lock 2 panel (supply closet)
+UTextBlock* UTakeLockPanelWidget::MakeText(const FString& Text, int32 Size, const FLinearColor& Color, bool bBold)
+{
+	UTextBlock* T = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+	FSlateFontInfo Font = T->GetFont();
+	Font.Size = Size;
+	if (bBold) { Font.TypefaceFontName = TEXT("Bold"); }
+	T->SetFont(Font);
+	T->SetColorAndOpacity(FSlateColor(Color));
+	T->SetText(FText::FromString(Text));
+	T->SetAutoWrapText(true);
+	return T;
+}
+
+UTakeIndexedButton* UTakeLockPanelWidget::MakeButton(const FString& Text, int32 Index, const FLinearColor& Fill, const FLinearColor& TextColor)
+{
+	UTakeIndexedButton* B = WidgetTree->ConstructWidget<UTakeIndexedButton>(UTakeIndexedButton::StaticClass());
+	B->SetBackgroundColor(Fill);
+	B->Init(Index);
+	UTextBlock* T = MakeText(Text, 15, TextColor, true);
+	T->SetAutoWrapText(false);
+	B->AddChild(T);
+	return B;
+}
+
+UHorizontalBox* UTakeLockPanelWidget::MakeGlyphRow(int32 Value, int32 Bits, float Size, float Opacity, bool bHidden)
+{
+	UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+	for (int32 B = 0; B < Bits; ++B)
+	{
+		const bool bLit = UTakeKeyLockLibrary::IsGlyphLit(Value, B);
+		UTexture2D* Tex = bHidden ? nullptr : (bLit ? GlyphLit[B % 8] : GlyphUnlit[B % 8]);
+		UWidget* Cell = nullptr;
+		if (Tex)
+		{
+			UImage* Img = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+			Img->SetBrushFromTexture(Tex, false);
+			Img->SetDesiredSizeOverride(FVector2D(Size, Size));
+			Img->SetOpacity(Opacity);
+			Cell = Img;
+		}
+		else
+		{
+			Cell = MakeText(bHidden ? TEXT("?") : (bLit ? TEXT("\u25A0") : TEXT("\u25A1")), int32(Size * 0.6f), bHidden ? Muted : (bLit ? Ink : Muted), true);
+		}
+		Row->AddChildToHorizontalBox(Cell)->SetPadding(FMargin(4.f, 2.f));
+	}
+	return Row;
+}
+
+TSharedRef<SWidget> UTakeLockPanelWidget::RebuildWidget()
+{
+	if (WidgetTree && !WidgetTree->RootWidget)
+	{
+		Lock = UTakeKeyLockLibrary::GenerateKeyLockForRun(this, Key, 0);
+		for (int32 G = 0; G < 8; ++G)
+		{
+			const FString Base = FString::Printf(TEXT("/Game/UI/Glyphs/T_Glyph%d_%s_"), G, GlyphNames[G]);
+			GlyphLit.Add(LoadObject<UTexture2D>(nullptr, *(Base + TEXT("Lit"))));
+			GlyphUnlit.Add(LoadObject<UTexture2D>(nullptr, *(Base + TEXT("Unlit"))));
+		}
+		const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		bSolved = GI && GI->SoulBits >= Key;
+		UCanvasPanel* Root = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("Root"));
+		WidgetTree->RootWidget = Root;
+		UBorder* Dim = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+		Dim->SetBrushColor(FLinearColor(0.01f, 0.02f, 0.03f, 0.85f));
+		UCanvasPanelSlot* DimSlot = Root->AddChildToCanvas(Dim);
+		DimSlot->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+		DimSlot->SetOffsets(FMargin(0.f));
+		UBorder* Screen = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+		Screen->SetBrushColor(Paper);
+		Screen->SetPadding(FMargin(48.f, 30.f));
+		UCanvasPanelSlot* ScreenSlot = Root->AddChildToCanvas(Screen);
+		ScreenSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+		ScreenSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+		ScreenSlot->SetSize(FVector2D(1000.f, 760.f));
+		UScrollBox* Scroll = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass());
+		Screen->SetContent(Scroll);
+		Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		Scroll->AddChild(Box);
+		Rebuild();
+	}
+	return Super::RebuildWidget();
+}
+
+void UTakeLockPanelWidget::Rebuild()
+{
+	if (!Box) { return; }
+	Box->ClearChildren();
+	auto Add = [this](UWidget* W, float Top = 0.f) { Box->AddChildToVerticalBox(W)->SetPadding(FMargin(0.f, Top, 0.f, 0.f)); };
+	Add(MakeText(TEXT("HALCYON ACCESS  \u00B7  SUPPLY  \u00B7  EMPLOYEE 4471"), 13, Mint, true));
+	if (bSolved)
+	{
+		Add(MakeText(TEXT("Welcome back, 4470."), 34, Ink, true), 8.f);
+		Add(MakeText(TEXT("Access pass 2 granted.\n\n...4470? The badge says 4471. The screen doesn't care."), 17, Ink), 14.f);
+		Add(MakeText(TEXT("E / Esc  -  step away"), 13, Muted), 26.f);
+		return;
+	}
+	Add(MakeText(TEXT("Session expired. Re-enter your integrity key."), 28, Ink, true), 8.f);
+	Add(MakeText(TEXT("For your security, the signature is not displayed. You should know it by now."), 16, Ink), 10.f);
+	Add(MakeText(TEXT("SIGNATURE"), 13, Muted, true), 20.f);
+	Add(MakeGlyphRow(0, Lock.Bits, 48.f, 1.f, true), 4.f);
+	if (const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		FString Notes;
+		for (const FString& N : GI->GlyphNotes) { if (N.StartsWith(FString::Printf(TEXT("Key %d"), Key))) { Notes += N + TEXT("\n"); } }
+		Add(MakeText(Notes.IsEmpty() ? TEXT("Your notes: nothing for this one yet. Somewhere on this floor there's a row of squares.")
+			: TEXT("Your notes:\n") + Notes, 14, Muted), 8.f);
+	}
+	Add(MakeText(TEXT("FRAGMENTS  (click to switch on / off)"), 13, Muted, true), 18.f);
+	for (int32 F = 0; F < Lock.Fragments.Num(); ++F)
+	{
+		const bool bOn = Active.Contains(F);
+		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+		UTakeIndexedButton* Toggle = MakeButton(bOn ? TEXT(" ON ") : TEXT(" OFF "), F, bOn ? Mint : Soft, bOn ? FLinearColor::White : Muted);
+		Toggle->OnIndexedClicked.AddDynamic(this, &UTakeLockPanelWidget::ToggleFragment);
+		Row->AddChildToHorizontalBox(Toggle)->SetVerticalAlignment(VAlign_Center);
+		Row->AddChildToHorizontalBox(MakeText(FString::Printf(TEXT("  Fragment %c  "), TCHAR('A' + F)), 15, Ink, true))->SetVerticalAlignment(VAlign_Center);
+		Row->AddChildToHorizontalBox(MakeGlyphRow(Lock.Fragments[F], Lock.Bits, 38.f, bOn ? 1.f : 0.45f));
+		Add(Row, 6.f);
+	}
+	Add(MakeText(TEXT("YOUR RESULT"), 13, Muted, true), 18.f);
+	Add(MakeGlyphRow(UTakeKeyLockLibrary::CurrentResult(Lock, Active), Lock.Bits, 48.f), 4.f);
+	UTakeIndexedButton* Go = MakeButton(TEXT("  Log in  "), 0, Mint, FLinearColor::White);
+	Go->OnIndexedClicked.AddDynamic(this, &UTakeLockPanelWidget::Submit);
+	Add(Go, 16.f);
+	if (!Feedback.IsEmpty()) { Add(MakeText(Feedback, 16, Warn, true), 10.f); }
+	Add(MakeText(TEXT("E / Esc  -  step away"), 13, Muted), 20.f);
+}
+
+void UTakeLockPanelWidget::ToggleFragment(int32 Fragment)
+{
+	if (Active.Contains(Fragment)) { Active.Remove(Fragment); } else { Active.Add(Fragment); }
+	Feedback.Reset();
+	Rebuild();
+}
+
+void UTakeLockPanelWidget::Submit(int32 Unused)
+{
+	UTakeGrabComponent* Hands = nullptr;
+	if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0)) { Hands = P->FindComponentByClass<UTakeGrabComponent>(); }
+	if (UTakeKeyLockLibrary::EvaluateKeyLock(Lock, Active) == ETakeLockResult::Solved)
+	{
+		bSolved = true;
+		if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+		{
+			if (GI->SoulBits < Key) { GI->SetSoulBits(Key); }
+		}
+		if (USoundBase* Snd = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/Placeholder/sfx_badge_ok.sfx_badge_ok"))) { UGameplayStatics::PlaySound2D(this, Snd, 0.7f); }
+		if (Hands) { Hands->ShowSubtitle(TEXT(""), TEXT("Pass 2. Something in my chest feels... less missing."), 4.5f); }
+	}
+	else
+	{
+		Feedback = TEXT("Integrity mismatch. This attempt has been logged.");
+		for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { It->StartCreep(FMath::Max(It->Fear, 0.15f), 2.f); break; }
+	}
+	Rebuild();
+}
+
+FReply UTakeLockPanelWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (InKeyEvent.IsRepeat()) { return FReply::Handled(); }
+	const FKey K = InKeyEvent.GetKey();
+	if (K == EKeys::Escape || K == EKeys::E || K == EKeys::Tab || K == EKeys::P) { OnCloseRequested.Broadcast(); return FReply::Handled(); }
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }

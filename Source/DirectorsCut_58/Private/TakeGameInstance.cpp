@@ -174,3 +174,18 @@ int32 UTakeGameInstance::TaskSignature() const
 	}
 	return (bReadEmail ? 1 : 0) | (bGotCoffee ? 2 : 0) | (bTrainingComplete ? 4 : 0);
 }
+
+FString UTakeGameInstance::GlyphString(int32 Value, int32 Bits)
+{
+	FString Out;
+	for (int32 B = 0; B < Bits; ++B) { Out += ((Value >> B) & 1) ? TEXT("\u25A0") : TEXT("\u25A1"); }
+	return Out;
+}
+
+bool UTakeGameInstance::AddGlyphNote(int32 Key, const FString& Source, int32 Value, int32 Bits)
+{
+	const FString Prefix = FString::Printf(TEXT("Key %d  \u00B7  %s"), Key, *Source);
+	for (const FString& N : GlyphNotes) { if (N.StartsWith(Prefix)) { return false; } }
+	GlyphNotes.Add(FString::Printf(TEXT("%s  \u00B7  %s"), *Prefix, *GlyphString(Value, Bits)));
+	return true;
+}

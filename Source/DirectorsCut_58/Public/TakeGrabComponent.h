@@ -23,7 +23,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeGrabEvent, UPrimitiveComponent*
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeActorEvent, AActor*, Actor);
 
 UENUM()
-enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Inspect, Prop, TooHeavy, Wisp };
+enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Inspect, Prop, TooHeavy, Wisp, Call, Vending, LockPanel };
 
 UCLASS(ClassGroup = (Take), meta = (BlueprintSpawnableComponent, DisplayName = "Take Grab"))
 class DIRECTORSCUT_58_API UTakeGrabComponent : public UActorComponent
@@ -223,6 +223,42 @@ private:
 	void TickSwings(float DeltaTime);
 	void SetFearDebug(float Value);
 	UFUNCTION() void HandleTerminalLogout();
+	// ---- Saturday batch (TakeAct2.cpp) ----
+	// The 12:30 call and the 1:00 meeting (the same call, word for word)
+	bool CanJoinCall() const;
+	void JoinCall();
+	void TickCall(float DeltaTime);
+	float CallLeft = -1.f;          // seconds until the call ends (< 0 = not in a call)
+	bool bCallIsMeeting = false;
+	// Phone: reminders for the call/meeting, and calling back when you miss it
+	bool bCallReminded = false;
+	bool bMeetingReminded = false;
+	int32 ReminderRinging = 0;      // 1 = call reminder, 2 = meeting reminder is what's ringing now
+	bool bCallBackMine = false;     // you missed your phone: it rings again soon
+	bool TickReminders();
+	// Coffee machine, vending machine, food that comes back, paper toss
+	void Vend(AActor* Machine);
+	AActor* SpawnProp(const TCHAR* MeshName, const FVector& Where, const FRotator& Rot);
+	struct FFood { TWeakObjectPtr<AActor> Actor; FTransform Home; float Back = -1.f; };
+	TArray<FFood> Foods;
+	int32 Vended = 0;
+	TArray<TWeakObjectPtr<AActor>> Spawned;   // vended snacks and poured mugs (oldest recycled)
+	TArray<TWeakObjectPtr<AActor>> Bins;
+	TWeakObjectPtr<UPrimitiveComponent> TossProp;
+	float TossLeft = 0.f;
+	int32 TossStreak = 0;
+	void CollectFunProps();
+	void TickFun(float DeltaTime);
+	void FoodEaten(AActor* Food);
+	// Key Lock 2: the "Employee 4471" login panel in the supply closet
+	UPROPERTY() TObjectPtr<class UTakeLockPanelWidget> LockPanel;
+	void OpenLockPanel(int32 Key);
+	UFUNCTION() void CloseLockPanel();
+	// New mail chime
+	int32 MailSeen = -1;
+	float MailCheckIn = 1.f;
+	void TickMail(float DeltaTime);
+	void NoteGlyphs(int32 Key, const FString& Source);
 	void Fear0() { SetFearDebug(0.f); }
 	void Fear1() { SetFearDebug(0.25f); }
 	void Fear2() { SetFearDebug(0.5f); }

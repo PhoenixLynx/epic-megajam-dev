@@ -213,7 +213,7 @@ void UTakeGrabComponent::OnBeatTrigger(FName TriggerName)
 	if (TriggerName == FName(TEXT("ConferenceRoom")) && GI->CurrentAct() >= 2 && !GI->bJoinedCall && !bLunchRoomNoted)
 	{
 		bLunchRoomNoted = true;
-		ShowSubtitle(TEXT(""), TEXT("The screen says: SYNC (12:30). Waiting for the organizer to start this meeting..."), 4.5f);
+		ShowSubtitle(TEXT(""), TEXT("The big screen: SYNC (12:30). The organizer has started the meeting. (E on the screen to join.)"), 4.5f);
 		return;
 	}
 

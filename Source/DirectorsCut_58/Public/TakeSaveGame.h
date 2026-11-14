@@ -37,6 +37,16 @@ public:
 	UPROPERTY() int32 CoworkersCheckedIn = 0;
 	UPROPERTY() bool bRepliedChairman = false;
 	UPROPERTY() bool bClocksFrozen = false;
+	// Saturday batch: mail, notes, HR, fun
+	UPROPERTY() TArray<FString> ReadMail;
+	UPROPERTY() TMap<FString, FString> MailReplies;
+	UPROPERTY() TArray<FString> GlyphNotes;
+	UPROPERTY() int32 CoworkersHit = 0;
+	UPROPERTY() int32 GuardComplaints = 0;
+	UPROPERTY() int32 HRModulesDone = 0;
+	UPROPERTY() int32 CoffeesPoured = 0;
+	UPROPERTY() int32 BestTossStreak = 0;
+	UPROPERTY() bool bRepliedPhish = false;
 
 	// settings
 	UPROPERTY() float MasterVolume = 1.f;

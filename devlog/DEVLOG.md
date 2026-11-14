@@ -765,3 +765,35 @@ A running record of every AI tool used and what it did.
   4. **Filing cabinets open:** each drawer is its own part and **slides out** (E: "Open the drawer"), with hanging folders inside. Every cabinet on the map (office, conference room, supply closet).
   5. **4470:** the moving box itself is now *Look closer* (it shows its label), not just the small label. And **the top drawer of the office cabinet by Corridor B holds 4470's personnel file**: Status **WRAPPED**, *"Performance: Consistent. Did everything the same way, every time. Notes: Asked about Corridor B. Asked about the clocks. Asked to see the Chairman. Replacement: 4471 (scheduled)"*, with *"they looked closer."* written underneath. ![file](screenshots/2026-11-14_file_4470.png)
 - **AI tools used:** Claude (C++, Blender cabinet shell + drawer, file texture, emails and lines).
+
+### Session 48: Sat Nov 14, 2026, 12:00 MST: The 12:30 call, mail replies, HR, and fun
+
+- **My feedback (11:55):** this is so cool, lots to get through. (1) The coffee maker and vending machine should do more; (2) the clock and the conference call still don't work: 1:02 PM and the call never joined ![clock](screenshots/Screenshot%202026-11-14%20114005_CLOCKCOUNTER.png); (3) join the call in the conference room (laptop or E on the screen); (4) if I miss my desk phone or press the wrong thing, it never rings again; (5) the phone should remind me about the call; (6) the "Employee 4471" screen in the supply closet should do something; (7) a stalker sequence fired (felt random): it slid sideways at me, expand later; (9) save glyphs; (10) reply to emails; (11) HR training if I hit coworkers too much (what should it be?); (12) a fun activity; (13) food and coffee should never run out; (14) unread mail in bold like Outlook; (15) wellness check emails. Also a mannequin with its head off to the side ![head](Screenshot%202026-11-14%20113617_offcenter.png).
+- **Done:**
+  - **Clock:** the afternoon now follows the story like the morning does. It holds at 12:29 until you join the call, 12:59 until the 1:00 meeting, then 2:13 until the rest of the list is done, then 2:14 and the freeze.
+  - **The 12:30 call:** E on the big screen, or on a conference laptop ("Join the call"). Eleven smiling tiles, one frozen mid-laugh, C with the camera off, and live captions that aren't words: they're **Key 2's signature** in squares (auto-noted).
+  - **The 1:00 meeting:** the same call, **word for word**. You notice, then *"Item four. Retake. Employee 4471. From the top, please."* The lights flicker.
+  - **Phone:** a missed call rings back in 30–45 s. At 12:20 the calendar calls to remind you about the sync, and at 12:55 about the 1:00. If you're far away, you get *"(Back at your desk, your phone is ringing.)"*
+  - **Mail:** unread mail is **bold** with a dot, and the Inbox tab shows the unread count. You no longer auto-open the first email. **Every email has replies:**
+    - Replying to the Chairman's notes ticks the Act 2 task.
+    - Sending your key to "Payro11" is a bad idea; reporting it is good. Each choice gets its own follow-up email.
+    - "Decline" on the invite accepts anyway.
+    - Writing to 4470 bounces.
+  - New-mail chime with an unread count.
+  - **Wellness check** (12:00): Great / Fine / **Something is wrong** (→ Fear, a booking at the Wellness Center, a follow-up).
+  - **Glyph notes:** every signature you find (poster, call captions) is saved. See Pause → Tasks; saved in save files.
+  - **Key Lock 2:** the "Employee 4471" login screen in the supply closet is now a terminal. Its signature is **hidden** ("you should know it by now"), so you match it from your notes. Solving it gives **Pass 2**, and the screen says *"Welcome back, 4470."* plus a sign-in email.
+  - **HR:** every 3 hits assigns a **Respectful Workplace** module in the Training tab:
+    - **Module 2:** *"Words are free. Staplers are company property."* A quiz where throwing a mug is "Correct! (Recorded.)", ending on a full-screen **"Please stop."**
+    - **Module 3** (6 hits): *"Will you stop?"* Yes / Yes.
+    - A certificate email when you finish.
+  - **Coffee machine:** E with a mug in hand refills it. Without one, a fresh full mug slides out with your name on it (never runs out). In Fear it pours black. Five cups = an email from Wellness: *"Please don't stop."*
+  - **Vending machine:** E drops a snack. It's always B4. One line mentions a badge stuck behind the glass: 4470.
+  - **Food comes back** to its spot 40–70 s after you eat it, when you aren't looking.
+  - **Fun activity: paper toss.**
+    - Crumpled paper balls sit by your bin and on some desks (new SM_PaperBall).
+    - Anything you throw that lands in a bin scores, and the game tracks your streak.
+    - Three in a row earns an email from Morale.
+  - **Head offset fixed** in the rig (twists were on the wrong axis); re-exported.
+  - **Rebuild.bat** in the project folder: builds the C++ and opens the editor, or shows the errors and stops.
+- **AI tools used:** Claude (C++, emails and lines, Blender paper ball and rig fix, batch script).

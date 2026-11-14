@@ -190,6 +190,10 @@ void UTakePauseMenu::RefreshTasks()
 	if (!GI->Objective.IsEmpty()) { T += FString::Printf(TEXT("Next:  %s"), *GI->Objective); }
 	else { T += GI->MorningTasksDone() ? TEXT("Next:  10:00 meeting, Conference Room.") : TEXT("Your desk is #4471, by the window."); }
 	T += FString::Printf(TEXT("\n\nAccess passes:  %d / 3"), GI->SoulBits);
+	T += TEXT("\n\nNOTES  (glyph signatures you've found)\n");
+	if (GI->GlyphNotes.Num() == 0) { T += TEXT("Nothing yet. Some things here have squares on them. Look closer."); }
+	for (const FString& N : GI->GlyphNotes) { T += N + TEXT("\n"); }
+	if (GI->HRModuleDue()) { T += TEXT("\nHR: Respectful Workplace training is due (your terminal, Training tab)."); }
 	TasksText->SetText(FText::FromString(T));
 }
 
@@ -311,6 +315,15 @@ bool UTakePauseMenu::SaveProgress(const UObject* WorldContext)
 	S->CoworkersCheckedIn = GI->CoworkersCheckedIn;
 	S->bRepliedChairman = GI->bRepliedChairman;
 	S->bClocksFrozen = GI->bClocksFrozen;
+	S->ReadMail = GI->ReadMail;
+	S->MailReplies = GI->MailReplies;
+	S->GlyphNotes = GI->GlyphNotes;
+	S->CoworkersHit = GI->CoworkersHit;
+	S->GuardComplaints = GI->GuardComplaints;
+	S->HRModulesDone = GI->HRModulesDone;
+	S->CoffeesPoured = GI->CoffeesPoured;
+	S->BestTossStreak = GI->BestTossStreak;
+	S->bRepliedPhish = GI->bRepliedPhish;
 	S->SavedAt = FDateTime::Now();
 	if (const APawn* P = UGameplayStatics::GetPlayerPawn(WorldContext, 0))
 	{
@@ -347,6 +360,15 @@ bool UTakePauseMenu::LoadProgress(const UObject* WorldContext)
 	GI->CoworkersCheckedIn = FMath::Clamp(S->CoworkersCheckedIn, 0, 3);
 	GI->bRepliedChairman = S->bRepliedChairman;
 	GI->bClocksFrozen = S->bClocksFrozen;
+	GI->ReadMail = S->ReadMail;
+	GI->MailReplies = S->MailReplies;
+	GI->GlyphNotes = S->GlyphNotes;
+	GI->CoworkersHit = S->CoworkersHit;
+	GI->GuardComplaints = S->GuardComplaints;
+	GI->HRModulesDone = S->HRModulesDone;
+	GI->CoffeesPoured = S->CoffeesPoured;
+	GI->BestTossStreak = S->BestTossStreak;
+	GI->bRepliedPhish = S->bRepliedPhish;
 	GI->bDevLunchNow = false;
 	GI->SetObjective(S->Objective.IsEmpty() ? GI->ObjectiveForBeat() : S->Objective);
 	if (APawn* P = UGameplayStatics::GetPlayerPawn(WorldContext, 0))

@@ -56,17 +56,78 @@ Further incidents will be escalated to HR.
 We've received several reports of office supplies travelling at speed.
 At HALCYON, every object has its place, and so does every employee.
 
-Please complete Respectful Workplace Module 2 at your earliest convenience.
-(There is no Module 2. Please stop.)
+Please complete Respectful Workplace Module 2 at your earliest convenience (your terminal, Training tab).
+It takes about a minute. It has always taken about a minute.
 
 Warmly,
 People Team","False","False","HRIncident"
+"A1_HRIncident2","1","HALCYON People Team","Following up :)","Hi again {EMP}!
+
+The reports are still coming in. So are the staplers.
+
+Respectful Workplace Module 3 has been assigned to you. There is no Module 4.
+
+Warmly (less),
+People Team","False","False","HRIncident2"
+"A1_HRCertificate","1","HALCYON Learning","Certificate of Completion","Congratulations, {EMP}!
+
+You have completed RESPECTFUL WORKPLACE.
+This certificate is valid for the rest of the day.
+
+Your coworkers have been notified and feel safer already.","False","False","HRModuleDone"
+"A1_CaffeineNoReply","1","HALCYON Wellness","About your caffeine intake","Hi {EMP}!
+
+Our sensors noticed you've had five coffees today. That's wonderful!
+Energy is our greatest asset, and yours is looking great.
+
+Please don't stop.
+
+- Wellness","False","False","Coffee5"
+"A1_MoraleToss","1","HALCYON Morale Team","Three in a row!","{EMP},
+
+Three baskets in a row! The Morale Team noticed. The Morale Team notices everything.
+
+You have been entered into the Employee of the Take draw. You are the only entry. You have always been the only entry.","False","False","Toss3"
+"A1_KeyLock2NoReply","1","HALCYON Access","New sign-in: Supply Closet","A new sign-in was detected on the Supply Closet terminal.
+
+User: 4470
+Badge: 4471
+
+If this was you, no action is needed. It was you.","False","False","KeyLock2"
 "A1_MailboxMigration","1","HALCYON IT","Mailbox migration complete","Hi {EMP},
 
 Your mailbox migration is complete. Mail addressed to 4470 will now be delivered to you.
 Please do not reply to 4470's correspondence. 4470 is no longer with the production.
 
 - IT","False","False",""
+"A2_Wellness","2","HALCYON Wellness","Quick wellness check-in :)","Hi {EMP}!
+
+It's lunchtime, and we care about how you're feeling.
+
+How are you today? Just hit reply.
+
+(This check-in is anonymous. It is addressed to you by name.)","False","False","Act2Start"
+"A2_WellnessFollowUp","2","HALCYON Wellness","Re: Quick wellness check-in :)","{EMP},
+
+Thank you for telling us something is wrong. Nothing is wrong.
+
+We've booked you into the Wellness Center (end of Corridor B). Rest. Recharge. Return.
+
+Are you feeling better now?","False","False","WellnessWrong"
+"A2_ITSecurityNoReply","2","HALCYON IT Security","You replied to a phishing email","{EMP},
+
+You sent your key signature to ""Payro11 Department"". Please note the two ones.
+
+This is your one warning. (It isn't your one warning. You've had this warning before.)
+
+- IT Security","False","False","RepliedPhish"
+"A2_ITThanksNoReply","2","HALCYON IT Security","Thanks for reporting!","{EMP},
+
+Thank you for reporting that phishing email. Good catch!
+
+Most people send their key. Most people are still here.
+
+- IT Security","False","False","ReportedPhish"
 "A2_PayrollPhish","2","Payro11 Department","ACTION REQUIRED: verify your key","Dear Employee,
 
 To keep receiving your energy allocation, reply with your key signature below. This is the correct one. Trust this one.

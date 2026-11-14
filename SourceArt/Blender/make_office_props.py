@@ -417,6 +417,15 @@ def trash_bin():
     return p.finish(0.0)
 
 
+def paper_ball():
+    """A crumpled sheet: three squashed lumps of paper (for the paper toss)."""
+    p = Prop("SM_PaperBall")
+    p.sphere(0.035, (0, 0, 0.035), "M_Paper", segs=8)
+    p.sphere(0.024, (0.018, 0.01, 0.045), "M_Paper", segs=6)
+    p.sphere(0.022, (-0.015, -0.012, 0.028), "M_Paper", segs=6)
+    return p.finish(0.0)
+
+
 def wall_clock():
     p = Prop("SM_WallClock")   # pivot at its back centre; hang on walls. Hands frozen at 2:14.
     p.cyl(0.16, 0.04, (0, 0.02, 0), "M_PlasticWhite", segs=32, axis="Y")
@@ -825,7 +834,7 @@ BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabine
             ream_of_paper, hospital_bed, mop_bucket, coffee_machine,
             # office supplies
             binder, lambda: binder("M_BinderMint", "SM_BinderMint"), lambda: binder("M_BinderRed", "SM_BinderRed"),
-            stapler, tape_dispenser, pen_cup, desk_lamp, desk_phone, pc_tower, laptop, printer, trash_bin,
+            stapler, tape_dispenser, pen_cup, desk_lamp, desk_phone, pc_tower, laptop, printer, trash_bin, paper_ball,
             wall_clock, pass_reader, exit_sign,
             # bright corporate design
             plant_tall, plant_desk, planter_box, lobby_sofa, coffee_table, logo_sign, meeting_chair,

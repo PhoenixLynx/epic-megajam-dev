@@ -218,7 +218,7 @@ def build_actions(arm):
     # Idle: breathe (chest), weight shift (pelvis side), head glance
     keys = []
     for fr, br, sh, hy in ((1, 0, 0, 0), (16, 2, 1.5, 6), (31, 0, 0, 0), (46, 2, -1.5, -5), (60, 0, 0, 0)):
-        keys.append((fr, P(RELAX, dict(chest=(br, 0, 0), pelvis=(0, 0, sh), head=(0, 0, hy))), ZLOC))
+        keys.append((fr, P(RELAX, dict(chest=(br, 0, 0), pelvis=(0, 0, sh), head=(0, hy, 0))), ZLOC))   # head turns (Y = twist)
     acts.append(make_action(arm, "Idle", 60, keys))
 
     # Walk (in place): two steps per second
@@ -228,7 +228,7 @@ def build_actions(arm):
                       calf_l=(-30 if s < 0 else -5, 0, 0), calf_r=(-30 if s > 0 else -5, 0, 0),
                       upperarm_l=(-18 * s, 0, -4), upperarm_r=(18 * s, 0, 4),
                       lowerarm_l=(15, 0, 0), lowerarm_r=(15, 0, 0),
-                      chest=(0, 0, 4 * s), pelvis=(0, 0, -3 * s)))
+                      chest=(0, 4 * s, 0), pelvis=(0, -3 * s, 0)))   # counter-twist, not a sideways lean
         keys.append((fr, pose, {"pelvis": (0, 0, -0.02 if s == 0 else 0.0)}))
     acts.append(make_action(arm, "Walk", 30, keys))
 
@@ -243,7 +243,7 @@ def build_actions(arm):
     keys = []
     for fr, tl, tr, hy in ((1, 0, 0, 0), (8, 6, 0, 2), (15, 0, 6, 2), (22, 5, 0, -3), (30, 0, 4, -3),
                            (38, 6, 0, 8), (46, 0, 5, 8), (53, 4, 0, 0), (60, 0, 0, 0)):
-        pose = P(SIT, TYPE_ARMS, dict(lowerarm_l=(52 + tl, 0, 6), lowerarm_r=(52 + tr, 0, -6), head=(6, 0, hy)))
+        pose = P(SIT, TYPE_ARMS, dict(lowerarm_l=(52 + tl, 0, 6), lowerarm_r=(52 + tr, 0, -6), head=(6, hy, 0)))
         keys.append((fr, pose, {"pelvis": SEAT}))
     acts.append(make_action(arm, "SitType", 60, keys))
 
@@ -253,7 +253,7 @@ def build_actions(arm):
     acts.append(make_action(arm, "Reach", 30, keys, loop=False))
 
     # Stare: dead still, head tilted a few degrees too far
-    stare = P(dict(head=(-3, 0, 0), neck=(0, 9, 0)))
+    stare = P(dict(head=(-3, 0, 6), neck=(0, 0, 0)))   # head tilted a little too far to one side
     acts.append(make_action(arm, "Stare", 60, [(1, stare, ZLOC), (60, stare, ZLOC)]))
     return acts
 
