@@ -1,6 +1,6 @@
 # C++ gameplay systems
 
-Module `DirectorsCut_58`, staged in `Source_Pending/` until we switch the project to C++ (TONIGHT.md step 8).
+Module `DirectorsCut_58` in `Source/` (switched on Fri Nov 13, 18:18).
 About 1,400 lines. The Key Lock core is tested outside Unreal (`Scripts/Reference/test_keylock_core.cpp`, 20,000 seeds × 3 keys); everything else compiles for the first time on the PC.
 
 | Class | What it does | Setup needed |

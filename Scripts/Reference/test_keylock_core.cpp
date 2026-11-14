@@ -1,5 +1,5 @@
-// Standalone tests for Source_Pending/.../TakeKeyLockCore.h (no Unreal needed).
-// Build: g++ -std=c++17 -O2 -I Source_Pending/DirectorsCut_58/Public Scripts/Reference/test_keylock_core.cpp -o /tmp/t && /tmp/t
+// Standalone tests for Source/.../TakeKeyLockCore.h (no Unreal needed).
+// Build: g++ -std=c++17 -O2 -I Source/DirectorsCut_58/Public Scripts/Reference/test_keylock_core.cpp -o /tmp/t && /tmp/t
 #include <cassert>
 #include <cstdio>
 #include <random>
