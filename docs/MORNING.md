@@ -9,7 +9,7 @@ Made overnight Friday. Everything below is already on your PC.
 
 ## 1. Rebuild (new C++ overnight)
 1. Close Unreal.
-2. Say "good morning" to Claude. The overnight C++ is waiting in `_to_delete\overnight\Source`, kept out of the project so it couldn't break the overnight package. Claude copies it in and moves the old DLL aside.
+2. (Done Friday 22:05: the package had finished, so the new C++ is already in `Source/` and the old DLL has been moved aside.)
 3. Open `DirectorsCut_58.uproject` → **Yes** to rebuild. If it fails, say "failed".
 
 ## 2. Run, in this order
