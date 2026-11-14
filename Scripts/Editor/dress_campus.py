@@ -63,8 +63,8 @@ put("SM_PCTower", 1410, 2280, 0, 180)
 put("SM_OfficeChair", 1300, 2385, 0, 0, ["ChangeOnRewind"])
 put("SM_TrashBin", 1170, 2370)
 put("SM_DirectorsChair", 1480, 2470, 0, 210, ["Act2Reveal"])  # hidden in game until Act 2
-put("SM_FilingCabinet_4", 1700, 3500, 0, 180)
-put("SM_FilingCabinet_2", 1760, 3500, 0, 180)
+put("SM_FilingCabinet_4", 1700, 3500, 0, 0)    # drawers face into the office
+put("SM_FilingCabinet_2", 1760, 3500, 0, 0)
 put("SM_Printer", 3300, 1870, 0, -90)
 put("SM_PlantTall", 860, 1780)
 put("SM_PlantTall", 3330, 3620)
@@ -232,6 +232,13 @@ put("SM_TrashBin", 870, 3660)
 for i in range(3):
     put(["SM_ReamOfPaper", "SM_SnackBox", "SM_TeaBox"][i], 835, 3470 + i * 40, 61)   # odd things stored on the shelf
 put("SM_MannequinCustodian", 960, 3560, 0, 90, ["NPC", "Custodian_Closet"])
+# 4470: the employee before you. Their things are boxed up in here.
+put("SM_MovingBox", 905, 3410, 0, -90)
+BOXES += [("Label_4470", 928, 3410, 16, 1, 30, 16, "/Game/Props/Materials/MI_Label_4470", ["Inspectable"]),          # on the box, facing the door
+          ("Polaroid_4470", 890, 3440, 31, 9, 11, 0.4, "/Game/Props/Materials/MI_Polaroid_4470", ["Inspectable"]),    # dropped on top
+          ("Sticky_4470", 835, 3500, 107, 8, 8, 0.3, "/Game/Props/Materials/MI_Sticky_4470", ["Inspectable"])]       # on the shelf
+# Your nameplate: the 4471 sticker doesn't quite cover the old number
+BOXES += [("Nameplate_4471", 1300, 2338, DESK_TOP + 4, 20, 1, 6, "/Game/Props/Materials/MI_Nameplate_4471", ["Inspectable"])]
 
 # --- Boards (engine cube + texture material): logo, notes ---------------------------
 PROPMAT = "/Game/Props/Materials/"

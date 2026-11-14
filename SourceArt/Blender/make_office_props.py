@@ -36,6 +36,7 @@ PALETTE = {  # slot name -> viewport colour (RGBA)
     "M_BinderRed": (0.75, 0.20, 0.22, 1), "M_Skin": (0.86, 0.84, 0.80, 1), "M_StalkerSkin": (0.30, 0.31, 0.33, 1),
     "M_Counter": (0.92, 0.92, 0.90, 1), "M_Steel": (0.75, 0.77, 0.79, 1), "M_SofaMint": (0.55, 0.80, 0.74, 1),
     "M_ExitGreen": (0.10, 0.75, 0.35, 1), "M_ClockFace": (0.98, 0.98, 0.96, 1), "M_SkyBlue": (0.65, 0.78, 0.95, 1),
+    "M_Cardboard": (0.55, 0.40, 0.25, 1),
 }
 
 
@@ -541,6 +542,18 @@ def kitchen_island():
     return p.finish(0.005)
 
 
+def moving_box():
+    p = Prop("SM_MovingBox")   # 46 x 34 x 30 cm cardboard box, flaps open, someone's desk things inside
+    p.box((0.46, 0.34, 0.30), (0, 0, 0.15), "M_Cardboard")
+    p.box((0.44, 0.32, 0.01), (0, 0, 0.295), "M_PlasticBlack")                    # dark inside
+    p.box((0.46, 0.01, 0.16), (0, -0.20, 0.36), "M_Cardboard", rot_x=math.radians(-35))   # front flap, open
+    p.box((0.46, 0.01, 0.16), (0, 0.20, 0.36), "M_Cardboard", rot_x=math.radians(35))     # back flap
+    p.box((0.08, 0.10, 0.14), (-0.12, 0.05, 0.33), "M_Ceramic")                   # a mug
+    p.box((0.18, 0.02, 0.22), (0.08, 0.06, 0.38), "M_MetalDark", rot_x=math.radians(-10)) # a picture frame
+    p.box((0.30, 0.24, 0.04), (0.02, -0.02, 0.32), "M_Paper")                     # papers
+    return p.finish(0.003)
+
+
 def fridge():
     p = Prop("SM_Fridge")
     p.box((0.7, 0.7, 1.8), (0, 0, 0.9), "M_Steel")
@@ -791,7 +804,7 @@ BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabine
             # bright corporate design
             plant_tall, plant_desk, planter_box, lobby_sofa, coffee_table, logo_sign, meeting_chair,
             # kitchen
-            kitchen_counter, kitchen_counter_short, kitchen_island, fridge, microwave, kettle, vending_machine, cafe_table, bar_stool,
+            kitchen_counter, kitchen_counter_short, kitchen_island, moving_box, fridge, microwave, kettle, vending_machine, cafe_table, bar_stool,
             # figures
             mannequin, mannequin_guard, mannequin_custodian, stalker,
             # wishlist batch

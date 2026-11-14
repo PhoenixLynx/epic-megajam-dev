@@ -54,6 +54,10 @@ EMAILS = [
      "Sync @ 12:30, Conference Room\nOrganizer: C\nCamera: optional (organizer's camera will be off)\n\n"
      "Agenda:\n1. Welcome\n2. Quarterly energy targets\n3. Morale\n4. Retake",
      False, False, "Act2Start"),
+    ("A1_MailboxMigration", 1, "HALCYON IT", "Mailbox migration complete",
+     "Hi {EMP},\n\nYour mailbox migration is complete. Mail addressed to 4470 will now be delivered to you.\n"
+     "Please do not reply to 4470's correspondence. 4470 is no longer with the production.\n\n- IT",
+     False, False, ""),
     ("A2_PayrollPhish", 2, "Payro11 Department", "ACTION REQUIRED: verify your key",
      "Dear Employee,\n\nTo keep receiving your energy allocation, reply with your key signature below. "
      "This is the correct one. Trust this one.\n\n{GLYPHS_B}",
@@ -148,6 +152,11 @@ NPC = [
     ("J_A1_Bump1", "Custodian", 1, False, "Bump", "Same scuffs every morning. Same exact scuffs."),
     ("J_A1_Bump2", "Custodian", 1, False, "Bump", "Don't go in my closet. Nothing in there. Mops."),
     ("J_A1_Bump3", "Custodian", 1, False, "Bump", "Whoa there. Wet floor."),
+    # --- 4470: the employee before you ---
+    ("C_A1_4470a", "Coworker", 1, False, "Bump", "Morning, 4470- sorry. 4471. Force of habit."),
+    ("C_A1_4470b", "Coworker", 1, False, "Bump", "You sit at 4470's old desk, right? ...Your desk. Sorry. Your desk."),
+    ("R_A1_4470", "Receptionist", 1, False, "Bump", "Welcome back. Oh- first day. Of course. First day."),
+    ("J_A1_4470", "Custodian", 1, False, "Bump", "Boxed up the last one's things. Didn't take long. They never have much."),
     # --- more Act 1 variety: receptionist, coffee reactions, guards, custodians ---
     ("R_A1_Greet", "Receptionist", 1, False, "Greeting", "Good morning, {EMP}! Welcome to HALCYON. You're expected."),
     ("R_A1_Bump1", "Receptionist", 1, False, "Bump", "Please sign in. ...Oh, you already have. You always have."),

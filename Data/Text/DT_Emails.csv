@@ -42,6 +42,12 @@ Agenda:
 2. Quarterly energy targets
 3. Morale
 4. Retake","False","False","Act2Start"
+"A1_MailboxMigration","1","HALCYON IT","Mailbox migration complete","Hi {EMP},
+
+Your mailbox migration is complete. Mail addressed to 4470 will now be delivered to you.
+Please do not reply to 4470's correspondence. 4470 is no longer with the production.
+
+- IT","False","False",""
 "A2_PayrollPhish","2","Payro11 Department","ACTION REQUIRED: verify your key","Dear Employee,
 
 To keep receiving your energy allocation, reply with your key signature below. This is the correct one. Trust this one.

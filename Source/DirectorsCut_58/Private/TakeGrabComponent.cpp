@@ -609,14 +609,14 @@ void UTakeGrabComponent::BindPropImpacts()
 	{
 		return LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), Name, Name));
 	};
-	for (const TCHAR* N : { TEXT("MI_Screen_Inbox"), TEXT("MI_Screen_Sheet"), TEXT("MI_Screen_Code"), TEXT("MI_Screen_Chart"),
+	for (const TCHAR* MatName : { TEXT("MI_Screen_Inbox"), TEXT("MI_Screen_Sheet"), TEXT("MI_Screen_Code"), TEXT("MI_Screen_Chart"),
 	                        TEXT("MI_Screen_Call"), TEXT("MI_Screen_Saver") })
 	{
-		if (UMaterialInterface* M = LoadMat(N)) { WorkScreens.Add(M); }
+		if (UMaterialInterface* M = LoadMat(MatName)) { WorkScreens.Add(M); }
 	}
-	for (const TCHAR* N : { TEXT("MI_Screen_Fear"), TEXT("MI_Screen_Glyphs") })
+	for (const TCHAR* MatName : { TEXT("MI_Screen_Fear"), TEXT("MI_Screen_Glyphs") })
 	{
-		if (UMaterialInterface* M = LoadMat(N)) { FearScreens.Add(M); }
+		if (UMaterialInterface* M = LoadMat(MatName)) { FearScreens.Add(M); }
 	}
 	LoginScreen = LoadMat(TEXT("MI_Screen_Login"));
 	InboxScreen = LoadMat(TEXT("MI_Screen_Inbox"));
@@ -804,6 +804,10 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 	int32 GlyphKey = 0;   // which Key Lock's signature is hidden on this one (0 = none)
 	struct FCaption { const TCHAR* Key; const TCHAR* Title; const TCHAR* Text; int32 Glyphs; };
 	static const FCaption Captions[] = {
+		{ TEXT("Label_4470"), TEXT("4470 - PERSONAL EFFECTS"), TEXT("A moving box with someone's desk in it. A mug, a frame, papers.\nYour badge says 4471. Whoever had this desk before you was 4470."), 0 },
+		{ TEXT("Polaroid_4470"), TEXT("DESK 4471 - DAY 1"), TEXT("Your desk. Someone sitting at it, in a mint suit.\nThe face has been scribbled out. Hard. The pen went through the photo."), 0 },
+		{ TEXT("Sticky_4470"), TEXT("A NOTE"), TEXT("\"if you're reading this it's not your first day. LOOK CLOSER. - 4470\"\nThe handwriting looks a lot like yours."), 0 },
+		{ TEXT("Nameplate_4471"), TEXT("YOUR NAMEPLATE"), TEXT("4471, on a sticker. It doesn't quite cover the number underneath.\nPeel back the corner and it says 4470."), 0 },
 		{ TEXT("Chairman"), TEXT("THE CHAIRMAN"), TEXT("Founder. Visionary. Always just out of frame.\nThe plaque says he's proud of you. It doesn't say for what."), 0 },
 		{ TEXT("CallSheet"), TEXT("CALL SHEET"), TEXT("Today's date. A shooting schedule for an office.\nOne line is highlighted: EMPLOYEE 4471. You."), 0 },
 		{ TEXT("FridgeNote_Yogurt"), TEXT("KITCHEN"), TEXT("Someone has strong feelings about yogurt."), 0 },

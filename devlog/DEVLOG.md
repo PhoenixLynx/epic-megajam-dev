@@ -739,3 +739,15 @@ A running record of every AI tool used and what it did.
   17. *More items in the supply closet and conference room:* supply closet: three stocked steel shelves (binders, paper, tape, staplers, cups, coffee, tea, snack boxes), a filing cabinet, a printer, a bin, a wet-floor sign. Conference room: an empty director's chair at the head of the table, laptops, mugs, water, a conference phone, paper, a binder, a filing cabinet, a bin, a poster. The call screen shows the video-call image and the Key Lock 2 panel a login screen.
 - **New sound:** `sfx_eat_crunch`.
 - **AI tools used:** Claude (video and screenshot review, C++, Blender UVs, HTML screen images rendered with headless Chrome, sound synthesis, level dressing).
+
+### Session 46: Sat Nov 14, 2026, 11:00 MST: Compile fix, the "blocks", and 4470
+
+- **Build failed** on one name clash: a loop variable `N` inside a function that already had an `N` (MSVC C4456, treated as an error). Renamed to `MatName`; no other errors in the log.
+- **The "random cubes" by Corridor B** ![cabinets](screenshots/2026-11-14_cabinets_backwards.png) are the two filing cabinets (4-drawer and 2-drawer), placed **backwards**: their drawers faced the wall, so you only saw plain backs. Turned around.
+- **My idea:** reference the employee badge number before mine, as if I'm taking their place. Maybe moving-out boxes or their stuff in the supply closet? Claude's take: **4470**, and since your number is also your take number, 4470 is the previous *take* of you. Clues, all subtle:
+  - **The janitor closet** (opens with pass 1 from training, so it's a reward): a new **moving box** (cardboard, flaps open, a mug, a frame and papers inside), label *"4470 · PERSONAL EFFECTS · DO NOT OPEN, RETAKE"*; a **polaroid** on top, *"desk 4471, day 1"*, of someone in a mint suit at your desk with the face scribbled out; and a **sticky note** on the shelf: *"if you're reading this it's not your first day. LOOK CLOSER. — 4470"*. Look closer: *"The handwriting looks a lot like yours."*
+  - **Your nameplate** on desk #4471: the 4471 sticker doesn't quite cover the 0 of the 4470 underneath.
+  - **Email** (Act 1, HALCYON IT): *"Mail addressed to 4470 will now be delivered to you… 4470 is no longer with the production."*
+  - **Slips of the tongue:** a coworker: *"Morning, 4470— sorry. 4471. Force of habit."*; the receptionist: *"Welcome back. Oh— first day. Of course. First day."*; the custodian: *"Boxed up the last one's things. Didn't take long. They never have much."*
+  ![4470 textures](screenshots/2026-11-14_4470_textures.png)
+- **AI tools used:** Claude (compile-log fix, Blender moving box, HTML textures with Permanent Marker / Caveat / Poppins via headless Chrome, writing).
