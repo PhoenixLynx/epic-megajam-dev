@@ -115,6 +115,7 @@ private:
 	int32 MyCalls = 0;
 	void TickPhones(float DeltaTime);
 	void AnswerPhone(AActor* Phone);
+	bool PhoneRingingNear() const;
 	void StopRinging();
 	// Queued subtitles
 	TArray<FString> SubQueue;
@@ -139,7 +140,7 @@ private:
 	void UpdatePrompt();
 	void TickSwings(float DeltaTime);
 	void SetFearDebug(float Value);
-	UFUNCTION() void HandleTerminalLogout() { LogOut(); }
+	UFUNCTION() void HandleTerminalLogout();
 	void Fear0() { SetFearDebug(0.f); }
 	void Fear1() { SetFearDebug(0.25f); }
 	void Fear2() { SetFearDebug(0.5f); }

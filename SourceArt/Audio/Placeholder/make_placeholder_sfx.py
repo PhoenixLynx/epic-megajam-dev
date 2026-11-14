@@ -183,3 +183,13 @@ write("sfx_phone_ring", ring, peak=0.45)
 write("sfx_phone_pickup", pad(bandpass_noise(0.05, 800, 5000) * env(0.05, 0.0005, 0.01), 0.3) + 0.6 * pad(tone(180, 0.08, 0.02), 0.3), peak=0.5)
 x = t(2.0)
 write("sfx_phone_dialtone", (np.sin(2 * np.pi * 350 * x) + np.sin(2 * np.pi * 440 * x)) * np.clip((2.0 - x) / 0.05, 0, 1), peak=0.25)
+
+# Phone line static: crackly band-limited hiss with random pops, 6 s, fades in/out
+x = t(6.0)
+hiss = bandpass_noise(6.0, 300, 3400) * (0.5 + 0.5 * np.abs(np.sin(2 * np.pi * 0.7 * x)))
+pops = np.zeros_like(x)
+for _ in range(60):
+    i = rng.integers(0, len(x) - 400)
+    pops[i:i + 400] += rng.standard_normal(400) * np.exp(-np.arange(400) / 40) * rng.uniform(0.5, 2.0)
+fade = np.clip(x / 0.15, 0, 1) * np.clip((6.0 - x) / 0.4, 0, 1)
+write("sfx_phone_static", (hiss * 0.5 + pops * 0.6) * fade, peak=0.35)

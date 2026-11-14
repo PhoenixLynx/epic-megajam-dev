@@ -285,7 +285,7 @@ TSharedRef<SWidget> UTakeTerminalWidget::RebuildWidget()
 		UBorder* Foot = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
 		Foot->SetBrushColor(FLinearColor(0.90f, 0.93f, 0.95f));
 		Foot->SetPadding(FMargin(24.f, 10.f));
-		Foot->SetContent(MakeText(TEXT("Click an email to read it.     E / Tab  -  log out"), 13, Muted));
+		Foot->SetContent(MakeText(TEXT("Click an email to read it.     E / Tab  -  log out   (E answers your phone when it rings)"), 13, Muted));
 		LoadTraining();
 		RebuildSlide();
 		Page->AddChildToVerticalBox(Foot);

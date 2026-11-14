@@ -167,6 +167,17 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 		Hit = FHitResult(C, nullptr, C->GetActorLocation(), FVector::UpVector);
 		return ETakeLookKind::Coworker;
 	}
+	// A ringing phone right next to you wins over the desk, the monitor and the props around it
+	if (PhoneRingingNear())
+	{
+		AActor* P = RingingPhone.Get();
+		const FVector To = (P->GetActorLocation() - Loc).GetSafeNormal();
+		if (FVector::DotProduct(Rot.Vector(), To) > 0.3f)
+		{
+			Hit = FHitResult(P, nullptr, P->GetActorLocation(), FVector::UpVector);
+			return ETakeLookKind::Phone;
+		}
+	}
 	const FVector End = Loc + Rot.Vector() * FMath::Max(CurrentRange(), UseRange);
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(TakeLook), false, GetOwner());
 	if (!GetWorld()->LineTraceSingleByChannel(Hit, Loc, End, ECC_Visibility, Params)) { return ETakeLookKind::None; }
@@ -595,7 +606,7 @@ void UTakeGrabComponent::TickPhones(float DeltaTime)
 		}
 		return;
 	}
-	if (bSeated || PauseMenu) { return; }
+	if (PauseMenu) { return; }
 	NextRingIn -= DeltaTime;
 	if (NextRingIn > 0.f) { return; }
 	NextRingIn = FMath::FRandRange(60.f, 120.f);
@@ -604,12 +615,26 @@ void UTakeGrabComponent::TickPhones(float DeltaTime)
 	RingPhone(bMine ? MyPhone.Get() : Phones[FMath::RandRange(0, Phones.Num() - 1)].Get());
 }
 
+bool UTakeGrabComponent::PhoneRingingNear() const
+{
+	const AActor* P = RingingPhone.Get();
+	return P && FVector::Dist(P->GetActorLocation(), GetOwner()->GetActorLocation()) <= UseRange + 100.f;
+}
+
+void UTakeGrabComponent::HandleTerminalLogout()
+{
+	// At your desk with the phone ringing: E answers it instead of logging out
+	if (PhoneRingingNear()) { AnswerPhone(RingingPhone.Get()); return; }
+	LogOut();
+}
+
 void UTakeGrabComponent::AnswerPhone(AActor* Phone)
 {
 	const bool bMine = Phone && Phone == MyPhone.Get();
 	StopRinging();
 	const FVector Where = Phone ? Phone->GetActorLocation() : GetOwner()->GetActorLocation();
 	PlaySfx(TEXT("sfx_phone_pickup"), Where, 0.8f);
+	PlaySfx(TEXT("sfx_phone_static"), Where, 0.5f);   // the line crackles under the voices (voices coming later)
 	TArray<FString> Lines;
 	if (bMine)
 	{
