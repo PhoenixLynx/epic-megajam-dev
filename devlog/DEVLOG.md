@@ -515,3 +515,14 @@ A running record of every AI tool used and what it did.
 - **Cause:** the imported prop meshes only had their triangle ("complex") collision. Unreal can't run physics on that, so every pick-up-able prop froze where it spawned. The layout in the screenshot is also the old one: `dress_campus.py` ran before the island/short-counter update arrived.
 - **Done:** `Scripts/Editor/fix_prop_collision.py` gives every prop a simple box collision and switches the pick-up-able ones (and the swinging doors) to use it; big furniture keeps exact collision so you can walk snugly around it. `import_jam_assets.py` now runs it automatically.
 - **AI tools used:** Claude (log diagnosis, collision fix).
+
+### Session 31: Fri Nov 13, 2026, 19:45 MST: Playtest 1 fixes
+
+- **My feedback:** progress! (1) the ambience stops after one loop; (2) some kitchen and desk items float in the editor, then fall to the floor when Play starts; (3) E picks things up and drops them, but I'd like to throw them too; (4) I can't interact with coworkers.
+- **Screenshots:** ![kitchen gap](screenshots/2026-11-13_kitchen_gap.png) ![food on the floor](screenshots/2026-11-13_kitchen_floor.png)
+- **Causes and fixes:**
+  1. Re-importing a sound resets its settings, so the loops lost "looping" when `import_jam_assets.py` ran again. The importer now re-sets looping on every `*_loop` sound and keeps them playing while you're out of earshot.
+  2. Claude's measurement mistake: the counter is 2.4 m (240 cm) but the layout treated it as 4.4 m, so the coffee machine and kettle hung off the ends. The north wall is now one continuous run (short counter | main counter with sink | short counter | fridge), and every item is placed on a measured surface. Desk #4471's pen cup, phone and lamp were also just past the desk edge; moved in.
+  3. Throw is now **left click** as well as right click while you're holding something (the prompt says "Click  Throw").
+  4. Coworkers are Pawns, and Unreal's Pawn collision ignores the "what am I looking at" trace, so E never saw them. E now picks the coworker you're facing within 2.5 m. Their lines also appear as a **subtitle** at the bottom of the screen ("Coworker:  Printer's jammed…"), and the floating text is bigger and lower.
+- **AI tools used:** Claude (diagnosis, C++ and script fixes).

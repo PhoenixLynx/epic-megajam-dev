@@ -85,6 +85,7 @@ void UTakeGrabComponent::BindKeys()
 	UInputComponent* IC = Pawn->InputComponent;
 	IC->BindKey(EKeys::E, IE_Pressed, this, &UTakeGrabComponent::Interact);
 	IC->BindKey(EKeys::RightMouseButton, IE_Pressed, this, &UTakeGrabComponent::Throw);
+	IC->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &UTakeGrabComponent::ThrowInput);   // only while holding
 	if (bDebugFearKeys)
 	{
 		IC->BindKey(EKeys::Zero, IE_Pressed, this, &UTakeGrabComponent::Fear0);
@@ -120,10 +121,32 @@ bool UTakeGrabComponent::IsHolding() const
 	return Handle && Handle->GetGrabbedComponent() != nullptr;
 }
 
+ATakeCoworker* UTakeGrabComponent::CoworkerInView() const
+{
+	// Coworkers are Pawns, and Pawns ignore the Visibility trace: pick the one you're facing instead.
+	FVector Loc; FRotator Rot;
+	if (!GetView(Loc, Rot)) { return nullptr; }
+	ATakeCoworker* Best = nullptr;
+	float BestDot = 0.9f;
+	for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
+	{
+		const FVector To = It->GetActorLocation() + FVector(0.f, 0.f, 40.f) - Loc;
+		if (To.Size() > UseRange) { continue; }
+		const float Dot = FVector::DotProduct(Rot.Vector(), To.GetSafeNormal());
+		if (Dot > BestDot) { BestDot = Dot; Best = *It; }
+	}
+	return Best;
+}
+
 ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 {
 	FVector Loc; FRotator Rot;
 	if (!GetView(Loc, Rot)) { return ETakeLookKind::None; }
+	if (ATakeCoworker* C = CoworkerInView())
+	{
+		Hit = FHitResult(C, nullptr, C->GetActorLocation(), FVector::UpVector);
+		return ETakeLookKind::Coworker;
+	}
 	const FVector End = Loc + Rot.Vector() * FMath::Max(CurrentRange(), UseRange);
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(TakeLook), false, GetOwner());
 	if (!GetWorld()->LineTraceSingleByChannel(Hit, Loc, End, ECC_Visibility, Params)) { return ETakeLookKind::None; }
@@ -315,11 +338,18 @@ void UTakeGrabComponent::SetFearDebug(float Value)
 }
 
 // ------------------------------------------------------------------ Tick
+void UTakeGrabComponent::ShowSubtitle(const FString& Who, const FString& Line, float Seconds)
+{
+	if (!Prompt) { return; }
+	Prompt->SetSubtitle(Who.IsEmpty() ? Line : FString::Printf(TEXT("%s:  %s"), *Who, *Line));
+	SubtitleLeft = Seconds;
+}
+
 void UTakeGrabComponent::UpdatePrompt()
 {
 	if (!Prompt) { return; }
 	if (bSeated) { Prompt->SetPrompt(TEXT("")); return; }
-	if (IsHolding()) { Prompt->SetPrompt(TEXT("E  Drop        Right Mouse  Throw")); return; }
+	if (IsHolding()) { Prompt->SetPrompt(TEXT("E  Drop        Click  Throw")); return; }
 	FHitResult Hit;
 	switch (Look(Hit))
 	{
@@ -342,6 +372,11 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	TickSwings(DeltaTime);
 	UpdatePrompt();
+	if (SubtitleLeft > 0.f)
+	{
+		SubtitleLeft -= DeltaTime;
+		if (SubtitleLeft <= 0.f && Prompt) { Prompt->SetSubtitle(TEXT("")); }
+	}
 	if (!IsHolding()) { return; }
 	FVector Loc; FRotator Rot;
 	if (GetView(Loc, Rot))

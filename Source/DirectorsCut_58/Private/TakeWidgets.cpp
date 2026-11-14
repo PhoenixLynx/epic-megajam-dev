@@ -55,8 +55,28 @@ TSharedRef<SWidget> UTakePromptWidget::RebuildWidget()
 		PromptSlot->SetAlignment(FVector2D(0.5f, 0.f));
 		PromptSlot->SetAutoSize(true);
 		PromptSlot->SetPosition(FVector2D(0.f, 48.f));
+
+		Subtitle = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("Subtitle"));
+		FSlateFontInfo SubFont = Subtitle->GetFont();
+		SubFont.Size = 22;
+		Subtitle->SetFont(SubFont);
+		Subtitle->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+		Subtitle->SetShadowOffset(FVector2D(1.5f, 1.5f));
+		Subtitle->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, 0.85f));
+		Subtitle->SetJustification(ETextJustify::Center);
+		Subtitle->SetAutoWrapText(true);
+		UCanvasPanelSlot* SubSlot = Root->AddChildToCanvas(Subtitle);
+		SubSlot->SetAnchors(FAnchors(0.5f, 1.f));
+		SubSlot->SetAlignment(FVector2D(0.5f, 1.f));
+		SubSlot->SetSize(FVector2D(1100.f, 90.f));
+		SubSlot->SetPosition(FVector2D(0.f, -70.f));
 	}
 	return Super::RebuildWidget();
+}
+
+void UTakePromptWidget::SetSubtitle(const FString& Text)
+{
+	if (Subtitle) { Subtitle->SetText(FText::FromString(Text)); }
 }
 
 void UTakePromptWidget::SetPrompt(const FString& Text)

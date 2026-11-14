@@ -103,5 +103,19 @@ if done < len(tasks):
         if not t.get_editor_property("imported_object_paths"):
             unreal.log_warning(f"[TAKE 4471] Not imported: {t.get_editor_property('filename')}")
 
+# Re-importing a .wav resets its settings: every *_loop sound loops, and keeps playing while out of earshot
+looped = 0
+for path in unreal.EditorAssetLibrary.list_assets("/Game/Audio/Placeholder", recursive=False):
+    wave = unreal.EditorAssetLibrary.load_asset(path)
+    if isinstance(wave, unreal.SoundWave) and wave.get_name().endswith("_loop"):
+        wave.set_editor_property("looping", True)
+        try:
+            wave.set_editor_property("virtualization_mode", unreal.VirtualizationMode.PLAY_WHEN_SILENT)
+        except Exception:
+            pass
+        unreal.EditorAssetLibrary.save_loaded_asset(wave)
+        looped += 1
+unreal.log(f"[TAKE 4471] {looped} sound(s) set to loop")
+
 # Physics props need simple collision, or they freeze in the air at Play
 exec(open(os.path.join(ROOT, "Scripts", "Editor", "fix_prop_collision.py")).read())

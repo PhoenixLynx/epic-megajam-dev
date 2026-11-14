@@ -50,14 +50,15 @@ def put(mesh, x, y, z=0.0, yaw=0.0, tags=()):
 
 # --- Your desk #4471 ----------------------------------------------------------
 put("SM_Desk", 1300, 2300, 0, 180, ["Terminal", "Desk4471"])
-put("SM_Monitor", 1300, 2265, DESK_TOP, 180, ["Terminal", "Monitor4471"])   # E here = sit and log in
-put("SM_Keyboard", 1300, 2325, DESK_TOP, 180)
-put("SM_Mug", 1235, 2310, DESK_TOP, 0, ["ChangeOnRewind"])
-put("SM_DeskPhone", 1390, 2290, DESK_TOP, 160)
-put("SM_PenCup", 1200, 2270, DESK_TOP)
-put("SM_DeskLamp", 1380, 2250, DESK_TOP, 200)
-put("SM_PlantDesk", 1220, 2250, DESK_TOP)
-put("SM_Stapler", 1355, 2330, DESK_TOP, 75)
+put("SM_Monitor", 1300, 2272, DESK_TOP, 180, ["Terminal", "Monitor4471"])   # E here = sit and log in
+# Desk top is x 1220-1380, y 2260-2340: everything stays inside it
+put("SM_Keyboard", 1300, 2318, DESK_TOP, 180)
+put("SM_Mug", 1242, 2320, DESK_TOP, 0, ["ChangeOnRewind"])
+put("SM_DeskPhone", 1355, 2312, DESK_TOP, 160)
+put("SM_PenCup", 1238, 2290, DESK_TOP)
+put("SM_DeskLamp", 1360, 2275, DESK_TOP, 200)
+put("SM_PlantDesk", 1250, 2270, DESK_TOP)
+put("SM_Stapler", 1330, 2332, DESK_TOP, 75)
 put("SM_PCTower", 1410, 2280, 0, 180)
 put("SM_OfficeChair", 1300, 2385, 0, 0, ["ChangeOnRewind"])
 put("SM_TrashBin", 1170, 2370)
@@ -83,7 +84,7 @@ for row in range(3):
         put("SM_Keyboard", cx, cy - 75, DESK_TOP, 180)
         put("SM_OfficeChair", cx + rnd.uniform(-20, 20), cy - 5, 0, rnd.uniform(-25, 25))
         for _ in range(rnd.randint(2, 4)):
-            put(rnd.choice(SUPPLIES), cx + rnd.uniform(-70, 70), cy - 95 + rnd.uniform(-25, 20), DESK_TOP,
+            put(rnd.choice(SUPPLIES), cx + rnd.uniform(-60, 60), cy - 95 + rnd.uniform(-20, 20), DESK_TOP,
                 rnd.uniform(0, 360))
         if rnd.random() < 0.3:
             put("SM_TrashBin", cx + 60, cy + 30)
@@ -107,13 +108,15 @@ put("SM_MannequinGuard", 2350, 650, 0, 200, ["NPC", "Guard_Lobby"])
 put("SM_ExitSign", 2100, 1688, 270, 0)
 
 # --- Kitchen (the old break room) ------------------------------------------------
-put("SM_KitchenCounter", 3300, 532, 0, 180)
-put("SM_CoffeeMachine", 3140, 530, 90, 180)
-put("SM_Microwave", 3400, 525, 90, 180)
-put("SM_Kettle", 3500, 545, 90, 180)
-put("SM_Mug", 3200, 540, 91)
-put("SM_Mug", 3225, 545, 91)
-put("SM_KitchenCounterShort", 3595, 532, 0, 180)   # fills the gap between counter and fridge
+# North wall run, west to east, no gaps: short 3175-3295 | main (sink) 3295-3535 | short 3535-3655 | fridge
+put("SM_KitchenCounterShort", 3235, 532, 0, 180)
+put("SM_KitchenCounter", 3415, 532, 0, 180)
+put("SM_KitchenCounterShort", 3595, 532, 0, 180)
+put("SM_CoffeeMachine", 3215, 530, 91, 180)
+put("SM_Mug", 3262, 540, 91)
+put("SM_Mug", 3280, 548, 91)
+put("SM_Microwave", 3385, 525, 91, 180)
+put("SM_Kettle", 3515, 545, 91, 180)          # sink is 3440-3490
 put("SM_KitchenIsland", 3300, 830, 0, 180)         # more worktop; ~2 m aisle to the counter
 put("SM_FridgeBody", 3710, 545, 0, 180)
 FRIDGE = (3710, 545, 180)   # door, notes and food are placed relative to this below
@@ -125,13 +128,13 @@ for tx, ty in ((3100, 1150), (3450, 1250)):
     put("SM_BarStool", tx + 55, ty - 30)
 put("SM_WetFloorSign", 3550, 1200, 0, 30)
 put("SM_TrashBin", 2850, 1450)
-put("SM_PlantTall", 2870, 580)
+put("SM_PlantTall", 2900, 580)
 put("SM_WallClock", 3300, 1488, 240, 0)
 put("SM_Mannequin", 3300, 1000, 0, 0, ["NPC", "Coworker_Kitchen"])
-# Stock the counters (all tops at 90 cm). Main counter spans x 3080-3520 (sink at ~3350),
-# short counter 3535-3655, island 3207-3393 x 782-878. Props spawn 1 cm above and settle.
-put("SM_CupStack", 3265, 535, 91)
-put("SM_CupStack", 3290, 548, 91)
+# Stock the counters (all tops at 90 cm): short 3175-3295, main 3295-3535 (sink 3440-3490),
+# short 3535-3655, island 3207-3393 x 782-878. Props spawn 1 cm above and settle.
+put("SM_CupStack", 3318, 535, 91)
+put("SM_CupStack", 3340, 548, 91)
 put("SM_TeaBox", 3560, 530, 91, 10)
 put("SM_TeaBox", 3585, 530, 91, -5)
 put("SM_TeaBox", 3572, 530, 99, 3)

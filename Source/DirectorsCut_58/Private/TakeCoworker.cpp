@@ -3,6 +3,7 @@
 #include "DirectorsCut_58.h"
 #include "TakeTypes.h"
 #include "TakeFearDirector.h"
+#include "TakeGrabComponent.h"
 #include "AIController.h"
 #include "NavigationSystem.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -35,10 +36,10 @@ ATakeCoworker::ATakeCoworker()
 
 	Speech = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Speech"));
 	Speech->SetupAttachment(GetCapsuleComponent());
-	Speech->SetRelativeLocation(FVector(0.f, 0.f, 120.f));
+	Speech->SetRelativeLocation(FVector(0.f, 0.f, 105.f));
 	Speech->SetHorizontalAlignment(EHTA_Center);
 	Speech->SetVerticalAlignment(EVRTA_TextBottom);
-	Speech->SetWorldSize(11.f);
+	Speech->SetWorldSize(14.f);
 	Speech->SetTextRenderColor(FColor(30, 40, 48));
 	Speech->SetText(FText::GetEmpty());
 
@@ -113,9 +114,17 @@ bool ATakeCoworker::Speak(const FString& Context)
 
 void ATakeCoworker::SayLine(const FString& Line)
 {
-	Speech->SetText(FText::FromString(TakeText::Fill(this, Line)));
+	const FString Filled = TakeText::Fill(this, Line);
+	Speech->SetText(FText::FromString(Filled));
 	SpeechLeft = SpeechSeconds;
 	CooldownLeft = SpeechCooldown;
+	if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+	{
+		if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>())
+		{
+			Hands->ShowSubtitle(Role, Filled, SpeechSeconds + 0.5f);
+		}
+	}
 	// Turn to face the player while talking
 	if (const APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0))
 	{

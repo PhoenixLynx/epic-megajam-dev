@@ -33,10 +33,13 @@ class DIRECTORSCUT_58_API UTakePromptWidget : public UUserWidget
 	GENERATED_BODY()
 public:
 	void SetPrompt(const FString& Text);
+	/** Bottom-of-screen subtitle for whoever is talking. Empty clears it. */
+	void SetSubtitle(const FString& Text);
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 private:
 	UPROPERTY() TObjectPtr<UTextBlock> Label;
+	UPROPERTY() TObjectPtr<UTextBlock> Subtitle;
 	FString Current;
 };
 

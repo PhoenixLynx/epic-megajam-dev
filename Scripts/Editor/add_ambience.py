@@ -33,6 +33,10 @@ for label, sound, x, y, z, radius, falloff, volume in AMBIENCE:
         continue
     wave = lib.load_asset(path)
     wave.set_editor_property("looping", True)
+    try:   # keep looping while you're out of earshot, so it's still going when you walk back in
+        wave.set_editor_property("virtualization_mode", unreal.VirtualizationMode.PLAY_WHEN_SILENT)
+    except Exception:
+        pass
     lib.save_loaded_asset(wave)
     amb = actor_sys.spawn_actor_from_class(unreal.AmbientSound, unreal.Vector(x, y, z), unreal.Rotator(0, 0, 0))
     comp = amb.audio_component

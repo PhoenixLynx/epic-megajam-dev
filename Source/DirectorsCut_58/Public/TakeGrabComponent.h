@@ -62,6 +62,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Grab") bool IsHolding() const;
 	UFUNCTION(BlueprintPure, Category = "Grab") bool IsSeated() const { return bSeated; }
 	UFUNCTION(BlueprintPure, Category = "Grab") float CurrentRange() const;
+	/** Show "Who: line" at the bottom of the screen for a few seconds. */
+	UFUNCTION(BlueprintCallable, Category = "Grab") void ShowSubtitle(const FString& Who, const FString& Line, float Seconds = 4.f);
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
@@ -75,6 +77,9 @@ private:
 	UPROPERTY() TObjectPtr<UTakeTerminalWidget> Terminal;
 	TMap<TWeakObjectPtr<AActor>, FSwing> Swings;
 	bool bSeated = false;
+	float SubtitleLeft = 0.f;
+	class ATakeCoworker* CoworkerInView() const;
+	void ThrowInput() { if (IsHolding()) { Throw(); } }
 	float HeldYawOffset = 0.f;
 	FRotator HeldPitchRoll = FRotator::ZeroRotator;
 	FVector SeatReturnLocation;
