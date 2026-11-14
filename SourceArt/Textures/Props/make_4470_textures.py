@@ -25,14 +25,28 @@ PAGES = {
 <div style="position:absolute;left:0;right:0;top:250px;height:60px;background:rgba(210,190,150,.55)"></div>"""),
     "T_Polaroid_4470": (700, 840, """
 <div style="position:absolute;inset:0;background:#f7f5ef"></div>
-<div style="position:absolute;left:44px;top:44px;width:612px;height:612px;background:linear-gradient(#cfe1e3,#a9c3c6);overflow:hidden">
- <div style="position:absolute;left:60px;right:60px;bottom:120px;height:26px;background:#d8d2c4"></div>
- <div style="position:absolute;left:120px;bottom:146px;width:210px;height:130px;background:#22292c;border:8px solid #444"></div>
- <div style="position:absolute;left:380px;bottom:146px;width:110px;height:250px;background:#7fd4c4;border-radius:50px 50px 8px 8px"></div>
- <div style="position:absolute;left:395px;bottom:390px;width:80px;height:80px;border-radius:50%;background:#e6e1d8"></div>
- <div style="position:absolute;left:378px;bottom:378px;width:120px;height:110px;
-  background:repeating-linear-gradient(35deg,#111 0 7px,transparent 7px 13px),repeating-linear-gradient(-40deg,#111 0 6px,transparent 6px 12px)"></div>
- <div style="position:absolute;left:0;right:0;top:0;bottom:0;background:radial-gradient(circle at 50% 40%,transparent 40%,rgba(0,0,0,.35))"></div>
+<div style="position:absolute;left:44px;top:44px;width:612px;height:612px;background:linear-gradient(#d6e6e8,#a9c3c6);overflow:hidden">
+ <!-- window light, desk, monitor -->
+ <div style="position:absolute;left:30px;top:40px;width:150px;height:260px;background:rgba(255,255,255,.45)"></div>
+ <div style="position:absolute;left:0;right:0;bottom:150px;height:22px;background:#d8d2c4"></div>
+ <div style="position:absolute;left:0;right:0;bottom:0;height:150px;background:#93aeb2"></div>
+ <div style="position:absolute;left:60px;bottom:172px;width:190px;height:120px;background:#22292c;border:7px solid #444"></div>
+ <div style="position:absolute;left:140px;bottom:172px;width:30px;height:24px;background:#444"></div>
+ <!-- the person: seen from the side and a little behind, sitting, hands on the keyboard -->
+ <div style="position:absolute;left:330px;bottom:60px;width:150px;height:30px;background:#3a3f42;border-radius:6px"></div>
+ <div style="position:absolute;left:452px;bottom:90px;width:26px;height:230px;background:#3a3f42;border-radius:8px"></div>
+ <div style="position:absolute;left:330px;bottom:150px;width:120px;height:40px;background:#5fb5a6;border-radius:14px"></div>
+ <div style="position:absolute;left:345px;bottom:185px;width:105px;height:170px;background:#7fd4c4;border-radius:40px 46px 10px 10px"></div>
+ <div style="position:absolute;left:265px;bottom:262px;width:110px;height:24px;background:#7fd4c4;border-radius:12px;transform:rotate(-12deg)"></div>
+ <div style="position:absolute;left:252px;bottom:258px;width:26px;height:26px;border-radius:50%;background:#e6e1d8"></div>
+ <div style="position:absolute;left:378px;bottom:345px;width:30px;height:26px;background:#e6e1d8"></div>
+ <div style="position:absolute;left:352px;bottom:362px;width:88px;height:96px;border-radius:50%;background:#e6e1d8"></div>
+ <!-- the face, scribbled out until the pen went through -->
+ <div style="position:absolute;left:340px;bottom:350px;width:112px;height:122px;border-radius:50%;
+  background:repeating-linear-gradient(35deg,#111 0 7px,transparent 7px 12px),repeating-linear-gradient(-40deg,#111 0 6px,transparent 6px 11px),
+  repeating-linear-gradient(80deg,#111 0 3px,transparent 3px 9px)"></div>
+ <div style="position:absolute;left:376px;bottom:396px;width:34px;height:20px;background:#f7f5ef;border-radius:40%;transform:rotate(20deg)"></div>
+ <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,transparent 45%,rgba(0,0,0,.35))"></div>
 </div>
 <div style="position:absolute;left:60px;top:680px;font:64px Caveat;color:#2a2a6a;transform:rotate(-2deg)">desk 4471 &mdash; day 1</div>"""),
     "T_Sticky_4470": (600, 600, """
