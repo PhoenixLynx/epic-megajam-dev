@@ -279,11 +279,12 @@ def water_cooler():
 
 def wet_floor_sign():
     p = Prop("SM_WetFloorSign")
-    for y, tilt in ((-0.12, 0.2), (0.12, -0.2)):
+    # An A-frame: the two panels lean IN, so their tops meet under the handle (feet apart, top together)
+    for y, tilt in ((-0.12, -0.2), (0.12, 0.2)):
         p.box((0.3, 0.015, 0.62), (0, y, 0.3), "M_Yellow", rot_x=tilt)
     # printed faces (CAUTION / WET FLOOR): thin labels just outside each panel; the back one has its UVs mirrored
-    p.box((0.28, 0.002, 0.56), (0, -0.129, 0.3), "M_SignWet", rot_x=0.2)
-    p.box((0.28, 0.002, 0.56), (0, 0.129, 0.3), "M_SignWetBack", rot_x=-0.2)
+    p.box((0.28, 0.002, 0.56), (0, -0.129, 0.3), "M_SignWet", rot_x=-0.2)
+    p.box((0.28, 0.002, 0.56), (0, 0.129, 0.3), "M_SignWetBack", rot_x=0.2)
     p.box((0.06, 0.06, 0.03), (0, 0, 0.62), "M_Yellow")
     return p.finish(0.006, fit_uv={"M_SignWet": (-0.14, 0.14, 0.02, 0.58), "M_SignWetBack": (0.14, -0.14, 0.02, 0.58)})
 

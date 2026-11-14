@@ -308,7 +308,18 @@ void UTakeGrabComponent::RevealAct2()
 		if (!A) { continue; }
 		A->SetActorHiddenInGame(false);
 		A->SetActorEnableCollision(true);
-		if (UStaticMeshComponent* SM = Cast<UStaticMeshComponent>(A->GetRootComponent())) { SM->SetSimulatePhysics(R.bPhysics); }
+		if (UStaticMeshComponent* SM = Cast<UStaticMeshComponent>(A->GetRootComponent()))
+		{
+			if (R.bPhysics)   // lunch you can pick up: a fresh physics body, then simulate
+			{
+				SM->SetMobility(EComponentMobility::Movable);
+				SM->SetCollisionProfileName(TEXT("PhysicsActor"));
+				SM->RecreatePhysicsState();
+				SM->SetSimulatePhysics(true);
+				SM->SetNotifyRigidBodyCollision(true);
+				SM->OnComponentHit.AddUniqueDynamic(this, &UTakeGrabComponent::OnPropHit);
+			}
+		}
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Lunch is out: revealed %d Act 2 thing(s)"), Act2Things.Num());
 }
@@ -581,7 +592,7 @@ void UTakeGrabComponent::TickEnergy(float DeltaTime)
 	// Full to empty in about 15 minutes; Fear burns it three times as fast
 	GI->Energy = FMath::Max(0.f, GI->Energy - DeltaTime * (100.f / 900.f) * (FearNow >= 0.5f ? 3.f : 1.f));
 	// Fear stinger: the moment the office turns (crossing 0.6, where coworkers start to stare)
-	if (FearNow >= 0.6f && LastFear < 0.6f) { PlaySfx2D(TEXT("sfx_fear_hit"), 0.9f); }
+	if (FearNow >= 0.35f && LastFear < 0.35f) { PlaySfx2D(TEXT("sfx_fear_hit"), 0.9f); }
 	LastFear = FearNow;
 	const bool bLow = GI->Energy < 25.f;
 	Me->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * (bLow ? 0.8f : 1.f);
@@ -635,5 +646,14 @@ void UTakeGrabComponent::TakeScreenshot()
 			PlaySfx2D(TEXT("sfx_clapper_snap"), 0.25f);
 			ShowSubtitle(TEXT(""), TEXT("(Screenshot saved: Saved/Screenshots)"), 1.5f);
 		}
+	}
+}
+
+void UTakeGrabComponent::TestStalker()
+{
+	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		GI->TakeStalker();
+		ShowSubtitle(TEXT(""), TEXT("(Playtest: the stalker is coming.)"), 2.f);
 	}
 }

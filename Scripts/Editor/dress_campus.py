@@ -125,6 +125,7 @@ put("SM_HandDryer", 3200, 2108, 110, 0, ["Use=Dryer"])
 put("SM_TrashBin", 3120, 2085)
 put("SM_PaperBall", 3150, 2060, 0)
 put("SM_WetFloorSign", 3210, 1965, 0, 40)
+put("SM_MeetingChair", 3130, 1760, 0, 180)     # the inexplicable restroom chair
 put("SM_PlantDesk", 3375, 2085, 85)
 
 # --- Lobby: bright, calm, too clean --------------------------------------------
@@ -145,18 +146,17 @@ put("SM_ExitSign", 2100, 1688, 270, 0)
 put("SM_MeetingChair", 1700, 1590, 0, 0)
 put("SM_MeetingChair", 1830, 1590, 0, 0)
 put("SM_PlantDesk", 1760, 1430, 44)
-for i, (x, y, yaw) in enumerate(((1790, 1470, 15), (1805, 1395, -20), (1725, 1475, 40))):
-    put("SM_Brochure", x, y, 45, yaw, [f"SlotMI=M_SignFace:{'MI_Brochure' if i < 2 else 'MI_Magazine'}"])
-put("SM_PlantTall", 2000, 1650)
+for i, (x, y, yaw) in enumerate(((1778, 1452, 15), (1742, 1408, -20), (1735, 1448, 40))):   # on the table (radius 45)
+    put("SM_Brochure", x, y, 46, yaw, [f"SlotMI=M_SignFace:{'MI_Brochure' if i < 2 else 'MI_Magazine'}"])
 put("SM_Monitor", 2235, 1285, 109, 0, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])   # reception sees everything
 put("SM_PlantDesk", 2280, 1300, 109)
 put("SM_PlantTall", 1440, 1650)
 put("SM_WaterCooler", 2740, 1260, 0, -90, ["Use=Cooler"])
 # Security desk by the elevator: two monitors showing the camera feeds (one of them is you, from behind)
-put("SM_Desk", 2560, 610, 0, 180)
-put("SM_Monitor", 2525, 585, 75, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])
-put("SM_Monitor", 2595, 585, 75, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])
-put("SM_OfficeChair", 2560, 690, 0, 0)
+put("SM_Desk", 1640, 620, 0, 180)        # security booth, NW corner (clear of the Chairman's portrait)
+put("SM_Monitor", 1605, 595, 75, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])
+put("SM_Monitor", 1675, 595, 75, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])
+put("SM_OfficeChair", 1640, 700, 0, 0)
 # Security cameras (they turn to follow you; C++ 'SecurityCam')
 for x, y, z, yaw in ((2785, 515, 265, -45), (1415, 515, 265, 45), (815, 1715, 265, 45), (3385, 3685, 265, -135),
                      (3785, 515, 265, -45), (1385, 3715, 265, 45), (215, 515, 265, 45)):
@@ -231,7 +231,6 @@ put("SM_PenCup", 980, 1000, TABLE_Z)
 put("SM_PlantTall", 280, 580)
 put("SM_PlantTall", 1320, 1620)
 put("SM_TrashBin", 1340, 600)
-cabinet(1340, 900, -90, 2)
 put("SM_WallClock", 800, 512, 240, 180)
 
 # Supply closet door (office south wall, opening x 2975-3125): access pass 1, like the guard says
@@ -299,10 +298,20 @@ BOXES += [
     ("Magazine", 1720, 1415, 44.4, 21, 27, 0.6, PM + "MI_Magazine", ["Inspectable"]),
     ("Lobby_PromoScreen", 1412, 1450, 175, 3, 160, 90, PM + "MI_Screen_Promo", []),
     # Elevator: a button panel inside (E), emergency signs
-    ("ElevatorPanel_In", 2388, 380, 120, 2, 24, 48, PM + "MI_ElevatorPanel", ["Use=Elevator"]),
-    ("Sign_ElevatorFire", 1812, 380, 150, 2, 40, 40, PM + "MI_Sign_ElevatorFire", []),
+    ("ElevatorPanel_In", 2385, 380, 120, 2, 24, 48, PM + "MI_ElevatorPanel", ["Use=Elevator"]),
+    ("Sign_ElevatorFire", 1815, 380, 150, 2, 40, 40, PM + "MI_Sign_ElevatorFire", []),
     ("Sign_ElevatorFire_Out", 1935, 512, 150, 30, 2, 30, PM + "MI_Sign_ElevatorFire", []),
-    ("Sign_Emergency", 2100, 12, 170, 40, 2, 40, PM + "MI_Sign_Emergency", []),
+    ("Sign_Emergency", 2100, 15, 170, 40, 2, 40, PM + "MI_Sign_Emergency", []),
+    # Elevator car: brushed steel inside (walls, floor plate, handrail), so it reads as an elevator and reflects
+    ("Elevator_SteelW", 1812, 250, 150, 4, 480, 300, PM + "M_BrushedSteel", []),
+    ("Elevator_SteelE", 2388, 250, 150, 4, 480, 300, PM + "M_BrushedSteel", []),
+    ("Elevator_SteelN", 2100, 12, 150, 576, 4, 300, PM + "M_BrushedSteel", []),
+    ("Elevator_Floor", 2100, 250, 0.6, 580, 480, 1.2, PM + "M_BrushedSteel", []),
+    ("Elevator_Rail", 2100, 22, 95, 520, 4, 5, PM + "M_BrushedSteel", []),
+    # Security booth front: a low counter
+    ("SecurityBooth_Front", 1640, 715, 55, 220, 8, 110, "/Game/Fear/MI_Greybox_Walls", []),
+    # Conference room whiteboard (east wall); the scribbles hide Key 2's squares
+    ("Whiteboard", 1388, 1400, 160, 2, 220, 110, PM + "MI_Whiteboard", ["Inspectable"]),
 ]
 BOXES += [(l, x, y, z, sx, sy, sz, "/Game/Fear/MI_Greybox_Walls", []) for (l, x, y, z, sx, sy, sz) in BOXES_SUPPLY]
 BOXES += [("RestroomWall_W1", 3050, 1825, 150, 20, 250, 300, "/Game/Fear/MI_Greybox_Walls", []),

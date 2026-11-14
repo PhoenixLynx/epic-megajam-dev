@@ -684,3 +684,24 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 	}
 	Animate(DeltaSeconds, bMoving);
 }
+
+void ATakeCoworker::ReactToTheft()
+{
+	if (bVanished || IsHidden() || State == ETakeCoworkerState::Watching) { return; }
+	const double Now = GetWorld()->GetTimeSeconds();
+	if (Now - LastHitTime < 3.0) { return; }
+	LastHitTime = Now;
+	if (const APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0))
+	{
+		const FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
+		SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));   // they stop and turn to look at you
+	}
+	FrownHold = 5.f;
+	CooldownLeft = 0.f;
+	static const TCHAR* Snark[] = {
+		TEXT("Excuse me. I was using that."), TEXT("That's company property. Specifically, mine."),
+		TEXT("Wow. Okay. I'll just... work on nothing, then."), TEXT("Put. It. Back."),
+		TEXT("I had seventeen tabs open on that."), TEXT("Is this a team-building exercise? Nobody told me."),
+	};
+	SayLine(Snark[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Snark)) - 1)]);
+}

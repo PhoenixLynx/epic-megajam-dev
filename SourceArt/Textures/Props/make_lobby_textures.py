@@ -147,6 +147,14 @@ PAGES.update({f"T_Printout_{i + 1}": (600, 860, f"""<div style="position:absolut
         ("YOUR PERFORMANCE: 99%", "Please give the remaining 1%.<br><br>Where is it?<br>We know you have it.<br><br>- The Morale Team"),
     ])})
 
+PAGES["T_Whiteboard"] = (1200, 600, f"""<div style="position:absolute;inset:0;background:#f7f9f9;border:18px solid #c9d1d4"></div>
+<div style="position:absolute;left:60px;top:40px;font:64px/1.05 Caveat;color:#1f4fb0">Q4 ENERGY TARGETS &uarr;&uarr;&uarr;</div>
+<div style="position:absolute;left:70px;top:140px;font:48px/1.3 Caveat;color:#2b2b2b">Retention: 100%<br>Morale: mandatory<br>Retakes: as needed</div>
+<svg style="position:absolute;left:640px;top:120px" width="460" height="260" viewBox="0 0 460 260"><polyline fill="none" stroke="#c62828" stroke-width="6" points="10,240 90,200 160,215 240,140 300,160 380,60 450,20"/>
+<line x1="10" y1="250" x2="450" y2="250" stroke="#333" stroke-width="4"/><line x1="10" y1="250" x2="10" y2="10" stroke="#333" stroke-width="4"/></svg>
+<div style="position:absolute;right:60px;bottom:40px;font:40px Caveat;color:#2a8a3a">(do not erase)</div>
+<div style="position:absolute;left:70px;bottom:50px;font:34px Caveat;color:#555">who keeps drawing squares on this?</div>""")
+
 if __name__ == "__main__":
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=os.environ.get("CHROME", "/usr/bin/google-chrome"))

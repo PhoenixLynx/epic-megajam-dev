@@ -55,12 +55,12 @@ EMAILS = [
      "Agenda:\n1. Welcome\n2. Quarterly energy targets\n3. Morale\n4. Retake",
      False, False, "Act2Start"),
     ("A1_SecurityIncident", 1, "HALCYON Security", "INCIDENT REPORT #4471-B",
-     "Employee {EMP},\n\nAt approximately now, you threw an object at a member of Security.\n"
+     "Employee {EMP},\n\nAt approximately now, you threw an object at a member of Security.\nIncidents logged today: {HITS}.\n"
      "This has been noted. It has been noted before.\nSecurity does not forget. Security does not need to.\n\n"
      "Further incidents will be escalated to HR.\n\n- Officer on duty (the one you hit)",
      False, False, "GuardComplaint"),
     ("A1_HRIncident", 1, "HALCYON People Team", "A gentle reminder about workplace conduct :)",
-     "Hi {EMP}!\n\nWe've received several reports of office supplies travelling at speed.\n"
+     "Hi {EMP}!\n\nWe've received {HITS} reports of office supplies travelling at speed.\n"
      "At HALCYON, every object has its place, and so does every employee.\n\n"
      "Please complete Respectful Workplace Module 2 at your earliest convenience (your terminal, Training tab).\n"
      "It takes about a minute. It has always taken about a minute.\n\nWarmly,\nPeople Team",
@@ -206,6 +206,9 @@ NPC = [
     ("J_A1_Bump2", "Custodian", 1, False, "Bump", "Don't go in my closet. Nothing in there. Mops."),
     ("J_A1_Bump3", "Custodian", 1, False, "Bump", "Whoa there. Wet floor."),
     # --- when you throw something at them ---
+    ("R_A1_Hit1", "Receptionist", 1, False, "Hit", "That's an incident. Please sign the incident report. Clipboard's on the desk."),
+    ("R_A1_Hit2", "Receptionist", 1, False, "Hit", "Incident number {HITS}. I'm keeping count. Someone has to."),
+    ("R_A1_Hit3", "Receptionist", 1, False, "Hit", "Smile with the eyes, they said. Nobody said anything about staplers."),
     ("C_A1_Hit1", "Coworker", 1, False, "Hit", "Hey! I haven't even had my coffee yet."),
     ("C_A1_Hit2", "Coworker", 1, False, "Hit", "Ow. ...That's going in the morale survey."),
     ("C_A1_Hit3", "Coworker", 1, False, "Hit", "Was that a stapler? Is that how we're doing this today?"),

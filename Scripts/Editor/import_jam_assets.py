@@ -117,6 +117,21 @@ mel.connect_material_property(f_rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
 mel.recompile_material(face_base)
 unreal.EditorAssetLibrary.save_loaded_asset(face_base)
 
+# Brushed steel (elevator car): metallic, fairly smooth, so Lumen gives it soft reflections
+steel = get_or_create("M_BrushedSteel", MAT_DIR, unreal.Material, unreal.MaterialFactoryNew())
+mel.delete_all_material_expressions(steel)
+st_col = mel.create_material_expression(steel, unreal.MaterialExpressionConstant3Vector, -400, 0)
+st_col.set_editor_property("constant", unreal.LinearColor(0.62, 0.65, 0.67, 1.0))
+mel.connect_material_property(st_col, "", unreal.MaterialProperty.MP_BASE_COLOR)
+st_met = mel.create_material_expression(steel, unreal.MaterialExpressionConstant, -400, 150)
+st_met.set_editor_property("r", 1.0)
+mel.connect_material_property(st_met, "", unreal.MaterialProperty.MP_METALLIC)
+st_rough = mel.create_material_expression(steel, unreal.MaterialExpressionConstant, -400, 250)
+st_rough.set_editor_property("r", 0.28)
+mel.connect_material_property(st_rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+mel.recompile_material(steel)
+unreal.EditorAssetLibrary.save_loaded_asset(steel)
+
 made = 0
 for path in unreal.EditorAssetLibrary.list_assets("/Game/Props/Textures", recursive=False):
     tex = unreal.EditorAssetLibrary.load_asset(path)

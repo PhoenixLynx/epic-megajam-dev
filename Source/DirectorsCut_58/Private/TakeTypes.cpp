@@ -10,6 +10,7 @@ FString TakeText::Fill(const UObject* WorldContext, const FString& In)
 	const UTakeGameInstance* GI = WorldContext ? Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(WorldContext)) : nullptr;
 	Out.ReplaceInline(TEXT("{EMP}"), TEXT("4471"));
 	Out.ReplaceInline(TEXT("{TAKE}"), *FString::FromInt(GI ? GI->TakeNumber : 1));
+	Out.ReplaceInline(TEXT("{HITS}"), *FString::FromInt(GI ? FMath::Max(1, GI->CoworkersHit) : 1));
 	// Glyph clues: pieces of this run's Key 2 / Key 3 signatures, drawn as filled/empty marks
 	const int32 Seed = GI ? GI->RunSeed : 4471;
 	const FTakeKeyLock K2 = UTakeKeyLockLibrary::GenerateKeyLock(Seed, 2, 0);

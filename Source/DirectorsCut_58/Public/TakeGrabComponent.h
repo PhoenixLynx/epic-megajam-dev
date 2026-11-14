@@ -280,6 +280,7 @@ private:
 	void SkipTasks();
 	void OpenNotes();
 	void TakeScreenshot();
+	void TestStalker();
 	float LastFear = 0.f;   // for the Fear stinger (crossing into watched territory)
 	// Energy (GameInstance->Energy): drains, coffee / food / the wisp refill it, low = a bit slower
 	float BaseWalkSpeed = -1.f;

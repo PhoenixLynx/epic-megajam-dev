@@ -927,3 +927,23 @@ A running record of every AI tool used and what it did.
 - **Done:** the opening slate now reads **TAKE 1 / 9:00 AM · SCENE 1 · MORNING**. The jump to lunch is a quick scene card: black, clapper, **12:00 PM / SCENE 2 · LUNCH**, back in about 2.5 s, then *"...Twelve? It was eleven a second ago."* When the clocks stop: **2:14 PM / SCENE 3 · HOLD**. Act 3 gets its own card. Same look as the TAKE slate (one `ShowTimeCard` call).
 - Also: Sol's title background **v11** (lobby, director's chair on the X, no baked HUD) is in the project for the title screen, with v10 as an alternate. Sol is redoing the faces in the aesthetic we named **"uncanny minimalism"**.
 - **AI tools used:** Claude (C++). Sol / ChatGPT (title art).
+
+### Session 58: Sat Nov 14, 2026, 16:05 MST: Playtest round 3 (last before Act 3)
+
+- **Notes highlights:** intro and scene 2 transitions work; *"the transition out of fear mode is satisfying"*; joining the meeting syncs with the clock; *"love the chef!"*; the mad face works.
+- **Fixes:**
+  - **New faces in the "uncanny minimalism" style** (Sol: calm, Fear, neutral, frown) replace the earlier ones (same slots, no code change).
+  - **Wet floor sign** was built as a V (feet together, tops apart); now a proper A-frame.
+  - Restroom: an inexplicable chair in the empty corner.
+  - The plant blocking the office entrance is gone; brochures sit on the coffee table (they were placed past its edge).
+  - **Security booth** moved to the lobby's north-west corner with a low counter, so the Chairman's portrait is visible again. (A real entrance with windows to the outside: Sunday polish list.)
+  - **Elevator car:** brushed-steel walls, floor plate and handrail (a metallic material, so Lumen gives it soft reflections), keeping it open as part of the entrance.
+  - **Conference room:** the stray filing cabinet became a **whiteboard** (*"Q4 energy targets ↑↑↑ ... who keeps drawing squares on this?"*). Looking closer shows **Key 2's squares** and adds them to your notes.
+  - **Hit counts:** the receptionist asks you to sign an incident report and counts incidents; the Security and HR emails now include the count.
+  - **Take someone's monitor/keyboard/laptop/mug:** the nearest coworker turns, frowns and gets snarky (*"I had seventeen tabs open on that."*).
+  - **Fear:** coworkers now stop and stare from Fear 0.35 (the corridor scare level), and vanish when unseen from 0.85. The Fear stinger plays at 0.35. Fear face while staring.
+  - **Check-ins explained:** the task now reads *"Check in: Reception, Security, Custodian (n/3)"*. It's the three story characters with a "!" (Lunch conversation), not the office extras.
+  - **Lunch** items get a fresh physics body when revealed, so you can pick them up.
+  - **F7** = the stalker, now (playtest), alongside F8 skip.
+- **Answered:** "why fear again at 12:19?": Fear rises from certain email replies (sending your key to "Payro11", *"What camera?"* to the Chairman, *"Something is wrong"* to Wellness) and from throwing things during Fear. To be checked in my notes.
+- **AI tools used:** Claude (C++, Blender, HTML whiteboard, level dressing). Sol / ChatGPT (uncanny minimalism faces).

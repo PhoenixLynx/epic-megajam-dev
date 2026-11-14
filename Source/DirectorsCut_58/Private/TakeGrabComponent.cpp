@@ -124,6 +124,7 @@ void UTakeGrabComponent::BindKeys()
 		IC->BindKey(EKeys::Three, IE_Pressed, this, &UTakeGrabComponent::Fear3);
 		IC->BindKey(EKeys::Four, IE_Pressed, this, &UTakeGrabComponent::Fear4);
 		IC->BindKey(EKeys::F8, IE_Pressed, this, &UTakeGrabComponent::SkipTasks);   // playtest: finish the current task list
+		IC->BindKey(EKeys::F7, IE_Pressed, this, &UTakeGrabComponent::TestStalker);  // playtest: the stalker, now
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Keys bound: E = use / pick up, Right Mouse = throw, 1-4/0 = Fear"));
 }
@@ -271,6 +272,22 @@ bool UTakeGrabComponent::TryGrabOrDrop()
 	Handle->GrabComponentAtLocationWithRotation(Comp, NAME_None, Comp->GetComponentLocation(), Comp->GetComponentRotation());
 	Comp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);   // a held mug can't shove you (or be shoved by you)
 	PlaySfx(TEXT("sfx_pickup"), Comp->GetComponentLocation(), 0.6f);
+	// Took someone's computer (or mug)? The nearest coworker notices
+	if (const UStaticMeshComponent* Took = Cast<UStaticMeshComponent>(Comp))
+	{
+		const FString TookName = Took->GetStaticMesh() ? Took->GetStaticMesh()->GetName() : FString();
+		if (TookName.Contains(TEXT("Monitor")) || TookName.Contains(TEXT("Keyboard")) || TookName.Contains(TEXT("Laptop")) || TookName.Contains(TEXT("Mug")))
+		{
+			ATakeCoworker* Owner = nullptr;
+			float Best = 230.f;
+			for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
+			{
+				const float D = FVector::Dist2D(It->GetActorLocation(), Comp->GetComponentLocation());
+				if (D < Best) { Best = D; Owner = *It; }
+			}
+			if (Owner) { Owner->ReactToTheft(); }
+		}
+	}
 	OnGrabbed.Broadcast(Comp);
 	return true;
 }
@@ -916,6 +933,7 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		{ TEXT("Polaroid_4470"), TEXT("DESK 4471 - DAY 1"), TEXT("Your desk. Someone sitting at it, in a mint suit.\nThe face has been scribbled out. Hard. The pen went through the photo."), 0 },
 		{ TEXT("Sticky_4470"), TEXT("A NOTE"), TEXT("\"if you're reading this it's not your first day. LOOK CLOSER. - 4470\"\nThe handwriting looks a lot like yours."), 0 },
 		{ TEXT("Nameplate_4471"), TEXT("YOUR NAMEPLATE"), TEXT("4471, on a sticker. It doesn't quite cover the number underneath.\nPeel back the corner and it says 4470."), 0 },
+		{ TEXT("Whiteboard"), TEXT("THE WHITEBOARD"), TEXT("Q4 energy targets, up and to the right. Retention: 100%. Retakes: as needed.\nIn the corner, in a different marker: a row of squares."), 2 },
 		{ TEXT("KitchenBoard"), TEXT("KITCHEN NOTICES"), TEXT("Lost: red stapler. Cake in the fridge for 4471's birthday (again).\nSomeone keeps labelling a mug \"4470\". Morale is mandatory. Fun is at 2:14."), 0 },
 		{ TEXT("ScriptNotes"), TEXT("THE RECEPTIONIST'S SCRIPT"), TEXT("INT. HALCYON LOBBY - MORNING. \"Welcome back. (beat) Oh -- first day. Of course.\"\nIn red pen, from C: smile with the eyes. AGAIN."), 0 },
 		{ TEXT("SignInSheet"), TEXT("VISITOR SIGN-IN"), TEXT("4471, 9:00. 4471, 9:00. 4471, 9:00. Every line, the same handwriting.\nOne line says 4470, OUT: wrapped. The last line is waiting for you."), 0 },

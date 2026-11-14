@@ -105,7 +105,7 @@ FString UTakeGameInstance::ObjectiveForBeat() const
 	case ETakeBeat::Lunch:
 		if (!bJoinedCall)            { return FString(TEXT("Join the 12:30 call (Conference Room)")); }
 		if (!bAttendedMeeting)       { return FString(TEXT("Attend the 1:00 meeting (Conference Room)")); }
-		if (CoworkersCheckedIn < 3)  { return FString(TEXT("Check in with your coworkers")); }
+		if (CoworkersCheckedIn < 3)  { return FString(TEXT("Check in with Reception, Security and the Custodian (look for the !)")); }
 		if (!bRepliedChairman)       { return FString(TEXT("Reply to the Chairman (your terminal)")); }
 		return FString(TEXT("Wait for further direction."));
 	default:                      return FString();
@@ -159,7 +159,7 @@ FString UTakeGameInstance::TaskListText() const
 	if (CurrentAct() >= 2)
 	{
 		const int32 Met = FMath::Clamp(CoworkersCheckedIn, 0, 3);
-		return FString::Printf(TEXT("%s  Join 12:30 call\n%s  Attend 1:00 meeting\n%s  Check in with 3 coworkers  (%d/3)\n%s  Reply to the Chairman"),
+		return FString::Printf(TEXT("%s  Join 12:30 call\n%s  Attend 1:00 meeting\n%s  Check in: Reception, Security, Custodian  (%d/3)\n%s  Reply to the Chairman"),
 		                       Box(bJoinedCall), Box(bAttendedMeeting), Box(Met >= 3), Met, Box(bRepliedChairman));
 	}
 	return FString::Printf(TEXT("%s  Read your email (inbox zero)\n%s  Get coffee\n%s  Complete Compliance Training"),

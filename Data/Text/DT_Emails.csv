@@ -45,6 +45,7 @@ Agenda:
 "A1_SecurityIncident","1","HALCYON Security","INCIDENT REPORT #4471-B","Employee {EMP},
 
 At approximately now, you threw an object at a member of Security.
+Incidents logged today: {HITS}.
 This has been noted. It has been noted before.
 Security does not forget. Security does not need to.
 
@@ -53,7 +54,7 @@ Further incidents will be escalated to HR.
 - Officer on duty (the one you hit)","False","False","GuardComplaint"
 "A1_HRIncident","1","HALCYON People Team","A gentle reminder about workplace conduct :)","Hi {EMP}!
 
-We've received several reports of office supplies travelling at speed.
+We've received {HITS} reports of office supplies travelling at speed.
 At HALCYON, every object has its place, and so does every employee.
 
 Please complete Respectful Workplace Module 2 at your earliest convenience (your terminal, Training tab).

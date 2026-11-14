@@ -41,9 +41,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WorkMax = 25.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechSeconds = 3.5f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechCooldown = 4.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WatchFear = 0.6f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WatchFear = 0.35f;
 	/** Above this Fear they vanish the moment you look away (and come back when it passes). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float VanishFear = 0.9f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float VanishFear = 0.85f;
 	/** Part of a quest / story beat: shows a "!" and is the only kind you talk to with E. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bStoryNPC = false;
 	/** Turn of the rigged mannequin inside the character (degrees). If they face the wrong way, change this
@@ -74,6 +74,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Coworker") bool IsInConversation() const { return bInConversation; }
 	/** Has a conversation you haven't heard yet (shows the "!"). */
 	UFUNCTION(BlueprintPure, Category = "Coworker") bool HasNewConversation() const;
+	/** You picked up their monitor / keyboard / mug: they turn, frown and say something. */
+	void ReactToTheft();
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
