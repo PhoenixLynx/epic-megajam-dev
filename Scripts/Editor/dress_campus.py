@@ -23,7 +23,7 @@ import unreal
 
 MESHES = "/Game/Props/Meshes"
 PREFIX = "DR_"
-YAW_FIX = 0.0
+YAW_FIX = 180.0   # confirmed on import: Blender fronts arrive facing backwards in Unreal
 SCALE_FIX = 1.0
 DESK_TOP = 76.0  # cm
 
@@ -157,6 +157,12 @@ for r in range(3):
     for c in range(5):
         put("SM_HospitalBed", 800 + c * 500, 5800 + r * 650, -1500)
 
+
+# --- A few chairs turned the wrong way on purpose (about 1 in 7; never your own desk chair)
+wrong = random.Random(214)
+for i, (mesh, x, y, z, yaw, tags) in enumerate(P):
+    if mesh in ("SM_OfficeChair", "SM_MeetingChair") and "ChangeOnRewind" not in tags and wrong.random() < 0.15:
+        P[i] = (mesh, x, y, z, yaw + 180 + wrong.uniform(-25, 25), tags + ["WrongWay"])
 
 # ----------------------------------------------------------------------------------
 actor_sys = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
