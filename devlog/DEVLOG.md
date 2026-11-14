@@ -637,3 +637,12 @@ A running record of every AI tool used and what it did.
 - **AI tools used:** Claude (sound synthesis, C++, phone call writing).
 - **23:05, my feedback:** the phone rings, but there was no way to answer it. E should answer if the phone is ringing at your desk: pick up, some subtitles and static for now. Real voices tomorrow.
 - **Fix:** the desk and monitor ("Sit and log in") were winning the look-at check over the small phone. Now a ringing phone within reach wins whenever you're roughly facing it. Sitting at your terminal, **E answers the ringing phone** instead of logging you out. Answering plays the pick-up click plus **line static** (`sfx_phone_static`, 6 s) under the subtitles. Phones can also ring while you're seated.
+
+### Session 41: Fri Nov 13, 2026, 23:25 MST: Look closer, walking-pace steps
+
+- **My feedback:** we should be able to inspect the director photo. I like the walking sound, but it should be at walking pace; it's too rushed. There are other little things, but we need to work on a lot more gameplay first. Exciting stuff!
+- **Done:**
+  - **E: "Look closer"** on the Chairman's portrait, the call sheet, the Corridor B posters and the fridge notes: the picture fills the screen with a title and a caption (the Chairman: *"Founder. Visionary. Always just out of frame. The plaque says he's proud of you. It doesn't say for what."*). It shows whatever the board shows *right now*, so a poster that changed in the loop looks changed: *"Wasn't it different a minute ago?"* E / Esc / click puts it back.
+  - **Footsteps at walking pace:** timed steps (about 2 a second when walking, a little quicker running, slower crouched) instead of one every 78 cm.
+- **Note:** agreed, gameplay first. The overnight runs are focused on Act 1 progression.
+- **AI tools used:** Claude (C++, captions).

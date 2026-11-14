@@ -296,6 +296,8 @@ def main():
             b.static_mesh_component.set_material(0, asset_lib.load_asset(mat_path))
         b.set_actor_label(f"{PREFIX}{label}_{k:02d}")
         b.set_folder_path("Dressing/Campus/Boards")
+        if label.startswith("FridgeNote"):
+            b.set_editor_property("tags", [unreal.Name("Inspectable")])   # E: look closer
         if "AttachToFridgeDoor" in tags and fridge_door:
             b.static_mesh_component.set_mobility(unreal.ComponentMobility.MOVABLE)
             b.attach_to_actor(fridge_door, "", unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD,
@@ -309,6 +311,8 @@ def main():
         mi_name = boards.get(a.get_actor_label())
         if mi_name and asset_lib.does_asset_exist(f"/Game/Props/Materials/{mi_name}"):
             a.static_mesh_component.set_material(0, asset_lib.load_asset(f"/Game/Props/Materials/{mi_name}"))
+            tags = [t for t in a.tags if str(t) != "Inspectable"] + [unreal.Name("Inspectable")]   # E: look closer
+            a.set_editor_property("tags", tags)
 
     unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
     unreal.log(f"[TAKE 4471] Dressed campus: placed {placed}, removed {removed} old actors")

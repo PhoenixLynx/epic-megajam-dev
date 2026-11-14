@@ -26,6 +26,8 @@
 #include "Engine/StaticMesh.h"
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
+#include "Engine/Texture2D.h"
+#include "Materials/MaterialInterface.h"
 #include "Engine/StaticMeshActor.h"
 
 UTakeGrabComponent::UTakeGrabComponent()
@@ -75,6 +77,7 @@ void UTakeGrabComponent::EndPlay(const EEndPlayReason::Type Reason)
 	if (Prompt) { Prompt->RemoveFromParent(); Prompt = nullptr; }
 	if (Terminal) { Terminal->RemoveFromParent(); Terminal = nullptr; }
 	if (PauseMenu) { PauseMenu->RemoveFromParent(); PauseMenu = nullptr; }
+	if (Inspecting) { Inspecting->RemoveFromParent(); Inspecting = nullptr; }
 	StopRinging();
 	Super::EndPlay(Reason);
 }
@@ -194,6 +197,7 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 		if (A->ActorHasTag(TEXT("Openable"))) { return ETakeLookKind::Openable; }
 		if (A->ActorHasTag(TEXT("CoffeeMachine"))) { return ETakeLookKind::Coffee; }
 		if (RingingPhone.IsValid() && A == RingingPhone.Get()) { return ETakeLookKind::Phone; }
+		if (A->ActorHasTag(TEXT("Inspectable"))) { return ETakeLookKind::Inspect; }
 	}
 	if (Comp && Comp->IsSimulatingPhysics() && Hit.Distance <= CurrentRange())
 	{
@@ -214,6 +218,7 @@ void UTakeGrabComponent::Interact()
 	case ETakeLookKind::Openable:  ToggleOpen(Hit.GetActor()); break;
 	case ETakeLookKind::Coffee:    PourCoffee(); break;
 	case ETakeLookKind::Phone:     AnswerPhone(Hit.GetActor()); break;
+	case ETakeLookKind::Inspect:   Inspect(Hit.GetActor()); break;
 	case ETakeLookKind::Prop:      TryGrabOrDrop(); break;
 	default: break;
 	}
@@ -395,7 +400,7 @@ void UTakeGrabComponent::TogglePause()
 {
 	APawn* Pawn = Cast<APawn>(GetOwner());
 	APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
-	if (!PC || bSeated) { return; }
+	if (!PC || bSeated || Inspecting) { return; }
 	if (PauseMenu)   // resume
 	{
 		PauseMenu->RemoveFromParent();
@@ -509,9 +514,10 @@ void UTakeGrabComponent::TickFootsteps(float DeltaTime)
 	const UCharacterMovementComponent* Move = C->GetCharacterMovement();
 	const float Speed = C->GetVelocity().Size2D();
 	if (!Move || !Move->IsMovingOnGround() || Speed < 40.f) { StepAccum = 0.f; return; }
-	StepAccum += Speed * DeltaTime;
-	const float Stride = C->bIsCrouched ? 55.f : 78.f;
-	if (StepAccum < Stride) { return; }
+	// Walking pace: about two steps a second at walking speed, a little quicker if you run, slower crouched
+	StepAccum += DeltaTime;
+	const float Interval = C->bIsCrouched ? 0.7f : FMath::Clamp(300.f / Speed, 0.45f, 0.65f);
+	if (StepAccum < Interval) { return; }
 	StepAccum = 0.f;
 	int32 Pick = FMath::RandRange(0, StepSounds.Num() - 1);
 	if (Pick == LastStep && StepSounds.Num() > 1) { Pick = (Pick + 1) % StepSounds.Num(); }
@@ -681,6 +687,77 @@ void UTakeGrabComponent::AnswerPhone(AActor* Phone)
 	}
 }
 
+void UTakeGrabComponent::Inspect(AActor* Target)
+{
+	APawn* Pawn = Cast<APawn>(GetOwner());
+	APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+	if (!PC || !Target || Inspecting) { return; }
+	// The picture is whatever texture the board's material shows right now (so a changed poster looks changed)
+	UTexture2D* Tex = nullptr;
+	if (const UStaticMeshComponent* SM = Target->FindComponentByClass<UStaticMeshComponent>())
+	{
+		if (UMaterialInterface* Mat = SM->GetMaterial(0))
+		{
+			UTexture* T = nullptr;
+			if (Mat->GetTextureParameterValue(FMaterialParameterInfo(FName(TEXT("Tex"))), T)) { Tex = Cast<UTexture2D>(T); }
+		}
+	}
+	const FString Name = Tex ? Tex->GetName() : FString();
+	FString Title, Caption;
+	if (Name.Contains(TEXT("Chairman")))
+	{
+		Title = TEXT("THE CHAIRMAN");
+		Caption = TEXT("Founder. Visionary. Always just out of frame.\nThe plaque says he's proud of you. It doesn't say for what.");
+	}
+	else if (Name.Contains(TEXT("CallSheet")))
+	{
+		Title = TEXT("CALL SHEET");
+		Caption = TEXT("Today's date. A shooting schedule for an office.\nOne line is highlighted: EMPLOYEE 4471. You.");
+	}
+	else if (Name.Contains(TEXT("FridgeNote")))
+	{
+		Title = TEXT("KITCHEN");
+		Caption = TEXT("Someone has strong feelings about yogurt.");
+	}
+	else if (Name.Contains(TEXT("_Changed")))
+	{
+		Title = TEXT("HALCYON");
+		Caption = TEXT("Wasn't it different a minute ago?");
+	}
+	else if (Name.Contains(TEXT("Poster")))
+	{
+		Title = TEXT("HALCYON");
+		Caption = TEXT("Every hallway has one. Every hallway has this one.");
+	}
+	Inspecting = CreateWidget<UTakeInspectWidget>(PC, UTakeInspectWidget::StaticClass());
+	if (!Inspecting) { return; }
+	Drop();
+	Inspecting->Setup(Tex, Title, Caption);
+	Inspecting->SetIsFocusable(true);
+	Inspecting->OnCloseRequested.AddDynamic(this, &UTakeGrabComponent::CloseInspect);
+	Inspecting->AddToViewport(30);
+	if (Prompt) { Prompt->SetVisibility(ESlateVisibility::Collapsed); }
+	FInputModeUIOnly Mode;
+	Mode.SetWidgetToFocus(Inspecting->TakeWidget());
+	PC->SetInputMode(Mode);
+	PC->SetIgnoreLookInput(true);
+	PC->SetIgnoreMoveInput(true);
+}
+
+void UTakeGrabComponent::CloseInspect()
+{
+	APawn* Pawn = Cast<APawn>(GetOwner());
+	APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+	if (Inspecting) { Inspecting->RemoveFromParent(); Inspecting = nullptr; }
+	if (Prompt) { Prompt->SetVisibility(ESlateVisibility::HitTestInvisible); }
+	if (PC)
+	{
+		PC->SetInputMode(FInputModeGameOnly());
+		PC->SetIgnoreLookInput(false);
+		PC->SetIgnoreMoveInput(false);
+	}
+}
+
 void UTakeGrabComponent::TickClock(float DeltaTime)
 {
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
@@ -746,6 +823,7 @@ void UTakeGrabComponent::UpdatePrompt()
 	}
 	case ETakeLookKind::Coffee:   Prompt->SetPrompt(TEXT("E  Pour a coffee")); break;
 	case ETakeLookKind::Phone:    Prompt->SetPrompt(TEXT("E  Answer the phone")); break;
+	case ETakeLookKind::Inspect:  Prompt->SetPrompt(TEXT("E  Look closer")); break;
 	case ETakeLookKind::Prop:     Prompt->SetPrompt(TEXT("E  Pick up")); break;
 	case ETakeLookKind::TooHeavy: Prompt->SetPrompt(TEXT("Too heavy")); break;
 	default:                      Prompt->SetPrompt(TEXT("")); break;

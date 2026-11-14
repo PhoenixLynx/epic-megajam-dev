@@ -98,3 +98,21 @@ private:
 	void LoadMail();
 	UTextBlock* MakeText(const FString& Text, int32 Size, const FLinearColor& Color, bool bBold = false);
 };
+
+/** Full-screen look at a picture or paper on the wall (the Chairman's portrait, posters, the call sheet, fridge notes). */
+UCLASS()
+class DIRECTORSCUT_58_API UTakeInspectWidget : public UUserWidget
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintAssignable) FTakeLogoutRequested OnCloseRequested;
+	void Setup(UTexture2D* InTexture, const FString& InTitle, const FString& InCaption);
+protected:
+	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+private:
+	UPROPERTY() TObjectPtr<UTexture2D> Picture;
+	FString TitleText;
+	FString CaptionText;
+};

@@ -545,3 +545,84 @@ void UTakeTerminalWidget::FinishTraining()
 	}
 	RebuildSlide();
 }
+
+// ================================================================ Inspect
+void UTakeInspectWidget::Setup(UTexture2D* InTexture, const FString& InTitle, const FString& InCaption)
+{
+	Picture = InTexture;
+	TitleText = InTitle;
+	CaptionText = InCaption;
+}
+
+TSharedRef<SWidget> UTakeInspectWidget::RebuildWidget()
+{
+	if (WidgetTree && !WidgetTree->RootWidget)
+	{
+		UCanvasPanel* Root = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("Root"));
+		WidgetTree->RootWidget = Root;
+		UBorder* Dim = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+		Dim->SetBrushColor(FLinearColor(0.01f, 0.02f, 0.03f, 0.88f));
+		UCanvasPanelSlot* DimSlot = Root->AddChildToCanvas(Dim);
+		DimSlot->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+		DimSlot->SetOffsets(FMargin(0.f));
+
+		UVerticalBox* Col = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		UCanvasPanelSlot* ColSlot = Root->AddChildToCanvas(Col);
+		ColSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+		ColSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+		ColSlot->SetAutoSize(true);
+
+		if (Picture)
+		{
+			const float MaxH = 640.f, MaxW = 1100.f;
+			const float W = float(FMath::Max(1, Picture->GetSizeX())), H = float(FMath::Max(1, Picture->GetSizeY()));
+			const float Scale = FMath::Min(MaxH / H, MaxW / W);
+			UImage* Img = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+			Img->SetBrushFromTexture(Picture, false);
+			Img->SetDesiredSizeOverride(FVector2D(W * Scale, H * Scale));
+			UVerticalBoxSlot* ImgSlot = Col->AddChildToVerticalBox(Img);
+			ImgSlot->SetHorizontalAlignment(HAlign_Center);
+		}
+		auto Line = [this](const FString& Text, int32 Size, const FLinearColor& Color, bool bBold)
+		{
+			UTextBlock* T = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+			FSlateFontInfo F = T->GetFont();
+			F.Size = Size;
+			if (bBold) { F.TypefaceFontName = TEXT("Bold"); }
+			T->SetFont(F);
+			T->SetColorAndOpacity(FSlateColor(Color));
+			T->SetJustification(ETextJustify::Center);
+			T->SetAutoWrapText(true);
+			T->SetText(FText::FromString(Text));
+			return T;
+		};
+		if (!TitleText.IsEmpty())
+		{
+			Col->AddChildToVerticalBox(Line(TitleText, 20, FLinearColor(0.50f, 0.83f, 0.77f), true))->SetPadding(FMargin(0.f, 18.f, 0.f, 0.f));
+		}
+		if (!CaptionText.IsEmpty())
+		{
+			Col->AddChildToVerticalBox(Line(CaptionText, 16, FLinearColor(0.92f, 0.94f, 0.95f), false))->SetPadding(FMargin(0.f, 8.f, 0.f, 0.f));
+		}
+		Col->AddChildToVerticalBox(Line(TEXT("E / Esc / click  -  put it back"), 12, FLinearColor(0.6f, 0.65f, 0.7f), false))->SetPadding(FMargin(0.f, 18.f, 0.f, 0.f));
+	}
+	return Super::RebuildWidget();
+}
+
+FReply UTakeInspectWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (InKeyEvent.IsRepeat()) { return FReply::Handled(); }
+	const FKey K = InKeyEvent.GetKey();
+	if (K == EKeys::E || K == EKeys::Escape || K == EKeys::Tab || K == EKeys::P)
+	{
+		OnCloseRequested.Broadcast();
+		return FReply::Handled();
+	}
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
+FReply UTakeInspectWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	OnCloseRequested.Broadcast();
+	return FReply::Handled();
+}

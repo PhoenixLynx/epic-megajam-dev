@@ -16,12 +16,13 @@ class UPrimitiveComponent;
 class UTakePromptWidget;
 class UTakeTerminalWidget;
 class UTakePauseMenu;
+class UTakeInspectWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeGrabEvent, UPrimitiveComponent*, Component);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeActorEvent, AActor*, Actor);
 
 UENUM()
-enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Prop, TooHeavy };
+enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Inspect, Prop, TooHeavy };
 
 UCLASS(ClassGroup = (Take), meta = (BlueprintSpawnableComponent, DisplayName = "Take Grab"))
 class DIRECTORSCUT_58_API UTakeGrabComponent : public UActorComponent
@@ -84,6 +85,9 @@ private:
 	UPROPERTY() TObjectPtr<UTakePromptWidget> Prompt;
 	UPROPERTY() TObjectPtr<UTakeTerminalWidget> Terminal;
 	UPROPERTY() TObjectPtr<UTakePauseMenu> PauseMenu;
+	UPROPERTY() TObjectPtr<UTakeInspectWidget> Inspecting;
+	void Inspect(AActor* Target);
+	UFUNCTION() void CloseInspect();
 	UFUNCTION() void HandleResume() { if (PauseMenu) { TogglePause(); } }
 	TMap<TWeakObjectPtr<AActor>, FSwing> Swings;
 	bool bSeated = false;
@@ -99,7 +103,7 @@ private:
 	void TickClock(float DeltaTime);
 	// Game feel: footsteps, pick up / throw sounds, props clunking when they land
 	UPROPERTY() TArray<TObjectPtr<class USoundBase>> StepSounds;
-	float StepAccum = 0.f;
+	float StepAccum = 0.f;   // seconds since the last step
 	int32 LastStep = -1;
 	double PlayStartTime = 0.0;
 	TMap<TWeakObjectPtr<UPrimitiveComponent>, double> LastImpact;
