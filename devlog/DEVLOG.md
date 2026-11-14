@@ -534,3 +534,4 @@ A running record of every AI tool used and what it did.
 - **Fix:** moved the old `UnrealEditor-DirectorsCut_58.dll` into `_to_delete/old_binaries`, so the next launch asks to rebuild. The collision fix worked: no more ComplexAsSimple warnings.
 - **Lesson for the runbook:** after any C++ change, either remove the old DLL or build from Visual Studio / Live Coding. Reopening the project isn't enough.
 - **AI tools used:** Claude (log reading).
+- **20:48, first compile error:** `TakeCoworker.h(33): 'Role' ... already defined in scope 'AActor'`. Every Unreal actor already has a member called Role (for multiplayer), and Unreal won't allow a second one. Renamed ours to `NPCRole` (`npc_role` in Python). Also renamed a desk-login parameter that would have tripped the same check.

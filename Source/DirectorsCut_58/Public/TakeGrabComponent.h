@@ -57,7 +57,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Grab") void Drop();
 	UFUNCTION(BlueprintCallable, Category = "Grab") void Throw();
 	UFUNCTION(BlueprintCallable, Category = "Grab") void ToggleOpen(AActor* Openable);
-	UFUNCTION(BlueprintCallable, Category = "Grab") void SitAndLogIn(AActor* Terminal);
+	UFUNCTION(BlueprintCallable, Category = "Grab") void SitAndLogIn(AActor* TerminalActor);
 	UFUNCTION(BlueprintCallable, Category = "Grab") void LogOut();
 	UFUNCTION(BlueprintPure, Category = "Grab") bool IsHolding() const;
 	UFUNCTION(BlueprintPure, Category = "Grab") bool IsSeated() const { return bSeated; }

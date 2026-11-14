@@ -30,7 +30,7 @@ public:
 	/** SM_Mannequin / SM_MannequinGuard / SM_MannequinCustodian (pivot at the feet). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") TObjectPtr<UStaticMesh> BodyMesh;
 	/** Coworker, Guard, Custodian, Receptionist (matches the Role column of DT_NPCLines). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") FString Role = TEXT("Coworker");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") FString NPCRole = TEXT("Coworker");
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bWanders = true;
 	/** A malware agent: its lines get stranger, and it watches you sooner. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bIsAgent = false;

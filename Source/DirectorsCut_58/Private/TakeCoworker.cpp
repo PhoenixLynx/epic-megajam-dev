@@ -77,7 +77,7 @@ void ATakeCoworker::BeginPlay()
 void ATakeCoworker::LoadLines()
 {
 	Lines.Reset();
-	const FString Want = Role.Equals(TEXT("Receptionist"), ESearchCase::IgnoreCase) ? TEXT("Coworker") : Role;
+	const FString Want = NPCRole.Equals(TEXT("Receptionist"), ESearchCase::IgnoreCase) ? TEXT("Coworker") : NPCRole;
 	if (const UDataTable* Table = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_NPCLines.DT_NPCLines")))
 	{
 		TArray<FTakeNPCLineRow*> Rows;
@@ -95,8 +95,8 @@ void ATakeCoworker::LoadLines()
 		Lines = { TEXT("Oh! Sorry, didn't see you there."), TEXT("Big day. Everyone knows their marks."),
 		          TEXT("Have you done your compliance training?"), TEXT("Coffee machine's making that noise again."),
 		          TEXT("Love the energy today, {EMP}."), TEXT("Is it still morning? Feels like it's been morning for a while.") };
-		if (Role.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { Lines = { TEXT("Badge, please."), TEXT("Keep it moving."), TEXT("Corridor B is off limits.") }; }
-		if (Role.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase)) { Lines = { TEXT("Mind the floor. Wet."), TEXT("I clean this hall every night. Same scuffs every morning."), TEXT("Don't go in my closet.") }; }
+		if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { Lines = { TEXT("Badge, please."), TEXT("Keep it moving."), TEXT("Corridor B is off limits.") }; }
+		if (NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase)) { Lines = { TEXT("Mind the floor. Wet."), TEXT("I clean this hall every night. Same scuffs every morning."), TEXT("Don't go in my closet.") }; }
 	}
 }
 
@@ -122,7 +122,7 @@ void ATakeCoworker::SayLine(const FString& Line)
 	{
 		if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>())
 		{
-			Hands->ShowSubtitle(Role, Filled, SpeechSeconds + 0.5f);
+			Hands->ShowSubtitle(NPCRole, Filled, SpeechSeconds + 0.5f);
 		}
 	}
 	// Turn to face the player while talking

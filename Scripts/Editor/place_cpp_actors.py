@@ -121,7 +121,7 @@ for i, (a, tags) in enumerate(npcs):
     cw.set_actor_label(f"{PREFIX}Coworker_{role_tag}")
     cw.set_folder_path("Gameplay/Coworkers")
     cw.set_editor_property("body_mesh", comp.get_editor_property("static_mesh"))
-    cw.set_editor_property("role", role)
+    cw.set_editor_property("npc_role", role)
     cw.set_editor_property("wanders", wanders)
     cw.set_editor_property("is_agent", role == "Coworker" and i in agents)
     cw.set_editor_property("tags", [unreal.Name("NPC"), unreal.Name(role_tag)])
