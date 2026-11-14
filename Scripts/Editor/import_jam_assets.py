@@ -102,3 +102,6 @@ if done < len(tasks):
     for t in tasks:
         if not t.get_editor_property("imported_object_paths"):
             unreal.log_warning(f"[TAKE 4471] Not imported: {t.get_editor_property('filename')}")
+
+# Physics props need simple collision, or they freeze in the air at Play
+exec(open(os.path.join(ROOT, "Scripts", "Editor", "fix_prop_collision.py")).read())

@@ -507,3 +507,11 @@ A running record of every AI tool used and what it did.
 - **Decisions & why:** an island instead of a longer counter: more surface, and something to dodge around when Fear is high.
 - **AI tools used:** Claude (Blender props, layout).
 - **Next:** rebuild results → shared sit/stand animation plan.
+
+### Session 30: Fri Nov 13, 2026, 19:35 MST: First rebuild, frozen props
+
+- **My feedback:** recompiled and ran the scripts. The Output Log filled with *"Trying to simulate physics on … but it has ComplexAsSimple collision"*, and in the kitchen the food hung in the air along the wall with no counter under it.
+- **Screenshots:** ![fridge notes](screenshots/2026-11-13_fridge_notes.png) ![kitchen, props frozen mid-air](screenshots/2026-11-13_kitchen_floating.png)
+- **Cause:** the imported prop meshes only had their triangle ("complex") collision. Unreal can't run physics on that, so every pick-up-able prop froze where it spawned. The layout in the screenshot is also the old one: `dress_campus.py` ran before the island/short-counter update arrived.
+- **Done:** `Scripts/Editor/fix_prop_collision.py` gives every prop a simple box collision and switches the pick-up-able ones (and the swinging doors) to use it; big furniture keeps exact collision so you can walk snugly around it. `import_jam_assets.py` now runs it automatically.
+- **AI tools used:** Claude (log diagnosis, collision fix).
