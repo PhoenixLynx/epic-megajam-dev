@@ -14,6 +14,9 @@ About 2,300 lines. The Key Lock core is tested outside Unreal (`Scripts/Referenc
 | `ATakeLoopTrigger` | Corridor B loop: silent teleport back 10 m (keeps speed + view). Each loop swaps one poster to its `_Changed` material. `TryBreakLoop(poster)` breaks it. | None: finds `LoopPoster`-tagged posters and `MI_*_Changed` materials |
 | `ATakeStalker` | Dormant + hidden → **Stalk** (lurks 6 m behind you) → **Chase** when you look straight at it or after 6 s → **Stunned** 1.5 s when a `Throwable` hits it at > 4 m/s → catch = rewind. Chase speed 350 + 80 per soul bit. `Slow()` for the extinguisher. Body = `SM_Stalker`. | Nav mesh (builder adds it; press **P**) |
 | `UTakeRewindSubsystem` | "CUT. AGAIN.": fade to black, take +1, Fear 0, stalker reset, back to `PlayerStart` tagged `Desk4471`, one `ChangeOnRewind` object turned, fade in. `OnRewind(Take)` event for the slate widget. | None |
+| `ATakeBeatTrigger` | *(overnight run 1)* Invisible box with a `BeatName`; tells the player's Take Grab "you walked into ConferenceRoom / CorridorB". The story code decides what happens (the 10:00 slip, the Corridor B PA + creep). | `place_cpp_actors.py` places two |
+| `ATakeWisp` | *(overnight run 1)* Soul-energy wisp: emissive sphere + point light, bobbing. Only there during its beat (`VisibleDuring`, default Corridor). E picks it up: Fear drains, objective "Return to your desk." | `place_cpp_actors.py` (on `GB_SoulEnergy_Act1`, makes `M_Wisp`) |
+| Story (`TakeStory.cpp`) | *(overnight run 1)* The story half of `UTakeGrabComponent`: cold open slate + PA, objectives (`UTakeGameInstance::Objective`, `ETakeBeat`), story NPC conversations (`ATakeCoworker::Talk`, DT_NPCLines `Story1..`, `Pass1Story1..`, `DoneStory1..`, `SlipStory1..`), loop hints + breaking the loop by looking closer at the changed poster, rewind slate. | None |
 | `UTakeKeyLockLibrary` | Blueprint nodes: `GenerateKeyLockForRun`, `EvaluateKeyLock` (Wrong / Solved / Corrupted), `CurrentResult`, `SightCheck`, `IsGlyphLit`, `IsGlyphHidden`, `GlyphRowString`. | None |
 
 ## Console commands (press ` during Play)
@@ -24,7 +27,8 @@ About 2,300 lines. The Key Lock core is tested outside Unreal (`Scripts/Referenc
 | `TakeCreep 1 20` | Creep to Fear 1 over 20 s (the real feel) |
 | `TakeStalker` | Wake the stalker now |
 | `TakeRewind` | "CUT. AGAIN." |
-| `TakeLoop 1` | Force the Corridor B loop on |
+| `TakeLoop 1` | Force the Corridor B loop on (otherwise it only runs during the Corridor B beat) |
+| `TakeBeat 1` | Jump to a story beat: 0 morning, 1 meeting (all tasks done), 2 Corridor B, 3 after the wisp |
 | `TakeSoulBits 1` | Pretend you have 1 soul bit (telekinesis reach) |
 | `TakeSeed` | Print this run's seed and all three Key Locks to the log |
 
