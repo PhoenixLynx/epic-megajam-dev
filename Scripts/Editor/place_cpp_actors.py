@@ -85,7 +85,8 @@ def import_table(csv_name, struct_path):
 
 
 tables = sum(import_table(n, st) for n, st in (("DT_Emails.csv", "/Script/DirectorsCut_58.TakeEmailRow"),
-                                                ("DT_NPCLines.csv", "/Script/DirectorsCut_58.TakeNPCLineRow")))
+                                                ("DT_NPCLines.csv", "/Script/DirectorsCut_58.TakeNPCLineRow"),
+                                                ("DT_ComplianceTraining.csv", "/Script/DirectorsCut_58.TakeTrainingRow")))
 
 # --- WorkSpots: where coworkers go to look busy ---------------------------------
 WORKSPOTS = [
@@ -134,4 +135,4 @@ for i, (a, tags) in enumerate(npcs):
 
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
 unreal.log(f"[TAKE 4471] Placed Fear Director, fog, loop trigger, stalker, {made} coworker(s), {len(WORKSPOTS)} work spots, "
-           f"{tables}/2 DataTables. Press Play: E talks / opens / picks up; E at your monitor logs in; 1-4 / 0 = Fear.")
+           f"{tables}/3 DataTables. Press Play: E talks / opens / picks up; E at your monitor logs in; 1-4 / 0 = Fear.")

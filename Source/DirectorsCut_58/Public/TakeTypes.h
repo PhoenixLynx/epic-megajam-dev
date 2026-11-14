@@ -31,6 +31,20 @@ struct FTakeNPCLineRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC") FString Line;
 };
 
+/** Data/Text/DT_ComplianceTraining.csv */
+USTRUCT(BlueprintType)
+struct FTakeTrainingRow : public FTableRowBase
+{
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Training") int32 Order = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Training") FString Title;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Training") FString Body;
+	/** Slide, KeyLock or Quiz */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Training") FString Kind;
+	/** Quiz answers separated by | */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Training") FString Options;
+};
+
 namespace TakeText
 {
 	/** Fill {EMP}, {TAKE} and glyph placeholders. */

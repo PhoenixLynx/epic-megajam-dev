@@ -7,10 +7,15 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
+#include "TakeKeyLockLibrary.h"
 #include "TakeWidgets.generated.h"
 
 class UTextBlock;
 class UScrollBox;
+class UVerticalBox;
+class UHorizontalBox;
+class UWidgetSwitcher;
+class UTexture2D;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeIndexedClicked, int32, Index);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTakeLogoutRequested);
@@ -50,12 +55,34 @@ class DIRECTORSCUT_58_API UTakeTerminalWidget : public UUserWidget
 public:
 	UPROPERTY(BlueprintAssignable) FTakeLogoutRequested OnLogoutRequested;
 	UFUNCTION() void ShowEmail(int32 Index);
+	UFUNCTION() void ShowTab(int32 Tab);            // 0 = Inbox, 1 = Training
+	UFUNCTION() void TrainingNav(int32 Direction);  // -1 back, +1 next
+	UFUNCTION() void ToggleFragment(int32 Fragment);
+	UFUNCTION() void AnswerQuiz(int32 Option);
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 private:
 	struct FMail { FString Sender, Subject, Body; bool bPhishing = false; };
+	struct FSlide { FString Title, Body, Kind; TArray<FString> Options; };
+	TArray<FSlide> Slides;
+	FTakeKeyLock Lock;
+	TArray<int32> ActiveFragments;
+	bool bLockSolved = false;
+	FString QuizFeedback;
+	UPROPERTY() TObjectPtr<UWidgetSwitcher> Pages;
+	UPROPERTY() TObjectPtr<UVerticalBox> TrainingBox;
+	UPROPERTY() TObjectPtr<UTextBlock> TrainingTabLabel;
+	UPROPERTY() TArray<TObjectPtr<UTexture2D>> GlyphLit;
+	UPROPERTY() TArray<TObjectPtr<UTexture2D>> GlyphUnlit;
+	void LoadTraining();
+	void RebuildSlide();
+	void FinishTraining();
+	int32 GetSlide() const;
+	void SetSlide(int32 Slide);
+	UHorizontalBox* MakeGlyphRow(int32 Value, int32 Bits, float Size, float Opacity = 1.f);
+	UTakeIndexedButton* MakeButton(const FString& Text, int32 Index, const FLinearColor& Fill, const FLinearColor& TextColor);
 	TArray<FMail> Mails;
 	UPROPERTY() TObjectPtr<UTextBlock> Reader;
 	UPROPERTY() TObjectPtr<UTextBlock> ReaderHeader;

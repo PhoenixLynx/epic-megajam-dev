@@ -535,3 +535,15 @@ A running record of every AI tool used and what it did.
 - **Lesson for the runbook:** after any C++ change, either remove the old DLL or build from Visual Studio / Live Coding. Reopening the project isn't enough.
 - **AI tools used:** Claude (log reading).
 - **20:48, first compile error:** `TakeCoworker.h(33): 'Role' ... already defined in scope 'AActor'`. Every Unreal actor already has a member called Role (for multiplayer), and Unreal won't allow a second one. Renamed ours to `NPCRole` (`npc_role` in Python). Also renamed a desk-login parameter that would have tripped the same check.
+
+### Session 33: Fri Nov 13, 2026, 21:05 MST: It works! Compliance Training next
+
+- **My feedback:** omg, the ambience and the NPCs talking add A LOT. I love that you can log into the computer now. Can we add the mandatory compliance training?
+- **Done:** HALCYON Mail now has two tabs, **Inbox** and **Training (1 due)**. *Data Integrity Module 1* is the Key 1 tutorial in disguise:
+  - Cheerful slides teach the XOR rule (glyph signatures, fragments, odd = lit / even = unlit).
+  - **Practice:** a real Key Lock generated from this run's seed, with the signature, four fragments to switch on and off, and your live result in glyphs. "Next" appears only once it matches.
+  - **Quick Check:** "Malware may disguise itself as a fragment. What should you do?" Picking *Look closer* gets "That answer is not on the list. Please choose again." and nudges Fear up a little. *Trust every fragment* is "Correct!"
+  - **Final Question:** "Do you consent to your next take?" Both buttons say Yes. Then: *Module complete. Thank you for your consent. … There is nothing behind the walls.* A PA subtitle thanks you, and you earn **soul bit 1** (pass 1, telekinesis reach).
+  - Progress is kept if you log out mid-module. Slides come from `DT_ComplianceTraining` (imported by `place_cpp_actors.py`).
+- **AI tools used:** Claude (training module C++, Key Lock UI).
+- **Next:** compile → playtest the module 📸 (the Key Lock slide is a great screenshot) → Act 1 flow: badge task list (check email, get coffee, complete training).
