@@ -197,7 +197,7 @@ void UTakePauseMenu::RefreshTasks()
 void UTakePauseMenu::RefreshSaveInfo()
 {
 	if (!SaveInfo) { return; }
-	if (const UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::ProgressSlot, 0)))
+	if (const UTakeSaveGame* S = Cast<UTakeSaveGame>((UGameplayStatics::DoesSaveGameExist(UTakeSaveGame::ProgressSlot, 0) ? UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::ProgressSlot, 0) : nullptr)))
 	{
 		SaveInfo->SetText(FText::FromString(FString::Printf(TEXT("Last save: Take %d, %s"), S->TakeNumber, *S->SavedAt.ToString(TEXT("%H:%M")))));
 	}
@@ -258,7 +258,7 @@ void UTakePauseMenu::OnWindowMode(int32 Mode)
 void UTakePauseMenu::OnVolume(float Value)
 {
 	FApp::SetVolumeMultiplier(Value);
-	UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0));
+	UTakeSaveGame* S = Cast<UTakeSaveGame>((UGameplayStatics::DoesSaveGameExist(UTakeSaveGame::SettingsSlot, 0) ? UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0) : nullptr));
 	if (!S) { S = Cast<UTakeSaveGame>(UGameplayStatics::CreateSaveGameObject(UTakeSaveGame::StaticClass())); }
 	if (S)
 	{
@@ -269,7 +269,7 @@ void UTakePauseMenu::OnVolume(float Value)
 
 void UTakePauseMenu::ApplySavedSettings()
 {
-	if (const UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0)))
+	if (const UTakeSaveGame* S = Cast<UTakeSaveGame>((UGameplayStatics::DoesSaveGameExist(UTakeSaveGame::SettingsSlot, 0) ? UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0) : nullptr)))
 	{
 		FApp::SetVolumeMultiplier(S->MasterVolume);
 		TakeSettings::DialogueMode = FMath::Clamp(S->DialogueMode, 0, 2);
@@ -279,7 +279,7 @@ void UTakePauseMenu::ApplySavedSettings()
 void UTakePauseMenu::OnDialogueMode(int32 Mode)
 {
 	TakeSettings::DialogueMode = FMath::Clamp(Mode, 0, 2);
-	UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0));
+	UTakeSaveGame* S = Cast<UTakeSaveGame>((UGameplayStatics::DoesSaveGameExist(UTakeSaveGame::SettingsSlot, 0) ? UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0) : nullptr));
 	if (!S) { S = Cast<UTakeSaveGame>(UGameplayStatics::CreateSaveGameObject(UTakeSaveGame::StaticClass())); }
 	if (S)
 	{
@@ -319,7 +319,7 @@ bool UTakePauseMenu::SaveProgress(const UObject* WorldContext)
 
 bool UTakePauseMenu::LoadProgress(const UObject* WorldContext)
 {
-	const UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::ProgressSlot, 0));
+	const UTakeSaveGame* S = Cast<UTakeSaveGame>((UGameplayStatics::DoesSaveGameExist(UTakeSaveGame::ProgressSlot, 0) ? UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::ProgressSlot, 0) : nullptr));
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(WorldContext));
 	if (!S || !GI) { return false; }
 	GI->TakeNumber = S->TakeNumber;
