@@ -908,3 +908,15 @@ A running record of every AI tool used and what it did.
   - **Water coolers:** E pours a cup; someone by the cooler gossips (*"...did you hear about 4470? No? ...Nobody did."*).
   ![board, script, brochure](screenshots/2026-11-14_kitchen_board_script_brochure.png)
 - **AI tools used:** Claude (reading my playtest notes, C++, Blender chef variant + brochure, HTML textures, sound synthesis).
+
+### Session 56: Sat Nov 14, 2026, 15:25 MST: Playtest round 2
+
+- **Notes (read from `PlaytestNotes.txt`):** intro no longer bleeds through; the custodian can go back in the closet as long as he's only reachable with the door open; add a resume button to the notes page; the guard says the supply closet is restricted but I can walk right in (and the login is in there); the printer/copier should print things; *"nice, it makes a mad face now"*; brochures work; the reception sign floats off the desk. F9 screenshots work (`Saved/Screenshots/WindowsEditor/`).
+- **Fixes:**
+  - The custodian is back inside the closet, by the door; the line-of-sight check means you only reach him with the door open.
+  - **Save note & resume** button on the notes page.
+  - **The supply closet now has a door that needs access pass 1**, matching what the guard says. The Key Lock 2 login is behind it, so the order holds: training → pass 1 → supply closet → Key Lock 2 → pass 2.
+  - **Printers print** (E): a page drops out that you can pick up and throw. It cycles through three printouts: a continuity memo, *"PRINT JOB 4470 (queued)... blank except for a row of squares"*, and *"YOUR PERFORMANCE: 99%. Please give the remaining 1%."* New `sfx_printer`.
+  - The reception sign now stands on the desk.
+  - Prompts for the new things: Print / Get some water / Press a button.
+- **AI tools used:** Claude (notes and screenshot review, C++, textures, sound).

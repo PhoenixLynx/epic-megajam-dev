@@ -1187,7 +1187,8 @@ void UTakeGrabComponent::UpdatePrompt()
 	{
 		const FString K = UseKey(Hit.GetActor());
 		Prompt->SetPrompt(K == TEXT("Sink") ? TEXT("E  Wash your hands") : K == TEXT("Dryer") ? TEXT("E  Dry your hands")
-			: K == TEXT("Toilet") ? TEXT("E  Flush") : TEXT("E  Use"));
+			: K == TEXT("Toilet") ? TEXT("E  Flush") : K == TEXT("Printer") ? TEXT("E  Print") : K == TEXT("Cooler") ? TEXT("E  Get some water")
+			: K == TEXT("Elevator") ? TEXT("E  Press a button") : TEXT("E  Use"));
 		break;
 	}
 	case ETakeLookKind::Wisp:     Prompt->SetPrompt(TEXT("E  Reach for the light")); break;

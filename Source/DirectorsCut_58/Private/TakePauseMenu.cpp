@@ -189,6 +189,9 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 		UTakeIndexedButton* SaveNote = MakeButton(TEXT("Save note"), 0, true);
 		SaveNote->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnSaveNote);
 		NoteButtons->AddChildToHorizontalBox(SaveNote)->SetPadding(FMargin(0.f, 0.f, 10.f, 0.f));
+		UTakeIndexedButton* SaveResume = MakeButton(TEXT("Save note & resume"), 2, true);
+		SaveResume->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnSaveNote);
+		NoteButtons->AddChildToHorizontalBox(SaveResume)->SetPadding(FMargin(0.f, 0.f, 10.f, 0.f));
 		UTakeIndexedButton* Skip = MakeButton(TEXT("Skip current tasks"), 1);
 		Skip->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnSaveNote);
 		NoteButtons->AddChildToHorizontalBox(Skip);
@@ -455,4 +458,5 @@ void UTakePauseMenu::OnSaveNote(int32 Which)
 	const bool bOk = FFileHelper::SaveStringToFile(Line, *Path, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM, &IFileManager::Get(), FILEWRITE_Append);
 	SetStatus(bOk ? TEXT("Note saved (Saved/PlaytestNotes.txt).") : TEXT("Couldn't save the note."));
 	if (bOk) { NotesBox->SetText(FText::GetEmpty()); }
+	if (bOk && Which == 2) { OnResumeRequested.Broadcast(); }   // back to the game
 }

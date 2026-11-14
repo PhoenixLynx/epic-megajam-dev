@@ -24,6 +24,7 @@
 #include "GameFramework/PlayerController.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialInterface.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -491,6 +492,29 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			TEXT("You press the alarm. Nothing. Then, very quietly, the PA: \"We heard you.\""),
 		};
 		ShowSubtitle(TEXT(""), Presses[N % int32(UE_ARRAY_COUNT(Presses))], 4.f);
+		return;
+	}
+	if (Key == TEXT("Printer"))
+	{
+		PlaySfx(TEXT("sfx_printer"), Where, 0.7f);
+		const APawn* PrintMe = Cast<APawn>(GetOwner());
+		FVector Out = Thing->GetActorLocation() + FVector(0.f, 0.f, 100.f);
+		if (PrintMe) { FVector D = PrintMe->GetActorLocation() - Thing->GetActorLocation(); D.Z = 0.f; Out += D.GetSafeNormal() * 40.f; }
+		if (AActor* Page = SpawnProp(TEXT("SM_Brochure"), Out, FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f)))
+		{
+			const int32 Which = N % 3 + 1;
+			const FString Mi = FString::Printf(TEXT("/Game/Props/Materials/MI_Printout_%d.MI_Printout_%d"), Which, Which);
+			if (UMaterialInterface* M = LoadObject<UMaterialInterface>(nullptr, *Mi))
+			{
+				if (UStaticMeshComponent* SM = Cast<UStaticMeshComponent>(Page->GetRootComponent())) { SM->SetMaterialByName(FName(TEXT("M_SignFace")), M); }
+			}
+		}
+		static const TCHAR* Prints[] = {
+			TEXT("It prints a memo you didn't send: \"Continuity is everyone's responsibility.\""),
+			TEXT("PRINT JOB 4470 (queued). It's been waiting for a long time. The page is blank except for a row of squares."),
+			TEXT("\"YOUR PERFORMANCE: 99%. Please give the remaining 1%.\""),
+		};
+		ShowSubtitle(TEXT(""), Prints[N % 3], 4.f);
 		return;
 	}
 	if (Key == TEXT("Cooler"))

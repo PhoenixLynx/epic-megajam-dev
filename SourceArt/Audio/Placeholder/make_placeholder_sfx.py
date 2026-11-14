@@ -236,3 +236,11 @@ boom = pad(tone(42, 2.4, 0.9, ((1, 1.0), (1.5, 0.4), (2.02, 0.25))), 3.0)
 boom = np.roll(boom, int(SR * 0.6))
 shatter = bandpass_noise(3.0, 2500, 11000) * np.exp(-np.maximum(x - 0.6, 0) / 0.25) * (x >= 0.6)
 write("sfx_fear_hit", swell * 0.5 + boom * 1.0 + shatter * 0.55, peak=0.8)
+
+# Printer: whirr with a rhythmic line feed, then the page drops
+x = t(2.6)
+whirr = bandpass_noise(2.6, 300, 2500) * (0.6 + 0.4 * (np.sin(2 * np.pi * 9 * x) > 0)) * np.clip(x / 0.1, 0, 1) * np.clip((2.3 - x) / 0.1, 0, 1)
+motor = np.sin(2 * np.pi * 120 * x) * 0.2 * (x < 2.3)
+drop = pad(bandpass_noise(0.2, 1000, 6000) * env(0.2, 0.005, 0.05), 2.6)
+drop = np.roll(drop, int(SR * 2.35))
+write("sfx_printer", whirr * 0.7 + motor + drop * 0.6, peak=0.5)

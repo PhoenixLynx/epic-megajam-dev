@@ -137,6 +137,16 @@ EMPLOYEE 4471 hesitates.
 <div style="position:absolute;left:0;right:0;bottom:30px;font:500 18px Poppins;color:#9fb2b8;text-align:center">HALCYON &middot; Your energy. Our future.</div>"""),
 })
 
+PAGES.update({f"T_Printout_{i + 1}": (600, 860, f"""<div style="position:absolute;inset:0;background:#fdfdfb"></div>
+<div style="position:absolute;left:50px;top:50px">{LOGO.format(w=90, h=54)}</div>
+<div style="position:absolute;left:50px;right:50px;top:140px;font:700 34px/1.25 Poppins;color:{INK}">{t}</div>
+<div style="position:absolute;left:50px;right:50px;top:300px;font:400 24px/1.6 Poppins;color:#45565c">{b}</div>""")
+    for i, (t, b) in enumerate([
+        ("MEMO: Continuity is everyone's responsibility.", "Please do not move props between takes.<br>If something looks different, it isn't.<br><br>- Continuity"),
+        ("PRINT JOB 4470 (queued)", "Status: waiting since forever.<br>Document: final_notes_DO_NOT_READ.txt<br><br>[the rest of the page is blank, except for a row of squares]"),
+        ("YOUR PERFORMANCE: 99%", "Please give the remaining 1%.<br><br>Where is it?<br>We know you have it.<br><br>- The Morale Team"),
+    ])})
+
 if __name__ == "__main__":
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=os.environ.get("CHROME", "/usr/bin/google-chrome"))

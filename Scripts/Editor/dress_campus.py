@@ -82,7 +82,7 @@ for i in range(5):                                          # a pile of crumpled
 put("SM_DirectorsChair", 1480, 2470, 0, 210, ["Act2Reveal"])  # hidden in game until Act 2
 cabinet(1700, 3500, 0, 4, {3: ["InspectTex=MI_File_4470"]})   # top drawer: 4470's personnel file
 cabinet(1760, 3500, 0, 2)
-put("SM_Printer", 3300, 2300, 0, -90)              # (moved out of the restroom corner)
+put("SM_Printer", 3300, 2300, 0, -90, ["Use=Printer"])   # (moved out of the restroom corner) E = print
 put("SM_PlantTall", 860, 1780)
 put("SM_PlantTall", 3330, 3620)
 put("SM_WallClock", 1100, 1712, 240, 180)
@@ -234,6 +234,11 @@ put("SM_TrashBin", 1340, 600)
 cabinet(1340, 900, -90, 2)
 put("SM_WallClock", 800, 512, 240, 180)
 
+# Supply closet door (office south wall, opening x 2975-3125): access pass 1, like the guard says
+BOXES_SUPPLY = [("SupplyWall_L", 2990, 3700, 150, 30, 20, 300), ("SupplyWall_R", 3110, 3700, 150, 30, 20, 300),
+                ("SupplyLintel", 3050, 3700, 255, 90, 20, 90)]
+put("SM_DoorFrame", 3050, 3700, 0, 180)
+put("SM_Door", 3005, 3700, 0, 180, ["Openable", "OpenYaw=90", "NeedsPass=1"])   # hinge at x 3005, swings into the closet
 # --- Supply closet: three steel shelves along the back wall, stocked -----------------------
 SHELF_Z = (16, 61, 106, 151)   # top of each shelf you can put things on (the 5th is the roof)
 for sx in (2890, 3050, 3210):
@@ -252,7 +257,7 @@ for sx in (2890, 3050, 3210):
 for i in range(4):   # boxes of paper on the bottom shelf
     put("SM_ReamOfPaper", 3050 + rnd.uniform(-40, 40), 4175, SHELF_Z[0] + 1 + i * 5, rnd.uniform(-8, 8))
 cabinet(3270, 3900, -90, 4)
-put("SM_Printer", 2850, 3820, 0, 90)
+put("SM_Printer", 2850, 3820, 0, 90, ["Use=Printer"])
 put("SM_TrashBin", 3260, 4060)
 put("SM_WetFloorSign", 3180, 3780, 0, 30)
 put("SM_PassReader", 2950, 3688, 120, 0)
@@ -283,7 +288,7 @@ BOXES += [
     ("LunchSpecials", 3245, 860, 115, 34, 2, 48, PM + "MI_LunchSpecials", ["Act2Reveal", "Inspectable"]),
     # Reception: the sign-in clipboard, and a sign
     ("SignInSheet", 1985, 1285, 109.6, 23, 32, 0.4, PM + "MI_SignInSheet", ["Inspectable"]),
-    ("Sign_Wait", 1930, 1262, 125, 30, 2, 30, PM + "MI_Sign_Wait", []),
+    ("Sign_Wait", 2045, 1268, 124, 30, 2, 30, PM + "MI_Sign_Wait", []),   # standing on the desk
     ("ScriptNotes", 2120, 1290, 109.6, 22, 30, 0.4, PM + "MI_ScriptNotes", ["Inspectable"]),
     # Kitchen: a bulletin board (west wall) and morale posters
     ("KitchenBoard", 2812, 1300, 160, 1, 150, 100, PM + "MI_KitchenBoard", ["Inspectable"]),
@@ -299,6 +304,7 @@ BOXES += [
     ("Sign_ElevatorFire_Out", 1935, 512, 150, 30, 2, 30, PM + "MI_Sign_ElevatorFire", []),
     ("Sign_Emergency", 2100, 12, 170, 40, 2, 40, PM + "MI_Sign_Emergency", []),
 ]
+BOXES += [(l, x, y, z, sx, sy, sz, "/Game/Fear/MI_Greybox_Walls", []) for (l, x, y, z, sx, sy, sz) in BOXES_SUPPLY]
 BOXES += [("RestroomWall_W1", 3050, 1825, 150, 20, 250, 300, "/Game/Fear/MI_Greybox_Walls", []),
           ("RestroomWall_W2", 3050, 2080, 150, 20, 80, 300, "/Game/Fear/MI_Greybox_Walls", []),
           ("RestroomLintel", 3050, 1995, 255, 20, 90, 90, "/Game/Fear/MI_Greybox_Walls", []),
@@ -319,7 +325,7 @@ put("SM_WetFloorSign", 850, 3655, 0, 15)
 put("SM_TrashBin", 950, 3672)
 for i in range(3):
     put(["SM_ReamOfPaper", "SM_SnackBox", "SM_TeaBox"][i], 835, 3470 + i * 40, 61)   # odd things stored on the shelf
-put("SM_MannequinCustodian", 1190, 3620, 0, 90, ["NPC", "Custodian_Closet"])   # by the closet door, outside
+put("SM_MannequinCustodian", 1030, 3600, 0, 90, ["NPC", "Custodian_Closet"])   # inside, by the door (you only reach him with it open)
 # 4470: the employee before you. Their things are boxed up in here.
 put("SM_MovingBox", 905, 3410, 0, -90, ["Inspectable", "InspectTex=MI_Label_4470"])
 BOXES += [("Label_4470", 928, 3410, 16, 1, 30, 16, "/Game/Props/Materials/MI_Label_4470", ["Inspectable"]),          # on the box, facing the door
