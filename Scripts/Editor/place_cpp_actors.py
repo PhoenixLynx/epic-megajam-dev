@@ -89,7 +89,7 @@ tables = sum(import_table(n, st) for n, st in (("DT_Emails.csv", "/Script/Direct
 
 # --- WorkSpots: where coworkers go to look busy ---------------------------------
 WORKSPOTS = [
-    ("CoffeeMachine", 3140, 650), ("Fridge", 3590, 560), ("WaterCooler", 3620, 1250), ("KitchenCounter", 3350, 700),
+    ("CoffeeMachine", 3140, 650), ("Fridge", 3620, 660), ("WaterCooler", 3620, 1250), ("KitchenCounter", 3200, 680),
     ("Printer", 3300, 1760), ("Filing", 1730, 3400), ("LobbyCoffeeTable", 1760, 1540), ("OfficeAisle", 2000, 2600),
 ]
 for name, x, y in WORKSPOTS:

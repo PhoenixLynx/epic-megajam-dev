@@ -111,8 +111,10 @@ put("SM_KitchenCounter", 3300, 532, 0, 180)
 put("SM_CoffeeMachine", 3140, 530, 90, 180)
 put("SM_Microwave", 3400, 525, 90, 180)
 put("SM_Kettle", 3500, 545, 90, 180)
-put("SM_Mug", 3200, 560, 90)
-put("SM_Mug", 3230, 575, 90)
+put("SM_Mug", 3200, 540, 91)
+put("SM_Mug", 3225, 545, 91)
+put("SM_KitchenCounterShort", 3595, 532, 0, 180)   # fills the gap between counter and fridge
+put("SM_KitchenIsland", 3300, 830, 0, 180)         # more worktop; ~2 m aisle to the counter
 put("SM_FridgeBody", 3710, 545, 0, 180)
 FRIDGE = (3710, 545, 180)   # door, notes and food are placed relative to this below
 put("SM_VendingMachine", 3750, 900, 0, -90)
@@ -126,17 +128,24 @@ put("SM_TrashBin", 2850, 1450)
 put("SM_PlantTall", 2870, 580)
 put("SM_WallClock", 3300, 1488, 240, 0)
 put("SM_Mannequin", 3300, 1000, 0, 0, ["NPC", "Coworker_Kitchen"])
-# Stock the counter (top at 90 cm): coffee, tea, cups, snacks, fruit
-for i, x in enumerate((3060, 3085, 3110)):
-    put("SM_CoffeeBag", x, 545, 90, rnd.uniform(-15, 15))
-put("SM_TeaBox", 3460, 525, 90, 10)
-put("SM_TeaBox", 3462, 525, 97, -5)
-put("SM_CupStack", 3260, 530, 90)
-put("SM_CupStack", 3280, 545, 90)
-put("SM_FruitBowl", 3540, 540, 90)
-put("SM_SnackBag", 3600, 530, 90, 20)
-put("SM_SnackBag", 3625, 545, 90, -10)
-put("SM_SnackBox", 3330, 520, 90, 0)
+# Stock the counters (all tops at 90 cm). Main counter spans x 3080-3520 (sink at ~3350),
+# short counter 3535-3655, island 3207-3393 x 782-878. Props spawn 1 cm above and settle.
+put("SM_CupStack", 3265, 535, 91)
+put("SM_CupStack", 3290, 548, 91)
+put("SM_TeaBox", 3560, 530, 91, 10)
+put("SM_TeaBox", 3585, 530, 91, -5)
+put("SM_TeaBox", 3572, 530, 99, 3)
+put("SM_FruitBowl", 3630, 540, 91)
+for i, x in enumerate((3225, 3250, 3275)):
+    put("SM_CoffeeBag", x, 805, 91, rnd.uniform(-15, 15))
+put("SM_SnackBag", 3320, 800, 91, 20)
+put("SM_SnackBag", 3345, 820, 91, -10)
+put("SM_SnackBag", 3330, 855, 91, 75)
+put("SM_SnackBox", 3375, 805, 91, 0)
+put("SM_SnackBox", 3375, 855, 91, 15)
+put("SM_SodaCan", 3240, 860, 91)
+put("SM_SodaCan", 3260, 862, 91)
+put("SM_WaterBottle", 3290, 860, 91)
 put("SM_SodaCan", 3100, 1150, 103)        # on the cafe tables
 put("SM_WaterBottle", 3470, 1240, 103)
 put("SM_SnackBag", 3430, 1270, 103, 60)

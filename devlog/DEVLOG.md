@@ -499,3 +499,11 @@ A running record of every AI tool used and what it did.
 - **Problems:** written without a compiler in the cloud; the first rebuild on the PC is the real test.
 - **AI tools used:** Claude (C++ interaction system, coworker AI, UI, dialogue lines, scripts).
 - **Next:** rebuild → re-run `dress_campus.py` + `place_cpp_actors.py` → playtest 📸 (screenshot of HALCYON Mail and a coworker talking) → answer the pick-up questions → Act 1 beats.
+
+### Session 29: Fri Nov 13, 2026, 19:20 MST: More kitchen worktop
+
+- **My feedback:** grabbed screenshots of the kitchen ("very good haha"), but a lot of the food was on the floor; we need more countertop. We'll also want sitting and standing animations the player and the NPCs can share, and later opening-the-fridge and grabbing animations (fine to wait).
+- **Done:** two new props, `SM_KitchenCounterShort` (1.2 m with wall cabinets, fills the gap by the fridge) and `SM_KitchenIsland` (1.8 × 0.9 m). Re-laid the stock so every item sits on a worktop: the old layout had coffee bags and snacks past the ends of the 2.4 m counter, so physics dropped them. Moved the fridge WorkSpot out of the new counter.
+- **Decisions & why:** an island instead of a longer counter: more surface, and something to dodge around when Fear is high.
+- **AI tools used:** Claude (Blender props, layout).
+- **Next:** rebuild results → shared sit/stand animation plan.

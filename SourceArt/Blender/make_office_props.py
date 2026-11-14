@@ -511,6 +511,30 @@ def kitchen_counter():
     return p.finish(0.005)
 
 
+def kitchen_counter_short():
+    p = Prop("SM_KitchenCounterShort")   # 1.2 m base run, no sink; fills the gap next to the fridge
+    p.box((1.2, 0.6, 0.86), (0, 0, 0.43), "M_PlasticWhite")
+    p.box((1.24, 0.64, 0.04), (0, -0.01, 0.88), "M_Counter")
+    for i in range(2):
+        x = -0.3 + i * 0.6
+        p.box((0.57, 0.01, 0.7), (x, -0.305, 0.43), "M_PlasticWhite")
+        p.box((0.12, 0.02, 0.015), (x, -0.315, 0.74), "M_MetalLight")
+    p.box((1.2, 0.35, 0.7), (0, 0.125, 1.85), "M_PlasticWhite")                    # wall cabinets
+    return p.finish(0.005)
+
+
+def kitchen_island():
+    p = Prop("SM_KitchenIsland")   # 1.8 x 0.9 m island, worktop at 90 cm; pivot floor-centre
+    p.box((1.7, 0.8, 0.86), (0, 0, 0.43), "M_PlasticWhite")
+    p.box((1.86, 0.96, 0.04), (0, 0, 0.88), "M_Counter")
+    p.box((1.72, 0.82, 0.08), (0, 0, 0.04), "M_MetalDark")                         # kick plate
+    for i in range(3):
+        x = -0.57 + i * 0.57
+        p.box((0.54, 0.01, 0.7), (x, -0.405, 0.46), "M_PlasticWhite")
+        p.box((0.12, 0.02, 0.015), (x, -0.415, 0.76), "M_MetalLight")
+    return p.finish(0.005)
+
+
 def fridge():
     p = Prop("SM_Fridge")
     p.box((0.7, 0.7, 1.8), (0, 0, 0.9), "M_Steel")
@@ -761,7 +785,7 @@ BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabine
             # bright corporate design
             plant_tall, plant_desk, planter_box, lobby_sofa, coffee_table, logo_sign, meeting_chair,
             # kitchen
-            kitchen_counter, fridge, microwave, kettle, vending_machine, cafe_table, bar_stool,
+            kitchen_counter, kitchen_counter_short, kitchen_island, fridge, microwave, kettle, vending_machine, cafe_table, bar_stool,
             # figures
             mannequin, mannequin_guard, mannequin_custodian, stalker,
             # wishlist batch
