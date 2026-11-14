@@ -22,7 +22,7 @@
 ## Nice to have
 
 - [ ] Cover image + screenshots on the itch page
-- [ ] Short gameplay clip/GIF
+- [ ] **REQUIRED:** gameplay video, 30-60 s, 1920x1080 or higher (rules sections 1 and 7(c))
 - [ ] Controls listed on the page
 - [ ] AI tool usage summarized on the page (pulled from the devlog ledger)
 - [ ] "Tools you used" field filled in at submission (some partner prizes, e.g. Hyper3D Rodin's pool, depend on it)

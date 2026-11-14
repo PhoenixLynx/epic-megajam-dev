@@ -797,3 +797,11 @@ A running record of every AI tool used and what it did.
   - **Head offset fixed** in the rig (twists were on the wrong axis); re-exported.
   - **Rebuild.bat** in the project folder: builds the C++ and opens the editor, or shows the errors and stops.
 - **AI tools used:** Claude (C++, emails and lines, Blender paper ball and rig fix, batch script).
+
+### Session 49: Sat Nov 14, 2026, 12:40 MST: Build OK, and a music partner
+
+- **Rebuild.bat works:** the session 48 batch compiled on the first try (21 files, ~70 s). The first two attempts failed only because the editor / Live Coding was still running.
+- **Music:** I'm composing in Ableton, with **Sol (ChatGPT)** as my creative assistant: extending and looping what I compose, plus creative tasks. Sol works in a separate private repo (`PhoenixLynx/epicjam-creative-assets`, folder `Music_Video_Assets`) and never writes to the game folder.
+- **How Claude and Sol talk:** a `handoff/` folder in Sol's repo. Claude writes `FROM_CLAUDE.md` (where music goes in the game, spec, priorities) and the shared `ASSET_REQUESTS.md` table (10 cues: morning loop + Fear layer, the HALCYON jingle, hold music, the lunch variation, stingers for "Retake" and the 2:14 freeze, title, chase, wrap party). Sol answers in `FROM_SOL.md`. I approve everything; audio freeze Sunday 12:00 PM.
+- **Caught by Sol:** the gameplay video (30-60 s, 1080p) is *required* by the rules, not optional. Checklist fixed.
+- **AI tools used:** Claude (build log check, handoff brief), Sol / ChatGPT (creative workspace, provenance records, rules review).
