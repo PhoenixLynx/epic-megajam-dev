@@ -112,7 +112,7 @@ put("SM_ExitSign", 2100, 1688, 270, 0)
 put("SM_KitchenCounterShort", 3235, 532, 0, 180)
 put("SM_KitchenCounter", 3415, 532, 0, 180)
 put("SM_KitchenCounterShort", 3595, 532, 0, 180)
-put("SM_CoffeeMachine", 3215, 530, 91, 180)
+put("SM_CoffeeMachine", 3215, 530, 91, 180, ["CoffeeMachine"])   # E = pour a coffee (task)
 put("SM_Mug", 3262, 540, 91)
 put("SM_Mug", 3280, 548, 91)
 put("SM_Microwave", 3385, 525, 91, 180)
@@ -270,7 +270,7 @@ def main():
         room = "Hospital" if z <= -1000 else "Campus"
         a.set_folder_path(f"Dressing/{room}/{'NPC' if 'NPC' in tags else 'Props'}")
         all_tags = list(tags)
-        if mesh in THROWABLE and "Terminal" not in tags:
+        if mesh in THROWABLE and "Terminal" not in tags and "CoffeeMachine" not in tags:
             comp.set_mobility(unreal.ComponentMobility.MOVABLE)
             comp.set_simulate_physics(True)
             comp.set_notify_rigid_body_collision(True)

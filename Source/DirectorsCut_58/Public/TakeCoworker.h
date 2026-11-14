@@ -62,7 +62,13 @@ private:
 	float Phase = 0.f;
 	float StuckTimer = 0.f;
 	FVector LastPos;
-	TArray<FString> Lines;
+	TArray<FString> Lines;          // small talk, cycled without repeats
+	TArray<FString> Greetings;      // first time you meet
+	TArray<FString> CoffeeLines;    // once you've had your coffee
+	TArray<int32> Bag;              // shuffled order of Lines still to say
+	int32 LastLine = -1;
+	bool bGreeted = false;
+	FString NextLine();
 	TArray<TWeakObjectPtr<AActor>> Spots;
 	TWeakObjectPtr<class ATakeFearDirector> FearDirector;
 

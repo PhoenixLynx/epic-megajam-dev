@@ -37,6 +37,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 TrainingSlide = 0;
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bTrainingComplete = false;
 
+	/** Act 1 badge task list */
+	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bReadEmail = false;
+	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bGotCoffee = false;
+	UFUNCTION(BlueprintPure, Category = "Take") bool MorningTasksDone() const { return bReadEmail && bGotCoffee && bTrainingComplete; }
+
 	/** Access pass N (1..3) is held once you have N soul bits. */
 	UFUNCTION(BlueprintPure, Category = "Take") bool HasPass(int32 PassNumber) const { return SoulBits >= PassNumber; }
 

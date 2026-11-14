@@ -119,3 +119,6 @@ unreal.log(f"[TAKE 4471] {looped} sound(s) set to loop")
 
 # Physics props need simple collision, or they freeze in the air at Play
 exec(open(os.path.join(ROOT, "Scripts", "Editor", "fix_prop_collision.py")).read())
+
+# Rigged mannequins + animations (skeletal meshes, separate importer)
+exec(open(os.path.join(ROOT, "Scripts", "Editor", "import_characters.py")).read())

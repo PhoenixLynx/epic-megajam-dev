@@ -158,6 +158,7 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 		if (A->IsA<ATakeCoworker>()) { return ETakeLookKind::Coworker; }
 		if (A->ActorHasTag(TEXT("Terminal"))) { return ETakeLookKind::Terminal; }
 		if (A->ActorHasTag(TEXT("Openable"))) { return ETakeLookKind::Openable; }
+		if (A->ActorHasTag(TEXT("CoffeeMachine"))) { return ETakeLookKind::Coffee; }
 	}
 	if (Comp && Comp->IsSimulatingPhysics() && Hit.Distance <= CurrentRange())
 	{
@@ -176,6 +177,7 @@ void UTakeGrabComponent::Interact()
 	case ETakeLookKind::Coworker:  Cast<ATakeCoworker>(Hit.GetActor())->Speak(TEXT("Talk")); break;
 	case ETakeLookKind::Terminal:  SitAndLogIn(Hit.GetActor()); break;
 	case ETakeLookKind::Openable:  ToggleOpen(Hit.GetActor()); break;
+	case ETakeLookKind::Coffee:    PourCoffee(); break;
 	case ETakeLookKind::Prop:      TryGrabOrDrop(); break;
 	default: break;
 	}
@@ -338,6 +340,42 @@ void UTakeGrabComponent::SetFearDebug(float Value)
 }
 
 // ------------------------------------------------------------------ Tick
+void UTakeGrabComponent::PourCoffee()
+{
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	static const TCHAR* Pours[] = {
+		TEXT("You pour a coffee. It's exactly the right temperature. It always is."),
+		TEXT("Another cup. The mug already has your name on it."),
+		TEXT("The machine hums the HALCYON jingle while it pours."),
+	};
+	const int32 Count = UE_ARRAY_COUNT(Pours);
+	ShowSubtitle(TEXT(""), Pours[(GI && GI->bGotCoffee) ? FMath::RandRange(1, Count - 1) : 0], 4.f);
+	if (GI) { GI->bGotCoffee = true; }
+}
+
+void UTakeGrabComponent::UpdateTasks()
+{
+	if (!Prompt) { return; }
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!GI) { return; }
+	const int32 Mask = (GI->bReadEmail ? 1 : 0) | (GI->bGotCoffee ? 2 : 0) | (GI->bTrainingComplete ? 4 : 0);
+	if (Mask == TasksShown) { return; }
+	const int32 NewlyDone = TasksShown < 0 ? 0 : (Mask & ~TasksShown);
+	TasksShown = Mask;
+	auto Box = [](bool bDone) { return bDone ? TEXT("[x]") : TEXT("[  ]"); };
+	FString Text = TEXT("TODAY  \u00B7  EMPLOYEE 4471\n");
+	Text += FString::Printf(TEXT("%s  Check email\n"), Box(GI->bReadEmail));
+	Text += FString::Printf(TEXT("%s  Get coffee\n"), Box(GI->bGotCoffee));
+	Text += FString::Printf(TEXT("%s  Complete Compliance Training"), Box(GI->bTrainingComplete));
+	if (Mask == 7) { Text += TEXT("\n\nNext: 10:00 meeting, Conference Room"); }
+	Prompt->SetTasks(Text);
+	if (Mask == 7 && NewlyDone)
+	{
+		ShowSubtitle(TEXT("PA"), TEXT("Thank you, 4471. Your morning is complete. Please proceed to your 10:00 in the Conference Room."), 6.f);
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Morning tasks complete"));
+	}
+}
+
 void UTakeGrabComponent::ShowSubtitle(const FString& Who, const FString& Line, float Seconds)
 {
 	if (!Prompt) { return; }
@@ -361,6 +399,7 @@ void UTakeGrabComponent::UpdatePrompt()
 		Prompt->SetPrompt((S && S->bOpen) ? TEXT("E  Close") : TEXT("E  Open"));
 		break;
 	}
+	case ETakeLookKind::Coffee:   Prompt->SetPrompt(TEXT("E  Pour a coffee")); break;
 	case ETakeLookKind::Prop:     Prompt->SetPrompt(TEXT("E  Pick up")); break;
 	case ETakeLookKind::TooHeavy: Prompt->SetPrompt(TEXT("Too heavy")); break;
 	default:                      Prompt->SetPrompt(TEXT("")); break;
@@ -372,6 +411,7 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	TickSwings(DeltaTime);
 	UpdatePrompt();
+	UpdateTasks();
 	if (SubtitleLeft > 0.f)
 	{
 		SubtitleLeft -= DeltaTime;

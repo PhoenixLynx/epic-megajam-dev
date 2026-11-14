@@ -19,7 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeGrabEvent, UPrimitiveComponent*
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeActorEvent, AActor*, Actor);
 
 UENUM()
-enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Prop, TooHeavy };
+enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Prop, TooHeavy };
 
 UCLASS(ClassGroup = (Take), meta = (BlueprintSpawnableComponent, DisplayName = "Take Grab"))
 class DIRECTORSCUT_58_API UTakeGrabComponent : public UActorComponent
@@ -78,6 +78,9 @@ private:
 	TMap<TWeakObjectPtr<AActor>, FSwing> Swings;
 	bool bSeated = false;
 	float SubtitleLeft = 0.f;
+	int32 TasksShown = -1;          // bitmask of finished tasks last time we drew the list
+	void PourCoffee();
+	void UpdateTasks();
 	class ATakeCoworker* CoworkerInView() const;
 	void ThrowInput() { if (IsHolding()) { Throw(); } }
 	float HeldYawOffset = 0.f;

@@ -4,6 +4,7 @@
 #include "TakeTypes.h"
 #include "TakeFearDirector.h"
 #include "TakeGrabComponent.h"
+#include "TakeGameInstance.h"
 #include "AIController.h"
 #include "NavigationSystem.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -77,17 +78,19 @@ void ATakeCoworker::BeginPlay()
 void ATakeCoworker::LoadLines()
 {
 	Lines.Reset();
-	const FString Want = NPCRole.Equals(TEXT("Receptionist"), ESearchCase::IgnoreCase) ? TEXT("Coworker") : NPCRole;
+	Greetings.Reset();
+	CoffeeLines.Reset();
+	auto Matches = [this](const FString& RowRole) { return RowRole.Equals(NPCRole, ESearchCase::IgnoreCase); };
 	if (const UDataTable* Table = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_NPCLines.DT_NPCLines")))
 	{
 		TArray<FTakeNPCLineRow*> Rows;
 		Table->GetAllRows<FTakeNPCLineRow>(TEXT("TakeCoworker"), Rows);
 		for (const FTakeNPCLineRow* R : Rows)
 		{
-			if (R && R->Act == 1 && R->Role.Equals(Want, ESearchCase::IgnoreCase) && (!R->IsAgent || bIsAgent))
-			{
-				Lines.Add(R->Line);
-			}
+			if (!R || R->Act != 1 || !Matches(R->Role) || (R->IsAgent && !bIsAgent)) { continue; }
+			if (R->Context == TEXT("Greeting") || R->Context == TEXT("BadgeCheck")) { Greetings.Add(R->Line); }
+			else if (R->Context == TEXT("AfterCoffee")) { CoffeeLines.Add(R->Line); }
+			else { Lines.Add(R->Line); }
 		}
 	}
 	if (Lines.Num() == 0)   // fallback until the DataTable is imported
@@ -97,7 +100,39 @@ void ATakeCoworker::LoadLines()
 		          TEXT("Love the energy today, {EMP}."), TEXT("Is it still morning? Feels like it's been morning for a while.") };
 		if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { Lines = { TEXT("Badge, please."), TEXT("Keep it moving."), TEXT("Corridor B is off limits.") }; }
 		if (NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase)) { Lines = { TEXT("Mind the floor. Wet."), TEXT("I clean this hall every night. Same scuffs every morning."), TEXT("Don't go in my closet.") }; }
+		if (NPCRole.Equals(TEXT("Receptionist"), ESearchCase::IgnoreCase)) { Lines = { TEXT("Welcome to HALCYON. You're expected."), TEXT("Please sign in. You already have.") }; }
 	}
+	Bag.Reset();
+}
+
+FString ATakeCoworker::NextLine()
+{
+	// First meeting: a greeting
+	if (!bGreeted && Greetings.Num() > 0)
+	{
+		bGreeted = true;
+		return Greetings[FMath::RandRange(0, Greetings.Num() - 1)];
+	}
+	bGreeted = true;
+	// Had your coffee? They notice (each coffee line once)
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (GI && GI->bGotCoffee && CoffeeLines.Num() > 0 && FMath::FRand() < 0.5f)
+	{
+		const int32 I = FMath::RandRange(0, CoffeeLines.Num() - 1);
+		const FString L = CoffeeLines[I];
+		CoffeeLines.RemoveAt(I);
+		return L;
+	}
+	// Small talk: shuffle bag, every line once before any repeats, never the same line twice in a row
+	if (Lines.Num() == 0) { return FString(); }
+	if (Bag.Num() == 0)
+	{
+		for (int32 I = 0; I < Lines.Num(); ++I) { Bag.Add(I); }
+		for (int32 I = Bag.Num() - 1; I > 0; --I) { Bag.Swap(I, FMath::RandRange(0, I)); }
+		if (Bag.Num() > 1 && Bag.Last() == LastLine) { Bag.Swap(0, Bag.Num() - 1); }
+	}
+	LastLine = Bag.Pop();
+	return Lines[LastLine];
 }
 
 float ATakeCoworker::GetFear() const
@@ -107,8 +142,10 @@ float ATakeCoworker::GetFear() const
 
 bool ATakeCoworker::Speak(const FString& Context)
 {
-	if (CooldownLeft > 0.f || Lines.Num() == 0) { return false; }
-	SayLine(Lines[FMath::RandRange(0, Lines.Num() - 1)]);
+	if (CooldownLeft > 0.f) { return false; }
+	const FString Line = NextLine();
+	if (Line.IsEmpty()) { return false; }
+	SayLine(Line);
 	return true;
 }
 

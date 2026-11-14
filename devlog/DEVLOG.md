@@ -547,3 +547,20 @@ A running record of every AI tool used and what it did.
   - Progress is kept if you log out mid-module. Slides come from `DT_ComplianceTraining` (imported by `place_cpp_actors.py`).
 - **AI tools used:** Claude (training module C++, Key Lock UI).
 - **Next:** compile → playtest the module 📸 (the Key Lock slide is a great screenshot) → Act 1 flow: badge task list (check email, get coffee, complete training).
+
+### Session 34: Fri Nov 13, 2026, 21:40 MST → overnight: dialogue, task list, rigged mannequin
+
+- **My feedback:** "It is definitely coming along!" I'm getting sleepy, so let's plan tasks for the night. NPCs should cycle through different dialogue, and I like that the text appears above their heads.
+- **Before bed, me:** kicked off a test **Windows package** overnight (packaging is the riskiest step; better to find problems on Friday than Sunday). Claude added the runtime-loaded folders (Data, UI, Props, Audio, Fear) to the cook list first, so emails, dialogue and glyphs make it into the build.
+- **Done overnight (Claude):**
+  - **Dialogue cycling:** each NPC greets you the first time, then cycles small talk shuffle-bag style (every line once before any repeat, never the same line twice in a row). After you've had coffee there's a 50% chance of a coffee comment, each said once. Lines are per role, and the receptionist now has her own. **75 lines** total (25 new).
+  - **Act 1 badge task list** (top left): Check email · Get coffee · Complete Compliance Training. Opening the inbox ticks the first; **E at the coffee machine** pours a coffee (three different flavour texts) and ticks the second. All three done: the PA sends you to the 10:00 meeting in the Conference Room.
+  - **Rigged mannequin (made from scratch in Blender):** 18-bone skeleton, articulated like a shop mannequin, with 3 variants (coworker / guard / custodian) sharing one skeleton and **6 animations**: Idle, Walk, SitDown, SitType, Reach, Stare. The pose directions are measured from the rig itself, so "forward" is forward on every limb. ![rig poses](screenshots/2026-11-13_mannequin_rig_poses.png)
+  - `import_characters.py` imports them as skeletal meshes on one shared skeleton; `import_jam_assets.py` runs it.
+  - `docs/MORNING.md`: the exact run order for Saturday.
+- **Decisions & why:**
+  - Articulated (rigid-part) mannequin instead of a smooth skinned body: fits the "mannequin coworkers" look, and needs no weight painting, so it was reliable to build overnight without a person checking each joint.
+  - One skeleton for every NPC (and later the player's seated camera), as you suggested: animate once, use everywhere.
+  - Task list text uses plain [x] / [ ] marks: Unreal's default font may not have checkbox symbols.
+- **AI tools used:** Claude (C++ dialogue + tasks, 25 dialogue lines, Blender rig + animations, pose preview renders, import script, runbook).
+- **Next:** see `docs/MORNING.md`.

@@ -40,12 +40,17 @@ public:
 	void SetPrompt(const FString& Text);
 	/** Bottom-of-screen subtitle for whoever is talking. Empty clears it. */
 	void SetSubtitle(const FString& Text);
+	/** Badge task list, top left. Empty hides it. */
+	void SetTasks(const FString& Text);
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 private:
 	UPROPERTY() TObjectPtr<UTextBlock> Label;
 	UPROPERTY() TObjectPtr<UTextBlock> Subtitle;
+	UPROPERTY() TObjectPtr<UTextBlock> TaskText;
+	UPROPERTY() TObjectPtr<class UBorder> TaskPanel;
 	FString Current;
+	FString CurrentTasks;
 };
 
 UCLASS()

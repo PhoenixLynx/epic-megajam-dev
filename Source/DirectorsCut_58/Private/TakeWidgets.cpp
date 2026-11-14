@@ -84,8 +84,32 @@ TSharedRef<SWidget> UTakePromptWidget::RebuildWidget()
 		SubSlot->SetAlignment(FVector2D(0.5f, 1.f));
 		SubSlot->SetSize(FVector2D(1100.f, 90.f));
 		SubSlot->SetPosition(FVector2D(0.f, -70.f));
+
+		// Badge task list (top left)
+		TaskPanel = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("TaskPanel"));
+		TaskPanel->SetBrushColor(FLinearColor(1.f, 1.f, 1.f, 0.82f));
+		TaskPanel->SetPadding(FMargin(18.f, 12.f));
+		TaskText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("Tasks"));
+		FSlateFontInfo TaskFont = TaskText->GetFont();
+		TaskFont.Size = 15;
+		TaskText->SetFont(TaskFont);
+		TaskText->SetColorAndOpacity(FSlateColor(FLinearColor(0.05f, 0.09f, 0.11f)));
+		TaskPanel->SetContent(TaskText);
+		UCanvasPanelSlot* TaskSlot = Root->AddChildToCanvas(TaskPanel);
+		TaskSlot->SetAnchors(FAnchors(0.f, 0.f));
+		TaskSlot->SetAutoSize(true);
+		TaskSlot->SetPosition(FVector2D(32.f, 32.f));
+		TaskPanel->SetVisibility(ESlateVisibility::Collapsed);
 	}
 	return Super::RebuildWidget();
+}
+
+void UTakePromptWidget::SetTasks(const FString& Text)
+{
+	if (Text == CurrentTasks || !TaskText || !TaskPanel) { return; }
+	CurrentTasks = Text;
+	TaskText->SetText(FText::FromString(Text));
+	TaskPanel->SetVisibility(Text.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 }
 
 void UTakePromptWidget::SetSubtitle(const FString& Text)
@@ -249,6 +273,7 @@ void UTakeTerminalWidget::ShowEmail(int32 Index)
 {
 	if (!Mails.IsValidIndex(Index) || !Reader || !ReaderHeader) { return; }
 	const FMail& M = Mails[Index];
+	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { GI->bReadEmail = true; }
 	ReaderHeader->SetText(FText::FromString(M.Subject));
 	Reader->SetText(FText::FromString(FString::Printf(TEXT("From: %s\n\n%s"), *M.Sender, *M.Body)));
 }
@@ -321,7 +346,7 @@ void UTakeTerminalWidget::LoadTraining()
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (TrainingTabLabel)
 	{
-		TrainingTabLabel->SetText(FText::FromString((GI && GI->bTrainingComplete) ? TEXT("Training  \u2713") : TEXT("Training  (1 due)")));
+		TrainingTabLabel->SetText(FText::FromString((GI && GI->bTrainingComplete) ? TEXT("Training  (done)") : TEXT("Training  (1 due)")));
 	}
 }
 
@@ -479,7 +504,7 @@ void UTakeTerminalWidget::FinishTraining()
 		GI->bTrainingComplete = true;
 		if (GI->SoulBits < 1) { GI->SetSoulBits(1); }   // Key 1: the first soul bit (pass 1, longer reach)
 	}
-	if (TrainingTabLabel) { TrainingTabLabel->SetText(FText::FromString(TEXT("Training  \u2713"))); }
+	if (TrainingTabLabel) { TrainingTabLabel->SetText(FText::FromString(TEXT("Training  (done)"))); }
 	if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
 	{
 		if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>())
