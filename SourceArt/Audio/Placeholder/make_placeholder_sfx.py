@@ -124,3 +124,37 @@ for b in range(2):
         i = int((b * 60 / 72 + off) * SR)
         beat[i:i + len(s)] += s[: len(beat) - i]
 write("sfx_heartbeat_loop", beat, peak=0.7)
+
+# --- Friday night batch: sip, locked door, door open/close, footstep-free UI tick ---
+# Slurp: short airy noise burst with a rising band (lips + air), then a small gulp
+x = t(0.55)
+band = np.zeros_like(x)
+for i, (lo, hi) in enumerate(((300, 1200), (600, 2400), (900, 3600))):
+    seg = bandpass_noise(0.55, lo, hi)
+    band += seg * np.exp(-((x - 0.08 - i * 0.07) / 0.06) ** 2)
+gulp = pad(tone(140, 0.18, 0.05, ((1, 1), (2, 0.4))), 0.55)
+gulp = np.roll(gulp, int(SR * 0.38))
+write("sfx_sip_slurp", band * 0.9 + gulp * 0.5, peak=0.6)
+
+# Locked door: handle rattle (3 quick metallic knocks) + latch thunk
+rattle = np.zeros(int(SR * 0.6))
+for k, at in enumerate((0.0, 0.09, 0.17, 0.26)):
+    hit = bandpass_noise(0.06, 1500, 6000) * env(0.06, 0.0005, 0.012)
+    hit += tone(820 + k * 35, 0.06, 0.02, ((1, 1), (2.7, 0.4)))
+    s0 = int(SR * at)
+    rattle[s0:s0 + len(hit)] += hit[: len(rattle) - s0]
+thunk = pad(tone(95, 0.2, 0.06) + bandpass_noise(0.2, 80, 400) * env(0.2, 0.001, 0.04), 0.6)
+write("sfx_door_locked", rattle + 0.8 * np.roll(thunk, int(SR * 0.33)), peak=0.6)
+
+# Door open: latch click + soft swing whoosh; close: whoosh + thud
+click = pad(bandpass_noise(0.03, 2000, 7000) * env(0.03, 0.0003, 0.006), 0.9)
+whoosh = bandpass_noise(0.9, 150, 900) * np.sin(np.pi * np.clip(t(0.9) / 0.9, 0, 1)) ** 2
+write("sfx_door_open", click + 0.35 * whoosh, peak=0.45)
+thud = pad(tone(70, 0.3, 0.08) + bandpass_noise(0.3, 60, 300) * env(0.3, 0.001, 0.05), 0.9)
+write("sfx_door_close", 0.35 * whoosh[::-1] + 0.9 * np.roll(thud, int(SR * 0.6)), peak=0.5)
+
+# Coffee pour: liquid trickle (bubbly band noise with amplitude flutter)
+x = t(1.6)
+flutter = 0.6 + 0.4 * np.abs(np.sin(2 * np.pi * 11 * x + 2 * np.sin(2 * np.pi * 3 * x)))
+pour = bandpass_noise(1.6, 500, 3000) * flutter * np.clip(x / 0.1, 0, 1) * np.clip((1.6 - x) / 0.3, 0, 1)
+write("sfx_coffee_pour", pour, peak=0.45)

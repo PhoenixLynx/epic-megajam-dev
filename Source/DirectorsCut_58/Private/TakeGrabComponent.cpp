@@ -22,6 +22,9 @@
 #include "CollisionQueryParams.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "Sound/SoundBase.h"
 
 UTakeGrabComponent::UTakeGrabComponent()
 {
@@ -89,6 +92,7 @@ void UTakeGrabComponent::BindKeys()
 	IC->BindKey(EKeys::E, IE_Pressed, this, &UTakeGrabComponent::Interact);
 	IC->BindKey(EKeys::RightMouseButton, IE_Pressed, this, &UTakeGrabComponent::Throw);
 	IC->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &UTakeGrabComponent::ThrowInput);   // only while holding
+	IC->BindKey(EKeys::F, IE_Pressed, this, &UTakeGrabComponent::Sip);
 	IC->BindKey(EKeys::P, IE_Pressed, this, &UTakeGrabComponent::TogglePause);
 	IC->BindKey(EKeys::Escape, IE_Pressed, this, &UTakeGrabComponent::TogglePause);   // in the editor Esc stops Play: use P
 	if (bDebugFearKeys)
@@ -135,6 +139,7 @@ ATakeCoworker* UTakeGrabComponent::CoworkerInView() const
 	float BestDot = 0.9f;
 	for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
 	{
+		if (!It->bStoryNPC) { continue; }   // office extras talk on their own as you pass
 		const FVector To = It->GetActorLocation() + FVector(0.f, 0.f, 40.f) - Loc;
 		if (To.Size() > UseRange) { continue; }
 		const float Dot = FVector::DotProduct(Rot.Vector(), To.GetSafeNormal());
@@ -235,7 +240,23 @@ void UTakeGrabComponent::ToggleOpen(AActor* Openable)
 		}
 		S = &Swings.Add(Openable, New);
 	}
+	const FVector Where = Openable->GetActorLocation() + FVector(0.f, 0.f, 100.f);
+	if (IsLockedForMe(Openable))
+	{
+		S->JiggleLeft = 0.45f;
+		PlaySfx(TEXT("sfx_door_locked"), Where);
+		const int32 Need = PassNeeded(Openable);
+		ShowSubtitle(TEXT(""), Need > 0 ? FString::Printf(TEXT("Locked. Access pass %d required."), Need) : FString(TEXT("Locked.")), 2.5f);
+		return;
+	}
+	if (PassNeeded(Openable) > 0 && !S->bUnlocked)
+	{
+		S->bUnlocked = true;
+		PlaySfx(TEXT("sfx_badge_ok"), Where, 0.8f);
+		ShowSubtitle(TEXT(""), TEXT("Access pass accepted."), 2.f);
+	}
 	S->bOpen = !S->bOpen;
+	PlaySfx(S->bOpen ? TEXT("sfx_door_open") : TEXT("sfx_door_close"), Where, 0.8f);
 }
 
 void UTakeGrabComponent::TickSwings(float DeltaTime)
@@ -247,11 +268,17 @@ void UTakeGrabComponent::TickSwings(float DeltaTime)
 		if (!A) { It.RemoveCurrent(); continue; }
 		FSwing& S = It.Value();
 		const float Goal = S.bOpen ? 1.f : 0.f;
-		if (FMath::IsNearlyEqual(S.Alpha, Goal)) { continue; }
+		if (FMath::IsNearlyEqual(S.Alpha, Goal) && S.JiggleLeft <= 0.f) { continue; }
 		S.Alpha = FMath::FInterpConstantTo(S.Alpha, Goal, 1.f, Step);
 		const float Eased = FMath::InterpEaseInOut(0.f, 1.f, S.Alpha, 2.f);
+		float Jiggle = 0.f;
+		if (S.JiggleLeft > 0.f)   // the handle rattles against the lock
+		{
+			S.JiggleLeft = FMath::Max(0.f, S.JiggleLeft - DeltaTime);
+			Jiggle = 1.4f * FMath::Sin(S.JiggleLeft * 70.f) * (S.JiggleLeft / 0.45f);
+		}
 		FRotator R = A->GetActorRotation();
-		R.Yaw = S.ClosedYaw + S.OpenYaw * Eased;
+		R.Yaw = S.ClosedYaw + S.OpenYaw * Eased + Jiggle;
 		A->SetActorRotation(R);
 	}
 }
@@ -276,6 +303,7 @@ void UTakeGrabComponent::SitAndLogIn(AActor* TerminalActor)
 	bSeated = true;
 	SeatedAt = Screen;
 	SeatReturnLocation = Pawn->GetActorLocation();
+	SeatReturnRotation = PC->GetControlRotation();
 	Drop();
 
 	// Sit on whichever side of the desk you walked up from, facing the screen
@@ -330,6 +358,7 @@ void UTakeGrabComponent::LogOut()
 		PC->SetIgnoreLookInput(false);
 	}
 	if (ACharacter* C = Cast<ACharacter>(Pawn)) { C->UnCrouch(); }
+	if (PC) { PC->SetControlRotation(FRotator(0.f, PC->GetControlRotation().Yaw, 0.f)); }   // look ahead, not at the ceiling
 	OnLoggedOut.Broadcast(SeatedAt.Get());
 }
 
@@ -386,6 +415,76 @@ void UTakeGrabComponent::PourCoffee()
 	const int32 Count = UE_ARRAY_COUNT(Pours);
 	ShowSubtitle(TEXT(""), Pours[(GI && GI->bGotCoffee) ? FMath::RandRange(1, Count - 1) : 0], 4.f);
 	if (GI) { GI->bGotCoffee = true; }
+	FHitResult Hit;
+	if (Look(Hit) == ETakeLookKind::Coffee) { PlaySfx(TEXT("sfx_coffee_pour"), Hit.ImpactPoint); }
+}
+
+void UTakeGrabComponent::PlaySfx(const TCHAR* Name, const FVector& Where, float Volume)
+{
+	if (USoundBase* Snd = LoadObject<USoundBase>(nullptr, *FString::Printf(TEXT("/Game/Audio/Placeholder/%s.%s"), Name, Name)))
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, Snd, Where, Volume);
+	}
+}
+
+bool UTakeGrabComponent::IsHoldingMug() const
+{
+	const UStaticMeshComponent* C = IsHolding() ? Cast<UStaticMeshComponent>(Handle->GetGrabbedComponent()) : nullptr;
+	return C && C->GetStaticMesh() && C->GetStaticMesh()->GetName().Contains(TEXT("Mug"));
+}
+
+void UTakeGrabComponent::Sip()
+{
+	if (!IsHoldingMug() || SipLeft > 0.f || bSeated) { return; }
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	SipLeft = 0.9f;
+	if (!GI || !GI->bGotCoffee)
+	{
+		ShowSubtitle(TEXT(""), TEXT("It's empty. The coffee machine is in the kitchen."), 3.f);
+		return;
+	}
+	PlaySfx(TEXT("sfx_sip_slurp"), Handle->GetGrabbedComponent()->GetComponentLocation(), 0.9f);
+	static const TCHAR* Lines[] = {
+		TEXT("*slurp* Perfect. It's always perfect."),
+		TEXT("*slurp* Tastes like Monday."),
+		TEXT("*slurp* Still exactly the right temperature."),
+		TEXT("*slurp* ...Is it getting fuller?"),
+		TEXT("*slurrrp*"),
+	};
+	ShowSubtitle(TEXT(""), Lines[Sips % int32(UE_ARRAY_COUNT(Lines))], 2.5f);
+	++Sips;
+}
+
+int32 UTakeGrabComponent::PassNeeded(const AActor* Door) const
+{
+	if (!Door) { return 0; }
+	for (const FName& Tag : Door->Tags)
+	{
+		const FString T = Tag.ToString();
+		if (T.StartsWith(TEXT("NeedsPass="))) { return FCString::Atoi(*T.Mid(10)); }
+	}
+	return 0;
+}
+
+bool UTakeGrabComponent::IsLockedForMe(const AActor* Door) const
+{
+	if (!Door) { return false; }
+	if (Door->ActorHasTag(TEXT("Locked"))) { return true; }   // locked for good (or until a script unlocks it)
+	const int32 Need = PassNeeded(Door);
+	return Need > 0 && GetSoulBits() < Need;
+}
+
+void UTakeGrabComponent::TickClock(float DeltaTime)
+{
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!GI || !Prompt) { return; }
+	// 1 game minute every 3 s. The morning stops at 11:59 until your tasks are done: it's always almost noon.
+	const float Cap = GI->MorningTasksDone() ? 12.f * 60.f + 0.f : 11.f * 60.f + 59.f;
+	{ GI->WorkdayMinutes = FMath::Min(GI->WorkdayMinutes + DeltaTime / 3.f, FMath::Max(Cap, GI->WorkdayMinutes)); }
+	const int32 M = FMath::FloorToInt(GI->WorkdayMinutes);
+	const int32 H24 = M / 60;
+	const int32 H12 = (H24 + 11) % 12 + 1;
+	Prompt->SetClock(FString::Printf(TEXT("%d:%02d %s\nTAKE %d   \u00B7   PASS %d / 3"), H12, M % 60, H24 < 12 ? TEXT("AM") : TEXT("PM"), GI->TakeNumber, GI->SoulBits));
 }
 
 void UTakeGrabComponent::UpdateTasks()
@@ -422,7 +521,11 @@ void UTakeGrabComponent::UpdatePrompt()
 {
 	if (!Prompt) { return; }
 	if (bSeated) { Prompt->SetPrompt(TEXT("")); return; }
-	if (IsHolding()) { Prompt->SetPrompt(TEXT("E  Drop        Click  Throw")); return; }
+	if (IsHolding())
+	{
+		Prompt->SetPrompt(IsHoldingMug() ? TEXT("F  Sip        E  Drop        Click  Throw") : TEXT("E  Drop        Click  Throw"));
+		return;
+	}
 	FHitResult Hit;
 	switch (Look(Hit))
 	{
@@ -431,7 +534,7 @@ void UTakeGrabComponent::UpdatePrompt()
 	case ETakeLookKind::Openable:
 	{
 		const FSwing* S = Swings.Find(Hit.GetActor());
-		Prompt->SetPrompt((S && S->bOpen) ? TEXT("E  Close") : TEXT("E  Open"));
+		Prompt->SetPrompt(IsLockedForMe(Hit.GetActor()) ? TEXT("E  Try the door") : ((S && S->bOpen) ? TEXT("E  Close") : TEXT("E  Open")));
 		break;
 	}
 	case ETakeLookKind::Coffee:   Prompt->SetPrompt(TEXT("E  Pour a coffee")); break;
@@ -445,6 +548,8 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	TickSwings(DeltaTime);
+	SipLeft = FMath::Max(0.f, SipLeft - DeltaTime);
+	TickClock(DeltaTime);
 	UpdatePrompt();
 	UpdateTasks();
 	if (SubtitleLeft > 0.f)
@@ -456,6 +561,15 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	FVector Loc; FRotator Rot;
 	if (GetView(Loc, Rot))
 	{
-		Handle->SetTargetLocationAndRotation(Loc + Rot.Vector() * HoldDistance, FRotator(HeldPitchRoll.Pitch, Rot.Yaw + HeldYawOffset, HeldPitchRoll.Roll));
+		if (SipLeft > 0.f && IsHoldingMug())   // bring the mug up to your face and tip it
+		{
+			const float A = FMath::Sin(PI * FMath::Clamp(1.f - SipLeft / 0.9f, 0.f, 1.f));
+			const FVector Target = Loc + Rot.Vector() * FMath::Lerp(HoldDistance, 38.f, A) - FVector(0.f, 0.f, 8.f * A);
+			Handle->SetTargetLocationAndRotation(Target, FRotator(HeldPitchRoll.Pitch, Rot.Yaw + HeldYawOffset, HeldPitchRoll.Roll + 35.f * A));
+		}
+		else
+		{
+			Handle->SetTargetLocationAndRotation(Loc + Rot.Vector() * HoldDistance, FRotator(HeldPitchRoll.Pitch, Rot.Yaw + HeldYawOffset, HeldPitchRoll.Roll));
+		}
 	}
 }

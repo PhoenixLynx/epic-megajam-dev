@@ -12,6 +12,7 @@
 class UStaticMeshComponent;
 class UTextRenderComponent;
 class UStaticMesh;
+class UAnimSequence;
 
 UENUM(BlueprintType)
 enum class ETakeCoworkerState : uint8 { Working, Walking, AtSpot, Returning, Watching };
@@ -41,6 +42,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechSeconds = 3.5f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechCooldown = 4.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WatchFear = 0.75f;
+	/** Part of a quest / story beat: shows a "!" and is the only kind you talk to with E. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bStoryNPC = false;
+	/** Sits at a desk typing (never wanders). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bSitsAtDesk = false;
 	/** Talk on their own when you walk past (no E needed). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bTalksWhenNear = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float NearRange = 260.f;
@@ -70,6 +75,15 @@ private:
 	static double NextAnyoneMayTalk;   // only one NPC talks at a time
 	static FString WrapLine(const FString& In, int32 Width);
 	void UpdateOverhead(const FVector& Eye);
+	// Rigged mannequin (if /Game/Characters/Mannequin was imported); otherwise the static Body is used
+	bool bSkeletal = false;
+	UPROPERTY() TObjectPtr<UAnimSequence> AnimIdle;
+	UPROPERTY() TObjectPtr<UAnimSequence> AnimWalk;
+	UPROPERTY() TObjectPtr<UAnimSequence> AnimSit;
+	UPROPERTY() TObjectPtr<UAnimSequence> AnimStare;
+	UPROPERTY() TObjectPtr<UAnimSequence> AnimPlaying;
+	void SetupSkeletal();
+	void PlayAnim(UAnimSequence* Anim);
 	float Phase = 0.f;
 	float StuckTimer = 0.f;
 	FVector LastPos;

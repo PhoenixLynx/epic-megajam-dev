@@ -37,6 +37,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 TrainingSlide = 0;
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bTrainingComplete = false;
 
+	/** In-game clock, minutes after midnight (starts 9:00). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take") float WorkdayMinutes = 540.f;
+
 	/** Act 1 badge task list */
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bReadEmail = false;
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bGotCoffee = false;

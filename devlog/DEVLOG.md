@@ -590,3 +590,17 @@ A running record of every AI tool used and what it did.
   - Lines stay up longer when they're long (about 14 characters a second).
   - Exiting: the pause menu (P / Esc) has **Quit to desktop**. It arrives with the morning rebuild.
 - **AI tools used:** Claude (video frame review, C++).
+
+### Session 37: Fri Nov 13, 2026, 22:15 MST: Feel like a game: story NPCs, seated coworkers, coffee sips, locked doors, HUD
+
+- **My feedback:** we have a good starting place, but the game hasn't *progressed* yet; let's keep going and see if overnight runs can be scheduled. It needs more game-like elements (HUD and so on). Also: (1) keep E-to-talk for story/quest characters only; office NPCs just talk as you pass. (2) The janitor, badge guard, front desk and security should be stationary. (3) Some coworkers should sit working at their desks. (4) Pick up your coffee and sip it, with slurping noises. (5) Try doors like the janitor closet and hear them locked. (6) Anything else from the video?
+- **Done:**
+  1. **Story NPCs only for E.** The receptionist, the closet guard and the closet custodian show a mint **"!"** and say "E  Talk"; everyone else just talks as you pass.
+  2. Receptionist, both guards and both custodians are **stationary**.
+  3. **Four coworkers sit at their cubicles typing**, the first use of the rigged mannequin (sitting/typing animation). Standing coworkers now **walk** with the walk cycle, idle at the coffee machine, and **stare** at high Fear. If the rig isn't imported, everyone falls back to the old static mannequin. `import_characters.py` renames the animations `AS_Idle / AS_Walk / AS_SitType / AS_Stare / …` so the code can find them.
+  4. **Sip your coffee:** hold a mug and press **F**. The mug comes up to your face and tips, *slurp* (new sound), and a line: "*slurp* Tastes like Monday." / "…Is it getting fuller?" Before you've poured a coffee it's "It's empty. The coffee machine is in the kitchen." Pouring now plays a pour sound.
+  5. **Locked doors:** the janitor closet needs **access pass 1**. Without it the handle rattles (the door jiggles, new rattle-and-thunk sound) and you get "Locked. Access pass 1 required." Finishing Compliance Training gives you pass 1. Then "Access pass accepted." and it opens, with door open/close sounds. **This is the first real progression gate.**
+  6. **HUD:** a small crosshair dot; top right, **a clock** (starts 9:00 AM; one game minute every 3 s; **it stops at 11:59 until your morning tasks are done**, because it's always almost noon) plus **TAKE n · PASS n / 3**.
+- **From the video (6):** motion blur was heavy when turning, so it's off now (`DefaultEngine.ini`). After logging out the camera was left looking up/down; now it levels out. Overhead clipping and no Quit were fixed last session.
+- **New sounds (placeholders, synthesized):** `sfx_sip_slurp`, `sfx_door_locked`, `sfx_door_open`, `sfx_door_close`, `sfx_coffee_pour`.
+- **AI tools used:** Claude (C++, sound synthesis, scripts, video review).

@@ -59,6 +59,18 @@ else:
     others = []
     for fbx in ("SK_MannequinGuard.fbx", "SK_MannequinCustodian.fbx"):
         others += run(fbx, skeleton, animations=False)
+    # Give the animations stable names the C++ can find: AS_Idle, AS_Walk, AS_SitDown, AS_SitType, AS_Reach, AS_Stare
+    for path in lib.list_assets(DEST, recursive=False):
+        a = lib.load_asset(path)
+        if not isinstance(a, unreal.AnimSequence) or a.get_name().startswith("AS_"):
+            continue
+        for key in ("SitDown", "SitType", "Idle", "Walk", "Reach", "Stare"):
+            if key.lower() in a.get_name().lower():
+                target = f"{DEST}/AS_{key}"
+                if lib.does_asset_exist(target):
+                    lib.delete_asset(target)
+                lib.rename_asset(path.split(".")[0], target)
+                break
     anims = [p for p in lib.list_assets(DEST, recursive=False)
              if isinstance(lib.load_asset(p), unreal.AnimSequence)]
     unreal.log(f"[TAKE 4471] Characters: skeleton {'ok' if skeleton else 'MISSING'}, "

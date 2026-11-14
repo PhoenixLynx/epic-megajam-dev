@@ -2,6 +2,7 @@
 //   E            look at a coworker = talk, your desk monitor = sit and log in,
 //                a door / fridge (tag Openable) = open or close, a loose prop = pick up / drop
 //   Right Mouse  throw what you're holding
+//   F            sip (while holding a mug)
 //   1-4 / 0      debug: Fear 0.25 / 0.5 / 0.75 / 0.95 / calm   (bDebugFearKeys)
 // Reach becomes telekinesis with 1+ soul bits. Added to the player automatically by the Fear Director.
 #pragma once
@@ -73,7 +74,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
-	struct FSwing { float ClosedYaw = 0.f; float OpenYaw = 90.f; float Alpha = 0.f; bool bOpen = false; };
+	struct FSwing { float ClosedYaw = 0.f; float OpenYaw = 90.f; float Alpha = 0.f; bool bOpen = false; float JiggleLeft = 0.f; bool bUnlocked = false; };
 
 	UPROPERTY() TObjectPtr<UPhysicsHandleComponent> Handle;
 	UPROPERTY() TObjectPtr<UTakePromptWidget> Prompt;
@@ -83,6 +84,15 @@ private:
 	TMap<TWeakObjectPtr<AActor>, FSwing> Swings;
 	bool bSeated = false;
 	float SubtitleLeft = 0.f;
+	float SipLeft = 0.f;
+	int32 Sips = 0;
+	FRotator SeatReturnRotation = FRotator::ZeroRotator;
+	bool IsHoldingMug() const;
+	void Sip();
+	int32 PassNeeded(const AActor* Door) const;   // 0 = not locked by a pass
+	bool IsLockedForMe(const AActor* Door) const;
+	void PlaySfx(const TCHAR* Name, const FVector& Where, float Volume = 1.f);
+	void TickClock(float DeltaTime);
 	int32 TasksShown = -1;          // bitmask of finished tasks last time we drew the list
 	void PourCoffee();
 	void UpdateTasks();

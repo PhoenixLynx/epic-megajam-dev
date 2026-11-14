@@ -42,12 +42,16 @@ public:
 	void SetSubtitle(const FString& Text);
 	/** Badge task list, top left. Empty hides it. */
 	void SetTasks(const FString& Text);
+	/** Clock / take / passes, top right. */
+	void SetClock(const FString& Text);
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 private:
 	UPROPERTY() TObjectPtr<UTextBlock> Label;
 	UPROPERTY() TObjectPtr<UTextBlock> Subtitle;
 	UPROPERTY() TObjectPtr<UTextBlock> TaskText;
+	UPROPERTY() TObjectPtr<UTextBlock> ClockText;
+	FString CurrentClock;
 	UPROPERTY() TObjectPtr<class UBorder> TaskPanel;
 	FString Current;
 	FString CurrentTasks;

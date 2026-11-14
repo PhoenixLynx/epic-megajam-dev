@@ -14,6 +14,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/DataTable.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/SkeletalMesh.h"
+#include "Animation/AnimSequence.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/TargetPoint.h"
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
@@ -74,7 +77,45 @@ void ATakeCoworker::BeginPlay()
 		if (It->ActorHasTag(TEXT("WorkSpot"))) { Spots.Add(*It); }
 	}
 	for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { FearDirector = *It; break; }
+	if (bSitsAtDesk)
+	{
+		bWanders = false;
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);   // the chair under them
+	}
+	SetupSkeletal();
 	LoadLines();
+}
+
+void ATakeCoworker::SetupSkeletal()
+{
+	const TCHAR* MeshName = NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase) ? TEXT("SK_MannequinGuard")
+		: NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase) ? TEXT("SK_MannequinCustodian") : TEXT("SK_Mannequin");
+	auto Load = [](const TCHAR* Name) -> UAnimSequence*
+	{
+		return LoadObject<UAnimSequence>(nullptr, *FString::Printf(TEXT("/Game/Characters/Mannequin/%s.%s"), Name, Name));
+	};
+	USkeletalMesh* SK = LoadObject<USkeletalMesh>(nullptr, *FString::Printf(TEXT("/Game/Characters/Mannequin/%s.%s"), MeshName, MeshName));
+	AnimIdle = Load(TEXT("AS_Idle"));
+	AnimWalk = Load(TEXT("AS_Walk"));
+	AnimSit = Load(TEXT("AS_SitType"));
+	AnimStare = Load(TEXT("AS_Stare"));
+	if (!SK || !AnimIdle) { return; }   // not imported yet: keep the static mannequin
+	bSkeletal = true;
+	USkeletalMeshComponent* M = GetMesh();
+	M->SetSkeletalMeshAsset(SK);
+	M->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -90.f), FRotator(0.f, -90.f, 0.f));
+	M->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	M->SetHiddenInGame(false);
+	Body->SetHiddenInGame(true);   // still there for E / line-of-sight traces
+	PlayAnim(bSitsAtDesk && AnimSit ? AnimSit.Get() : AnimIdle.Get());
+}
+
+void ATakeCoworker::PlayAnim(UAnimSequence* Anim)
+{
+	if (!bSkeletal || !Anim || Anim == AnimPlaying) { return; }
+	AnimPlaying = Anim;
+	GetMesh()->PlayAnimation(Anim, /*bLooping=*/true);
+	GetMesh()->SetPosition(FMath::FRandRange(0.f, Anim->GetPlayLength()), false);   // out of step with each other
 }
 
 void ATakeCoworker::LoadLines()
@@ -152,7 +193,18 @@ FString ATakeCoworker::WrapLine(const FString& In, int32 Width)
 
 void ATakeCoworker::UpdateOverhead(const FVector& Eye)
 {
-	if (SpokenLine.IsEmpty()) { return; }
+	if (SpokenLine.IsEmpty())
+	{
+		if (bStoryNPC && State != ETakeCoworkerState::Watching)   // someone to talk to
+		{
+			Speech->SetWorldRotation(FRotator(0.f, (Eye - Speech->GetComponentLocation()).Rotation().Yaw, 0.f));
+			Speech->SetTextRenderColor(FColor(80, 200, 180));
+			Speech->SetWorldSize(16.f);
+			Speech->SetText(FText::FromString(TEXT("!")));
+		}
+		return;
+	}
+	Speech->SetTextRenderColor(FColor(30, 40, 48));
 	const FVector Here = Speech->GetComponentLocation();
 	Speech->SetWorldRotation(FRotator(0.f, (Eye - Here).Rotation().Yaw, 0.f));
 	// Scale with distance so it is always about the same size on screen and never runs off it
@@ -203,7 +255,7 @@ void ATakeCoworker::SayLine(const FString& Line)
 	// Turn to face the player while talking
 	if (const APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0))
 	{
-		if (State == ETakeCoworkerState::Working || State == ETakeCoworkerState::AtSpot)
+		if (!bSitsAtDesk && (State == ETakeCoworkerState::Working || State == ETakeCoworkerState::AtSpot))
 		{
 			FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
 			SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));
@@ -271,6 +323,14 @@ void ATakeCoworker::Animate(float DeltaSeconds, bool bMoving)
 		break;
 	}
 	Body->SetRelativeLocationAndRotation(L, R);
+	if (bSkeletal)
+	{
+		UAnimSequence* Want = AnimIdle;
+		if (State == ETakeCoworkerState::Watching) { Want = AnimStare ? AnimStare.Get() : AnimIdle.Get(); }
+		else if (bMoving && AnimWalk) { Want = AnimWalk; }
+		else if (State == ETakeCoworkerState::Working && bSitsAtDesk && AnimSit) { Want = AnimSit; }
+		PlayAnim(Want);
+	}
 }
 
 void ATakeCoworker::Tick(float DeltaSeconds)

@@ -196,7 +196,7 @@ BOXES += [("JanitorWall_N", 950, 3350, 150, 320, 20, 300, WALL_MAT, []),
           ("JanitorWall_E2", 1100, 3635, 150, 20, 130, 300, WALL_MAT, []),
           ("JanitorLintel", 1100, 3525, 255, 20, 90, 90, WALL_MAT, [])]
 put("SM_DoorFrame", 1100, 3525, 0, -90)
-put("SM_Door", 1100, 3480, 0, -90, ["Openable", "OpenYaw=90", "JanitorDoor"])     # hinge at y 3480, swings in
+put("SM_Door", 1100, 3480, 0, -90, ["Openable", "OpenYaw=90", "JanitorDoor", "NeedsPass=1"])     # hinge at y 3480, swings in
 put("SM_UtilityShelf", 835, 3525, 0, -90)
 put("SM_MopBucket", 1000, 3420)
 put("SM_WetFloorSign", 1040, 3640, 0, 15)

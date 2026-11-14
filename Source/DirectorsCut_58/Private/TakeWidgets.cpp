@@ -100,6 +100,30 @@ TSharedRef<SWidget> UTakePromptWidget::RebuildWidget()
 		TaskSlot->SetAutoSize(true);
 		TaskSlot->SetPosition(FVector2D(32.f, 32.f));
 		TaskPanel->SetVisibility(ESlateVisibility::Collapsed);
+
+		// Clock, take and passes (top right)
+		ClockText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("Clock"));
+		FSlateFontInfo ClockFont = ClockText->GetFont();
+		ClockFont.Size = 16;
+		ClockFont.TypefaceFontName = TEXT("Bold");
+		ClockText->SetFont(ClockFont);
+		ClockText->SetColorAndOpacity(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.9f)));
+		ClockText->SetShadowOffset(FVector2D(1.f, 1.f));
+		ClockText->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, 0.6f));
+		ClockText->SetJustification(ETextJustify::Right);
+		UCanvasPanelSlot* ClockSlot = Root->AddChildToCanvas(ClockText);
+		ClockSlot->SetAnchors(FAnchors(1.f, 0.f));
+		ClockSlot->SetAlignment(FVector2D(1.f, 0.f));
+		ClockSlot->SetAutoSize(true);
+		ClockSlot->SetPosition(FVector2D(-32.f, 32.f));
+
+		// Crosshair: a small soft dot
+		UBorder* Dot = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("Crosshair"));
+		Dot->SetBrushColor(FLinearColor(1.f, 1.f, 1.f, 0.75f));
+		UCanvasPanelSlot* DotSlot = Root->AddChildToCanvas(Dot);
+		DotSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+		DotSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+		DotSlot->SetSize(FVector2D(4.f, 4.f));
 	}
 	return Super::RebuildWidget();
 }
@@ -110,6 +134,13 @@ void UTakePromptWidget::SetTasks(const FString& Text)
 	CurrentTasks = Text;
 	TaskText->SetText(FText::FromString(Text));
 	TaskPanel->SetVisibility(Text.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+}
+
+void UTakePromptWidget::SetClock(const FString& Text)
+{
+	if (Text == CurrentClock || !ClockText) { return; }
+	CurrentClock = Text;
+	ClockText->SetText(FText::FromString(Text));
 }
 
 void UTakePromptWidget::SetSubtitle(const FString& Text)
