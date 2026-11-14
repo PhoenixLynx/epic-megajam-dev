@@ -577,3 +577,4 @@ A running record of every AI tool used and what it did.
   - Opens with **P**, or **Esc** in the packaged game (in the editor Esc stops Play). P/Esc again or Resume closes it.
 - **Decisions & why:** a controls *reference* now; real key rebinding (Enhanced Input user settings) is a polish-day task if there's time. Volume uses the engine's master volume, so it covers music, ambience and voices without extra sound mixes.
 - **AI tools used:** Claude (pause menu, save system).
+- **21:47: first package succeeded!** `Builds/FridayNight/Windows/DirectorsCut_58.exe`, 1.1 GB, Development build, AutomationTool exit code 0, compiled and cooked in about 7 minutes. The riskiest step of the jam has worked once on Friday night. 📸 a screenshot of the packaged game running goes in the devlog.

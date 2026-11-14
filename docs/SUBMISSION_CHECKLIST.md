@@ -6,6 +6,7 @@
 ## Required
 
 - [ ] Windows development build packaged (zipped, tested by launching it on a clean run)
+  - Fri Nov 13, 21:47: first test package OK (`Builds/FridayNight`, 1.1 GB, Development, exit code 0). Still to do: the final build Sunday, zip it, test on a clean run.
 - [ ] itch.io game page set to **public**
 - [ ] Devlog linked from the itch page (GitHub repo starts **private**: switch it to **public** before linking, or post the devlog on itch instead)
 - [ ] Only the Unreal Engine logo used (no other engine/brand logos in the game or on the page)
