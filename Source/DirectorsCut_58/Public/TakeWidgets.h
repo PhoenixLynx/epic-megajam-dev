@@ -112,6 +112,8 @@ class DIRECTORSCUT_58_API UTakeInspectWidget : public UUserWidget
 public:
 	UPROPERTY(BlueprintAssignable) FTakeLogoutRequested OnCloseRequested;
 	void Setup(UTexture2D* InTexture, const FString& InTitle, const FString& InCaption);
+	/** Show a Key Lock signature as glyphs under the picture (call before AddToViewport). */
+	void SetGlyphs(int32 Value, int32 Bits) { GlyphValue = Value; GlyphBits = Bits; }
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
@@ -120,4 +122,6 @@ private:
 	UPROPERTY() TObjectPtr<UTexture2D> Picture;
 	FString TitleText;
 	FString CaptionText;
+	int32 GlyphValue = 0;
+	int32 GlyphBits = 0;
 };

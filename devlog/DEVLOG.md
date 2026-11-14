@@ -715,3 +715,27 @@ A running record of every AI tool used and what it did.
 - **Merged:** `overnight-run2` (which contains run 1) fast-forwarded into `main`. 26 files, +1,415 lines.
 - **Pre-emptive fix:** run 2 flagged one line as likely to fail (`Glow->IntensityUnits = …` in the wisp); switched it to `Glow->SetIntensityUnits(ELightUnits::Lumens)`, the public setter.
 - **Next:** copy into the PC project, rebuild, run the scripts, play the morning from the cold open through lunch to 2:14.
+
+### Session 45: Sat Nov 14, 2026, 09:10 MST: First full playthrough to lunch, big feedback round
+
+- **Compiled first try** (the overnight runs' 1,400 lines plus my fixes). I played from the cold open through the slip, Corridor B and the wisp ("that transition is amazing!!!!") to lunch, and recorded it (`devlog/Recording 2026-11-14 085508_secondact.mp4`, 5:26). ![Act 1 run](screenshots/2026-11-14_act1_run_frames.jpg) ![Corridor B to lunch](screenshots/2026-11-14_corridor_to_lunch_frames.jpg)
+- **My feedback** (1–17), with what was done:
+  1. *Items on my desk disappear* ![scattered desk](screenshots/2026-11-14_desk_items_scattered.png): sitting down teleports you next to the monitor, which blasted the physics props off the desk. Your keyboard, phone, pen cup, lamp, plant and stapler are now fixed in place; the mug stays pick-up-able.
+  2. *Animate the screens like real computers:* new screen images (inbox, spreadsheet, code, morale dashboard, video call, screensaver, login, plus LOOK CLOSER and a glyph field for Fear). Every monitor flips between them every few seconds. Yours shows a login screen, and your inbox while you're logged in. The monitor mesh got proper screen UVs and an emissive screen material.
+  3. Other NPC desks stay physical (unchanged).
+  4. *During Fear the desk can go, but it should regenerate:* at Fear 0.75 everything on your desk lifts and scatters. Once Fear drops below 0.25 it puts itself back, but only when you're not looking.
+  5. *The clock and the 10:00 meeting don't agree:* Act 1's clock now keeps time with the story: it holds at 9:55 until your morning tasks are done, reads 10:00 for the meeting, then the corridor eats the morning (time runs 3× faster) up to 11:59, so "It was eleven a second ago" is true at lunch.
+  6. *Coffee sip looks like it moves away:* the mug now comes to your mouth and tips toward you. Small things are held closer and a little lower, like in a hand.
+  7. *Different info for different posters:* each poster (Energy, Present, Corridor B, Smile, Mark, Wellness, and each one's changed version) has its own title and caption.
+  8. *Couldn't find glyphs in posters:* the Energy poster carries the Key 2 signature and the Smile poster the Key 3 signature: *Look closer* shows the glyph row under the picture. New posters on the walls: Smile ×2 (office, conference room), Mark, Wellness, Energy (lobby), Present (kitchen).
+  9. *Recovering soul energy, Fear vanishing: amazing, I love that transition.* ❤️
+  10. *For Fear, all coworkers rise and stare in place:* at Fear 0.75 everyone stops, stands up where they are (seated ones too) and turns to stare at you. No more creeping.
+  11. *More fear: they disappear:* at 0.9, anyone you look away from is gone. They're back in their places, working, when it passes.
+  12. *TakeBeat works great.* / *No payroll email:* it was waiting on the 12:30 call (not built yet). It now arrives after your first lunchtime check-in.
+  13. *Don't answer the phone until email is closed:* E at the terminal only logs out now. The phone keeps ringing while you're seated and you answer it once you stand up.
+  14. *Eat snacks:* pick up a snack, drink or fruit, **F: Eat** (crunch) or drink (gulp), with a line, and it's gone from the kitchen.
+  15. *Nothing happened in the conference room:* skipping with `TakeBeat 4` jumps past the 10:00 slip. The 12:30 call there isn't built yet (next).
+  16. *Plain blocks in the office* ![blocks](screenshots/2026-11-14_office_blocks.png): need to find out which ones these are (the level's leftover grey-box props are listed). The supply-closet shelf block is now replaced.
+  17. *More items in the supply closet and conference room:* supply closet: three stocked steel shelves (binders, paper, tape, staplers, cups, coffee, tea, snack boxes), a filing cabinet, a printer, a bin, a wet-floor sign. Conference room: an empty director's chair at the head of the table, laptops, mugs, water, a conference phone, paper, a binder, a filing cabinet, a bin, a poster. The call screen shows the video-call image and the Key Lock 2 panel a login screen.
+- **New sound:** `sfx_eat_crunch`.
+- **AI tools used:** Claude (video and screenshot review, C++, Blender UVs, HTML screen images rendered with headless Chrome, sound synthesis, level dressing).

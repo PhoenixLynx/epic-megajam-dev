@@ -193,3 +193,13 @@ for _ in range(60):
     pops[i:i + 400] += rng.standard_normal(400) * np.exp(-np.arange(400) / 40) * rng.uniform(0.5, 2.0)
 fade = np.clip(x / 0.15, 0, 1) * np.clip((6.0 - x) / 0.4, 0, 1)
 write("sfx_phone_static", (hiss * 0.5 + pops * 0.6) * fade, peak=0.35)
+
+# Eating: three crunchy bites (bright noise bursts with a low thud), a little wrapper crinkle
+crunch = np.zeros(int(SR * 0.9))
+for k, at in enumerate((0.0, 0.28, 0.55)):
+    bite = bandpass_noise(0.12, 1500, 7000) * env(0.12, 0.002, 0.03) * (1.0 - 0.2 * k)
+    bite += pad(tone(110, 0.08, 0.02), 0.12) * 0.4
+    s0 = int(SR * at)
+    crunch[s0:s0 + len(bite)] += bite[: len(crunch) - s0]
+crinkle = bandpass_noise(0.9, 3000, 9000) * (rng.random(int(SR * 0.9)) > 0.985) * 0.6
+write("sfx_eat_crunch", crunch + crinkle, peak=0.55)

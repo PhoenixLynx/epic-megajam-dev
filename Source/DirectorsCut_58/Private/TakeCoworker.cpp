@@ -491,24 +491,45 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 			SpeechLeft = 0.f;
 			Speech->SetText(FText::GetEmpty());
 		}
-		if (PlayerCanSee(Player))
+		// Everyone stops, rises where they are and stares at you. They don't walk any more.
+		if (AI) { AI->StopMovement(); }
+		const FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
+		SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));   // it was always looking at you
+		// Even more Fear: look away and they're gone. Look back: still gone.
+		if (Fear >= VanishFear && !bVanished && !PlayerCanSee(Player))
 		{
-			if (AI) { AI->StopMovement(); }
-			const FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
-			SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));   // it was always looking at you
-		}
-		else if (FVector::Dist2D(Player->GetActorLocation(), GetActorLocation()) > 140.f && AI)
-		{
-			GetCharacterMovement()->MaxWalkSpeed = CreepSpeed * (bIsAgent ? 2.f : 1.f);
-			AI->MoveToActor(Player, 120.f);
+			bVanished = true;
+			SetActorHiddenInGame(true);
+			SetActorEnableCollision(false);
 		}
 		Animate(DeltaSeconds, false);
 		return;
 	}
+	if (bVanished)   // Fear passed: back in their place as if nothing happened
+	{
+		bVanished = false;
+		SetActorHiddenInGame(false);
+		SetActorEnableCollision(true);
+		if (bSitsAtDesk)   // seated people only block you, never the furniture
+		{
+			GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+		}
+		SetActorLocation(Home);
+	}
 	if (State == ETakeCoworkerState::Watching)   // fear dropped: go back to work as if nothing happened
 	{
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-		GoTo(Home, ETakeCoworkerState::Returning);
+		if (bSitsAtDesk || !bWanders)
+		{
+			SetActorRotation(HomeRot);
+			State = ETakeCoworkerState::Working;
+			StateTimer = FMath::FRandRange(WorkMin, WorkMax);
+		}
+		else
+		{
+			GoTo(Home, ETakeCoworkerState::Returning);
+		}
 	}
 
 	// --- Ordinary workday ---------------------------------------------------------

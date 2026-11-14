@@ -38,7 +38,7 @@ THROWABLE = {"SM_CoffeeBag", "SM_TeaBox", "SM_CupStack", "SM_SnackBag", "SM_Snac
 REPLACE = ["GB_ReceptionDesk", "GB_Desk_4471", "GB_Monitor_4471", "GB_FileCabinet_A", "GB_FileCabinet_B", "GB_BreakCounter",
            "GB_CoffeeMachine", "GB_WaterCooler", "GB_WellnessBed_1", "GB_WellnessBed_2", "GB_WellnessBed_3",
            "GB_Mug_4471", "GB_Keyboard_4471", "GB_Chair_4471", "GB_ReamOfPaper_A", "GB_ReamOfPaper_B",
-           "GB_CoffeePot", "GB_WetFloorSign", "GB_FireExtinguisher", "GB_MopBucket"]
+           "GB_CoffeePot", "GB_WetFloorSign", "GB_FireExtinguisher", "GB_MopBucket", "GB_SupplyShelf"]
 REPLACE_PREFIXES = ["GB_Cubicle_", "GB_HospBed_"]
 
 P = []  # placements: (mesh, x, y, z, yaw, extra tags)
@@ -52,13 +52,13 @@ def put(mesh, x, y, z=0.0, yaw=0.0, tags=()):
 put("SM_Desk", 1300, 2300, 0, 180, ["Terminal", "Desk4471"])
 put("SM_Monitor", 1300, 2272, DESK_TOP, 180, ["Terminal", "Monitor4471"])   # E here = sit and log in
 # Desk top is x 1220-1380, y 2260-2340: everything stays inside it
-put("SM_Keyboard", 1300, 2318, DESK_TOP, 180)
-put("SM_Mug", 1242, 2320, DESK_TOP, 0, ["ChangeOnRewind"])
-put("SM_DeskPhone", 1355, 2312, DESK_TOP, 160, ["Phone4471"])   # your phone: it rings
-put("SM_PenCup", 1238, 2290, DESK_TOP)
-put("SM_DeskLamp", 1360, 2275, DESK_TOP, 200)
-put("SM_PlantDesk", 1250, 2270, DESK_TOP)
-put("SM_Stapler", 1330, 2332, DESK_TOP, 75)
+put("SM_Keyboard", 1300, 2318, DESK_TOP, 180, ["DeskItem", "DeskFixed"])
+put("SM_Mug", 1242, 2320, DESK_TOP, 0, ["ChangeOnRewind", "DeskItem"])
+put("SM_DeskPhone", 1355, 2312, DESK_TOP, 160, ["Phone4471", "DeskItem", "DeskFixed"])   # your phone: it rings
+put("SM_PenCup", 1238, 2290, DESK_TOP, 0, ["DeskItem", "DeskFixed"])
+put("SM_DeskLamp", 1360, 2275, DESK_TOP, 200, ["DeskItem", "DeskFixed"])
+put("SM_PlantDesk", 1250, 2270, DESK_TOP, 0, ["DeskItem", "DeskFixed"])
+put("SM_Stapler", 1330, 2332, DESK_TOP, 75, ["DeskItem", "DeskFixed"])
 put("SM_PCTower", 1410, 2280, 0, 180)
 put("SM_OfficeChair", 1300, 2385, 0, 0, ["ChangeOnRewind"])
 put("SM_TrashBin", 1170, 2370)
@@ -157,17 +157,45 @@ put("SM_SnackBag", 3430, 1270, 103, 60)
 for x in (600, 800, 1000):
     put("SM_MeetingChair", x, 960, 0, 180)
     put("SM_MeetingChair", x, 1240, 0, 0)
-put("SM_Laptop", 700, 1100, 75, 180)
-put("SM_Mug", 950, 1080, 75)
+put("SM_DirectorsChair", 1150, 1100, 0, 90)          # at the head of the table, empty
+TABLE_Z = 75
+for (x, y, yaw) in ((600, 1030, 180), (800, 1030, 180), (1000, 1170, 0)):
+    put("SM_Laptop", x, y, TABLE_Z, yaw)
+for (x, y) in ((660, 1060), (950, 1080), (720, 1150), (1060, 1130)):
+    put("SM_Mug", x, y, TABLE_Z, rnd.uniform(0, 360))
+for (x, y) in ((880, 1090), (900, 1110), (520, 1100)):
+    put("SM_WaterBottle", x, y, TABLE_Z)
+put("SM_DeskPhone", 800, 1100, TABLE_Z, 180)          # conference phone in the middle
+put("SM_ReamOfPaper", 560, 1150, TABLE_Z, 10)
+put("SM_BinderRed", 1080, 1060, TABLE_Z, 80)
+put("SM_PenCup", 980, 1000, TABLE_Z)
 put("SM_PlantTall", 280, 580)
 put("SM_PlantTall", 1320, 1620)
+put("SM_TrashBin", 1340, 600)
+put("SM_FilingCabinet_2", 1340, 900, 0, -90)
 put("SM_WallClock", 800, 512, 240, 180)
 
-# --- Supply closet ------------------------------------------------------------------
-for i in range(7):
-    put(["SM_Binder", "SM_BinderMint", "SM_BinderRed"][i % 3], 2880 + i * 6.5, 4170, 200, 90)
-for i in range(4):
-    put("SM_ReamOfPaper", 3100, 4170, 200 + i * 5, rnd.uniform(-8, 8))
+# --- Supply closet: three steel shelves along the back wall, stocked -----------------------
+SHELF_Z = (16, 61, 106, 151)   # top of each shelf you can put things on (the 5th is the roof)
+for sx in (2890, 3050, 3210):
+    put("SM_UtilityShelf", sx, 4172, 0, 0)
+STOCK = ["SM_Binder", "SM_BinderMint", "SM_BinderRed", "SM_ReamOfPaper", "SM_ReamOfPaper", "SM_TapeDispenser",
+         "SM_Stapler", "SM_CupStack", "SM_CoffeeBag", "SM_TeaBox", "SM_PenCup", "SM_SnackBox"]
+for sx in (2890, 3050, 3210):
+    for z in SHELF_Z[1:]:
+        for k in range(4):
+            mesh = rnd.choice(STOCK)
+            if mesh.startswith("SM_Binder"):   # binders stand in a row
+                for b in range(3):
+                    put(rnd.choice(["SM_Binder", "SM_BinderMint", "SM_BinderRed"]), sx - 45 + k * 28 + b * 6.5, 4175, z + 1, 90)
+            else:
+                put(mesh, sx - 45 + k * 28, 4175 + rnd.uniform(-6, 6), z + 1, rnd.uniform(-20, 20))
+for i in range(4):   # boxes of paper on the bottom shelf
+    put("SM_ReamOfPaper", 3050 + rnd.uniform(-40, 40), 4175, SHELF_Z[0] + 1 + i * 5, rnd.uniform(-8, 8))
+put("SM_FilingCabinet_4", 3270, 3900, 0, -90)
+put("SM_Printer", 2850, 3820, 0, 90)
+put("SM_TrashBin", 3260, 4060)
+put("SM_WetFloorSign", 3180, 3780, 0, 30)
 put("SM_PassReader", 2950, 3688, 120, 0)
 put("SM_MannequinGuard", 2950, 3590, 0, 0, ["NPC", "Guard_Closet"])
 
@@ -207,6 +235,13 @@ put("SM_MannequinCustodian", 960, 3560, 0, 90, ["NPC", "Custodian_Closet"])
 
 # --- Boards (engine cube + texture material): logo, notes ---------------------------
 PROPMAT = "/Game/Props/Materials/"
+POSTER = lambda name: PROPMAT + f"MI_Poster_{name}"
+BOXES += [("Poster_Smile_Office", 812, 2150, 165, 1, 60, 85, POSTER("Smile"), ["Inspectable"]),          # west wall
+          ("Poster_Mark_Office", 3388, 2600, 165, 1, 60, 85, POSTER("Mark"), ["Inspectable"]),           # east wall
+          ("Poster_Wellness_Office", 2000, 3688, 165, 60, 1, 85, POSTER("Wellness"), ["Inspectable"]),   # south wall
+          ("Poster_Smile_Conference", 1050, 512, 165, 60, 1, 85, POSTER("Smile"), ["Inspectable"]),      # north wall
+          ("Poster_Energy_Lobby", 2788, 1100, 165, 1, 60, 85, POSTER("Energy"), ["Inspectable"]),        # lobby east wall
+          ("Poster_Present_Kitchen", 3788, 1300, 165, 1, 60, 85, POSTER("Present"), ["Inspectable"])]    # kitchen east wall
 BOXES += [("Logo_ReceptionFront", 2100, 1261, 62, 250, 1, 62, PROPMAT + "MI_HalcyonLogoPanel", []),
           ("Logo_LobbyWall", 1412, 800, 190, 1, 110, 110, PROPMAT + "MI_HalcyonLogo", []),
           ("Logo_Kitchen", 3300, 1488, 200, 90, 1, 90, PROPMAT + "MI_HalcyonLogo", [])]
@@ -270,7 +305,9 @@ def main():
         room = "Hospital" if z <= -1000 else "Campus"
         a.set_folder_path(f"Dressing/{room}/{'NPC' if 'NPC' in tags else 'Props'}")
         all_tags = list(tags)
-        if mesh in THROWABLE and "Terminal" not in tags and "CoffeeMachine" not in tags:
+        if "DeskFixed" in tags:   # your desk stays tidy (Fear can still throw it around; it puts itself back)
+            comp.set_mobility(unreal.ComponentMobility.MOVABLE)
+        elif mesh in THROWABLE and "Terminal" not in tags and "CoffeeMachine" not in tags:
             comp.set_mobility(unreal.ComponentMobility.MOVABLE)
             comp.set_simulate_physics(True)
             comp.set_notify_rigid_body_collision(True)
@@ -296,8 +333,9 @@ def main():
             b.static_mesh_component.set_material(0, asset_lib.load_asset(mat_path))
         b.set_actor_label(f"{PREFIX}{label}_{k:02d}")
         b.set_folder_path("Dressing/Campus/Boards")
-        if label.startswith("FridgeNote"):
-            b.set_editor_property("tags", [unreal.Name("Inspectable")])   # E: look closer
+        box_tags = [t for t in tags if t != "AttachToFridgeDoor"] + (["Inspectable"] if label.startswith("FridgeNote") else [])
+        if box_tags:
+            b.set_editor_property("tags", [unreal.Name(t) for t in sorted(set(box_tags))])   # Inspectable: E = look closer
         if "AttachToFridgeDoor" in tags and fridge_door:
             b.static_mesh_component.set_mobility(unreal.ComponentMobility.MOVABLE)
             b.attach_to_actor(fridge_door, "", unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD,
@@ -306,13 +344,15 @@ def main():
     # Textures onto the grey-box boards. Posters 0-2 repeat as 3-5 so the loop looks identical.
     boards = {"GB_Poster_0": "MI_Poster_Energy", "GB_Poster_1": "MI_Poster_Present", "GB_Poster_2": "MI_Poster_CorridorB",
               "GB_Poster_3": "MI_Poster_Energy", "GB_Poster_4": "MI_Poster_Present", "GB_Poster_5": "MI_Poster_CorridorB",
-              "GB_ChairmanPortrait": "MI_ChairmanPortrait", "GB_BulletinBoard": "MI_CallSheet"}
+              "GB_ChairmanPortrait": "MI_ChairmanPortrait", "GB_BulletinBoard": "MI_CallSheet",
+              "GB_CallScreen": "MI_Screen_Call", "GB_KeyLock2_Panel": "MI_Screen_Login"}
     for a in actor_sys.get_all_level_actors():
         mi_name = boards.get(a.get_actor_label())
         if mi_name and asset_lib.does_asset_exist(f"/Game/Props/Materials/{mi_name}"):
             a.static_mesh_component.set_material(0, asset_lib.load_asset(f"/Game/Props/Materials/{mi_name}"))
-            tags = [t for t in a.tags if str(t) != "Inspectable"] + [unreal.Name("Inspectable")]   # E: look closer
-            a.set_editor_property("tags", tags)
+            if not mi_name.startswith("MI_Screen"):
+                tags = [t for t in a.tags if str(t) != "Inspectable"] + [unreal.Name("Inspectable")]   # E: look closer
+                a.set_editor_property("tags", tags)
 
     unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
     unreal.log(f"[TAKE 4471] Dressed campus: placed {placed}, removed {removed} old actors")

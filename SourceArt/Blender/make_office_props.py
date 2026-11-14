@@ -100,7 +100,8 @@ class Prop:
             rot = Vector((0, 0, 1)).rotation_difference(d.normalized()).to_matrix().to_4x4()
             self._add(r["verts"], mat, Matrix.Translation(Vector(loc) + mid) @ rot)
 
-    def finish(self, bevel=0.004, origin=(0.0, 0.0, 0.0)):
+    def finish(self, bevel=0.004, origin=(0.0, 0.0, 0.0), fit_uv=None):
+        """fit_uv: {material: (x0, x1, z0, z1)} gives that material's front faces 0..1 UVs (screens, labels)."""
         mesh = bpy.data.meshes.new(self.name)
         bmesh.ops.remove_doubles(self.bm, verts=self.bm.verts, dist=0.0001)
         if any(origin):
@@ -113,6 +114,11 @@ class Prop:
             for loop in f.loops:
                 co = loop.vert.co
                 loop[uv].uv = (co.y, co.z) if ax == 0 else ((co.x, co.z) if ax == 1 else (co.x, co.y))
+            if fit_uv and ax == 1 and f.material_index < len(self.slots) and self.slots[f.material_index] in fit_uv:
+                x0, x1, z0, z1 = fit_uv[self.slots[f.material_index]]
+                for loop in f.loops:
+                    co = loop.vert.co
+                    loop[uv].uv = ((co.x - x0) / (x1 - x0), (co.z - z0) / (z1 - z0))
         self.bm.to_mesh(mesh)
         self.bm.free()
         obj = bpy.data.objects.new(self.name, mesh)
@@ -177,8 +183,8 @@ def monitor():
     p.box((0.22, 0.18, 0.015), (0, 0.02, 0.0075), "M_PlasticBlack")
     p.box((0.05, 0.03, 0.28), (0, 0.07, 0.15), "M_PlasticBlack")
     p.box((0.62, 0.035, 0.38), (0, 0.04, 0.38), "M_PlasticBlack")
-    p.box((0.59, 0.004, 0.335), (0, 0.021, 0.39), "M_Screen")                 # screen face: own slot for UI later
-    return p.finish(0.003)
+    p.box((0.59, 0.004, 0.335), (0, 0.021, 0.39), "M_Screen")                 # screen face: own slot, 0..1 UVs for screen images
+    return p.finish(0.003, fit_uv={"M_Screen": (-0.295, 0.295, 0.2225, 0.5575)})
 
 
 def keyboard():

@@ -477,8 +477,47 @@ bool UTakeGrabComponent::IsHoldingMug() const
 	return C && C->GetStaticMesh() && C->GetStaticMesh()->GetName().Contains(TEXT("Mug"));
 }
 
+bool UTakeGrabComponent::IsHoldingSnack() const
+{
+	const UStaticMeshComponent* C = IsHolding() ? Cast<UStaticMeshComponent>(Handle->GetGrabbedComponent()) : nullptr;
+	if (!C || !C->GetStaticMesh()) { return false; }
+	const FString N = C->GetStaticMesh()->GetName();
+	return N.Contains(TEXT("Snack")) || N.Contains(TEXT("Fruit")) || N.Contains(TEXT("SodaCan")) || N.Contains(TEXT("WaterBottle"))
+		|| N.Contains(TEXT("LunchBox")) || N.Contains(TEXT("MilkCarton"));
+}
+
+void UTakeGrabComponent::Eat()
+{
+	if (!IsHoldingSnack() || bSeated) { return; }
+	UPrimitiveComponent* Comp = Handle->GetGrabbedComponent();
+	const FString N = Cast<UStaticMeshComponent>(Comp)->GetStaticMesh()->GetName();
+	const bool bDrink = N.Contains(TEXT("Soda")) || N.Contains(TEXT("Water")) || N.Contains(TEXT("Milk"));
+	PlaySfx(bDrink ? TEXT("sfx_sip_slurp") : TEXT("sfx_eat_crunch"), Comp->GetComponentLocation(), 0.85f);
+	static const TCHAR* Bites[] = {
+		TEXT("*crunch* Tastes like the vending machine smells."),
+		TEXT("*crunch* Someone wrote 4471 on the wrapper."),
+		TEXT("*crunch* Best before: today. It's always today."),
+		TEXT("*crunch* ...It was your favourite. You don't remember why."),
+	};
+	static const TCHAR* Drinks[] = {
+		TEXT("*gulp* Room temperature. Every room's temperature."),
+		TEXT("*gulp* Refreshing. Mandatory refreshment."),
+	};
+	if (bDrink) { ShowSubtitle(TEXT(""), Drinks[Eaten % int32(UE_ARRAY_COUNT(Drinks))], 2.5f); }
+	else { ShowSubtitle(TEXT(""), Bites[Eaten % int32(UE_ARRAY_COUNT(Bites))], 2.5f); }
+	++Eaten;
+	Handle->ReleaseComponent();
+	if (AActor* Food = Comp->GetOwner())
+	{
+		Food->SetActorHiddenInGame(true);       // gone from the kitchen
+		Food->SetActorEnableCollision(false);
+		Comp->SetSimulatePhysics(false);
+	}
+}
+
 void UTakeGrabComponent::Sip()
 {
+	if (IsHoldingSnack()) { Eat(); return; }   // F: eat / drink whatever you're holding
 	if (!IsHoldingMug() || SipLeft > 0.f || bSeated) { return; }
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	SipLeft = 0.9f;
@@ -564,6 +603,50 @@ void UTakeGrabComponent::BindPropImpacts()
 		}
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %d desk phone(s), yours %s"), Phones.Num(), MyPhone.IsValid() ? TEXT("found") : TEXT("missing"));
+
+	// Screens: every monitor's "M_Screen" slot flips between the MI_Screen_* images
+	auto LoadMat = [](const TCHAR* Name) -> UMaterialInterface*
+	{
+		return LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), Name, Name));
+	};
+	for (const TCHAR* N : { TEXT("MI_Screen_Inbox"), TEXT("MI_Screen_Sheet"), TEXT("MI_Screen_Code"), TEXT("MI_Screen_Chart"),
+	                        TEXT("MI_Screen_Call"), TEXT("MI_Screen_Saver") })
+	{
+		if (UMaterialInterface* M = LoadMat(N)) { WorkScreens.Add(M); }
+	}
+	for (const TCHAR* N : { TEXT("MI_Screen_Fear"), TEXT("MI_Screen_Glyphs") })
+	{
+		if (UMaterialInterface* M = LoadMat(N)) { FearScreens.Add(M); }
+	}
+	LoginScreen = LoadMat(TEXT("MI_Screen_Login"));
+	InboxScreen = LoadMat(TEXT("MI_Screen_Inbox"));
+	for (TActorIterator<AStaticMeshActor> It(GetWorld()); It; ++It)
+	{
+		UStaticMeshComponent* SM = It->GetStaticMeshComponent();
+		if (!SM || !SM->GetStaticMesh()) { continue; }
+		if (SM->GetStaticMesh()->GetName().Contains(TEXT("Monitor")))
+		{
+			const int32 Slot = SM->GetMaterialIndex(FName(TEXT("M_Screen")));
+			if (Slot != INDEX_NONE && WorkScreens.Num() > 0)
+			{
+				FScreen Scr;
+				Scr.Comp = SM;
+				Scr.Slot = Slot;
+				Scr.Next = FMath::FRandRange(0.f, 2.f);
+				Scr.bMine = It->ActorHasTag(TEXT("Monitor4471"));
+				Screens.Add(Scr);
+			}
+		}
+		if (It->ActorHasTag(TEXT("DeskItem")))
+		{
+			FDeskItem D;
+			D.Actor = *It;
+			D.Home = It->GetActorTransform();
+			D.bPhysics = SM->IsSimulatingPhysics();
+			DeskItems.Add(D);
+		}
+	}
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %d screen(s) (%d images), %d desk item(s)"), Screens.Num(), WorkScreens.Num(), DeskItems.Num());
 }
 
 void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -614,7 +697,7 @@ void UTakeGrabComponent::TickPhones(float DeltaTime)
 	if (Phones.Num() == 0) { return; }
 	if (AActor* P = RingingPhone.Get())
 	{
-		RingLeft -= DeltaTime;
+		if (!bSeated) { RingLeft -= DeltaTime; }   // it waits for you to log out
 		RingCycle -= DeltaTime;
 		if (RingLeft <= 0.f) { StopRinging(); NextRingIn = FMath::FRandRange(60.f, 120.f); return; }
 		if (RingCycle <= 0.f)
@@ -644,9 +727,7 @@ bool UTakeGrabComponent::PhoneRingingNear() const
 
 void UTakeGrabComponent::HandleTerminalLogout()
 {
-	// At your desk with the phone ringing: E answers it instead of logging out
-	if (PhoneRingingNear()) { AnswerPhone(RingingPhone.Get()); return; }
-	LogOut();
+	LogOut();   // close your email first; the phone keeps ringing until you stand up
 }
 
 void UTakeGrabComponent::AnswerPhone(AActor* Phone)
@@ -720,40 +801,44 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 	const FString Name = Tex ? Tex->GetName() : FString();
 	const bool bBrokeLoop = TryBreakLoopAt(Target);   // after reading the texture: breaking restores the poster
 	FString Title, Caption;
-	if (Name.Contains(TEXT("Chairman")))
+	int32 GlyphKey = 0;   // which Key Lock's signature is hidden on this one (0 = none)
+	struct FCaption { const TCHAR* Key; const TCHAR* Title; const TCHAR* Text; int32 Glyphs; };
+	static const FCaption Captions[] = {
+		{ TEXT("Chairman"), TEXT("THE CHAIRMAN"), TEXT("Founder. Visionary. Always just out of frame.\nThe plaque says he's proud of you. It doesn't say for what."), 0 },
+		{ TEXT("CallSheet"), TEXT("CALL SHEET"), TEXT("Today's date. A shooting schedule for an office.\nOne line is highlighted: EMPLOYEE 4471. You."), 0 },
+		{ TEXT("FridgeNote_Yogurt"), TEXT("KITCHEN"), TEXT("Someone has strong feelings about yogurt."), 0 },
+		{ TEXT("FridgeNote_Memo"), TEXT("KITCHEN"), TEXT("A memo about the fridge. It's signed by the fridge."), 0 },
+		{ TEXT("Energy_Changed"), TEXT("YOUR ENERGY IS OUR GREATEST ASSET"), TEXT("The bolt is pointing at you now.\nIn the corner, very small, someone has drawn a row of squares."), 2 },
+		{ TEXT("Present_Changed"), TEXT("BE PRESENT."), TEXT("The eye is closed.\nWasn't it open a minute ago?"), 0 },
+		{ TEXT("CorridorB_Changed"), TEXT("THERE IS NO CORRIDOR B"), TEXT("The arrow points back the way you came.\nThat's the one."), 0 },
+		{ TEXT("Smile_Changed"), TEXT("SMILE!"), TEXT("The smile is wider. Too wide."), 0 },
+		{ TEXT("Mark_Changed"), TEXT("HIT YOUR MARK"), TEXT("The X is on the floor where you're standing."), 0 },
+		{ TEXT("Wellness_Changed"), TEXT("WELLNESS CENTER"), TEXT("Open late. Open later. Open."), 0 },
+		{ TEXT("Energy"), TEXT("YOUR ENERGY IS OUR GREATEST ASSET"), TEXT("A cheerful lightning bolt. HALCYON Morale Team, Q4.\nSomeone has scratched a pattern of squares into the frame."), 2 },
+		{ TEXT("Present"), TEXT("BE PRESENT. BE PRESENT. BE PRESENT."), TEXT("A single open eye. It's printed slightly off-centre, so it's looking at you."), 0 },
+		{ TEXT("CorridorB"), TEXT("THERE IS NO CORRIDOR B"), TEXT("Facilities notice. The arrow points down the corridor."), 0 },
+		{ TEXT("Smile"), TEXT("SMILE!"), TEXT("The Morale Team reminds you that cameras are always rolling.\nUnder the logo: a faint row of squares."), 3 },
+		{ TEXT("Mark"), TEXT("HIT YOUR MARK"), TEXT("Stand where you're told. Say what you're given."), 0 },
+		{ TEXT("Wellness"), TEXT("WELLNESS CENTER"), TEXT("Rest. Recharge. Return. The building's own clinic, down Corridor B."), 0 },
+	};
+	for (const FCaption& C : Captions)
 	{
-		Title = TEXT("THE CHAIRMAN");
-		Caption = TEXT("Founder. Visionary. Always just out of frame.\nThe plaque says he's proud of you. It doesn't say for what.");
+		if (Name.Contains(C.Key)) { Title = C.Title; Caption = C.Text; GlyphKey = C.Glyphs; break; }
 	}
-	else if (Name.Contains(TEXT("CallSheet")))
-	{
-		Title = TEXT("CALL SHEET");
-		Caption = TEXT("Today's date. A shooting schedule for an office.\nOne line is highlighted: EMPLOYEE 4471. You.");
-	}
-	else if (Name.Contains(TEXT("FridgeNote")))
-	{
-		Title = TEXT("KITCHEN");
-		Caption = TEXT("Someone has strong feelings about yogurt.");
-	}
-	else if (Name.Contains(TEXT("_Changed")))
-	{
-		Title = TEXT("HALCYON");
-		Caption = TEXT("Wasn't it different a minute ago?");
-	}
-	else if (Name.Contains(TEXT("Poster")))
+	if (Title.IsEmpty() && Name.Contains(TEXT("Poster")))
 	{
 		Title = TEXT("HALCYON");
 		Caption = TEXT("Every hallway has one. Every hallway has this one.");
-	}
-	if (bBrokeLoop)
-	{
-		Title = TEXT("HALCYON");
-		Caption = TEXT("That's the one. It wasn't like this a minute ago.\nSomewhere ahead, the hum stops.");
 	}
 	Inspecting = CreateWidget<UTakeInspectWidget>(PC, UTakeInspectWidget::StaticClass());
 	if (!Inspecting) { return; }
 	Drop();
 	Inspecting->Setup(Tex, Title, Caption);
+	if (GlyphKey > 0)   // a Key Lock signature hidden in the artwork: shown as glyphs under the picture
+	{
+		const FTakeKeyLock Lock = UTakeKeyLockLibrary::GenerateKeyLockForRun(this, GlyphKey, 0);
+		Inspecting->SetGlyphs(Lock.Target, Lock.Bits);
+	}
 	Inspecting->SetIsFocusable(true);
 	Inspecting->OnCloseRequested.AddDynamic(this, &UTakeGrabComponent::CloseInspect);
 	Inspecting->AddToViewport(30);
@@ -779,6 +864,80 @@ void UTakeGrabComponent::CloseInspect()
 	}
 }
 
+void UTakeGrabComponent::TickScreens(float DeltaTime)
+{
+	if (Screens.Num() == 0) { return; }
+	float Fear = 0.f;
+	for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { Fear = It->Fear; break; }
+	const bool bFear = Fear >= 0.75f && FearScreens.Num() > 0;
+	for (FScreen& Scr : Screens)
+	{
+		UStaticMeshComponent* C = Scr.Comp.Get();
+		if (!C) { continue; }
+		Scr.Next -= DeltaTime;
+		if (Scr.Next > 0.f) { continue; }
+		UMaterialInterface* M = nullptr;
+		if (bFear)
+		{
+			M = FearScreens[FMath::RandRange(0, FearScreens.Num() - 1)];
+			Scr.Next = FMath::FRandRange(0.08f, 0.6f);   // stutter
+		}
+		else if (Scr.bMine)
+		{
+			M = bSeated ? InboxScreen.Get() : LoginScreen.Get();
+			Scr.Next = 0.5f;
+		}
+		else
+		{
+			M = WorkScreens[FMath::RandRange(0, WorkScreens.Num() - 1)];
+			Scr.Next = FMath::FRandRange(2.5f, 7.f);       // someone switching windows
+		}
+		if (M) { C->SetMaterial(Scr.Slot, M); }
+	}
+}
+
+void UTakeGrabComponent::TickDesk()
+{
+	if (DeskItems.Num() == 0) { return; }
+	float Fear = 0.f;
+	for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { Fear = It->Fear; break; }
+	if (!bDeskThrown && Fear >= 0.75f)
+	{
+		bDeskThrown = true;   // everything on your desk lifts and scatters
+		for (const FDeskItem& D : DeskItems)
+		{
+			AActor* A = D.Actor.Get();
+			UPrimitiveComponent* P = A ? Cast<UPrimitiveComponent>(A->GetRootComponent()) : nullptr;
+			if (!P || (IsHolding() && Handle->GetGrabbedComponent() == P)) { continue; }
+			P->SetSimulatePhysics(true);
+			P->AddImpulse(FVector(FMath::FRandRange(-1.f, 1.f), FMath::FRandRange(-1.f, 1.f), FMath::FRandRange(1.2f, 2.f)) * 180.f, NAME_None, true);
+			P->AddAngularImpulseInDegrees(FVector(FMath::FRandRange(-1.f, 1.f), FMath::FRandRange(-1.f, 1.f), FMath::FRandRange(-1.f, 1.f)) * 500.f, NAME_None, true);
+		}
+		return;
+	}
+	if (bDeskThrown && Fear < 0.25f)
+	{
+		// Only tidy up when you aren't watching: you come back and it's as if nothing happened
+		const AActor* Any = DeskItems[0].Actor.Get();
+		FVector Loc; FRotator Rot;
+		if (Any && GetView(Loc, Rot))
+		{
+			const FVector To = Any->GetActorLocation() - Loc;
+			if (To.Size() < 500.f && FVector::DotProduct(Rot.Vector(), To.GetSafeNormal()) > 0.2f) { return; }
+		}
+		bDeskThrown = false;
+		for (const FDeskItem& D : DeskItems)
+		{
+			AActor* A = D.Actor.Get();
+			UPrimitiveComponent* P = A ? Cast<UPrimitiveComponent>(A->GetRootComponent()) : nullptr;
+			if (!P || (IsHolding() && Handle->GetGrabbedComponent() == P)) { continue; }
+			P->SetSimulatePhysics(false);
+			A->SetActorTransform(D.Home, false, nullptr, ETeleportType::ResetPhysics);
+			if (D.bPhysics) { P->SetSimulatePhysics(true); }   // the mug stays a mug you can pick up
+		}
+	}
+}
+
 void UTakeGrabComponent::TickClock(float DeltaTime)
 {
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
@@ -796,8 +955,14 @@ void UTakeGrabComponent::TickClock(float DeltaTime)
 	}
 	else
 	{
-		const float Cap = GI->MorningTasksDone() ? 12.f * 60.f + 0.f : 11.f * 60.f + 59.f;
-		GI->WorkdayMinutes = FMath::Min(GI->WorkdayMinutes + DeltaTime / 3.f, FMath::Max(Cap, GI->WorkdayMinutes));
+		// Act 1 keeps time with the story: it's always almost ten until your morning tasks are done, ten o'clock
+		// for the meeting, then the corridor eats the rest of the morning (time runs 3x faster) up to 11:59.
+		float Cap = 9.f * 60.f + 55.f;
+		float SecondsPerMinute = 3.f;
+		if (GI->Beat == ETakeBeat::Meeting) { Cap = 10.f * 60.f; }
+		else if (GI->Beat >= ETakeBeat::Corridor) { Cap = 11.f * 60.f + 59.f; SecondsPerMinute = 1.f; }
+		if (GI->Beat >= ETakeBeat::Corridor && GI->WorkdayMinutes < 10.f * 60.f + 1.f) { GI->WorkdayMinutes = 10.f * 60.f + 1.f; }
+		GI->WorkdayMinutes = FMath::Min(GI->WorkdayMinutes + DeltaTime / SecondsPerMinute, FMath::Max(Cap, GI->WorkdayMinutes));
 	}
 	const int32 M = FMath::FloorToInt(GI->WorkdayMinutes);
 	const int32 H24 = M / 60;
@@ -847,7 +1012,8 @@ void UTakeGrabComponent::UpdatePrompt()
 	if (bSeated) { Prompt->SetPrompt(TEXT("")); return; }
 	if (IsHolding())
 	{
-		Prompt->SetPrompt(IsHoldingMug() ? TEXT("F  Sip        E  Drop        Click  Throw") : TEXT("E  Drop        Click  Throw"));
+		Prompt->SetPrompt(IsHoldingMug() ? TEXT("F  Sip        E  Drop        Click  Throw")
+			: IsHoldingSnack() ? TEXT("F  Eat        E  Drop        Click  Throw") : TEXT("E  Drop        Click  Throw"));
 		return;
 	}
 	FHitResult Hit;
@@ -884,6 +1050,8 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickClock(DeltaTime);
 	TickFootsteps(DeltaTime);
 	TickPhones(DeltaTime);
+	TickScreens(DeltaTime);
+	TickDesk();
 	TickSlate(DeltaTime);
 	TickStory();
 	TickAct2(DeltaTime);
@@ -906,11 +1074,21 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	FVector Loc; FRotator Rot;
 	if (GetView(Loc, Rot))
 	{
-		if (SipLeft > 0.f && IsHoldingMug())   // bring the mug up to your face and tip it
+		if (SipLeft > 0.f && IsHoldingMug())   // bring the mug up to your mouth and tip it toward you
 		{
 			const float A = FMath::Sin(PI * FMath::Clamp(1.f - SipLeft / 0.9f, 0.f, 1.f));
-			const FVector Target = Loc + Rot.Vector() * FMath::Lerp(HoldDistance, 38.f, A) - FVector(0.f, 0.f, 8.f * A);
-			Handle->SetTargetLocationAndRotation(Target, FRotator(HeldPitchRoll.Pitch, Rot.Yaw + HeldYawOffset, HeldPitchRoll.Roll + 35.f * A));
+			const FVector Flat = FRotator(0.f, Rot.Yaw, 0.f).Vector();
+			const FVector Right = FRotator(0.f, Rot.Yaw + 90.f, 0.f).Vector();
+			const FVector Rest = Loc + Rot.Vector() * MugHoldDistance - FVector(0.f, 0.f, 12.f);
+			const FVector Mouth = Loc + Flat * 22.f - FVector(0.f, 0.f, 9.f);
+			const FQuat Base = FRotator(HeldPitchRoll.Pitch, Rot.Yaw + HeldYawOffset, HeldPitchRoll.Roll).Quaternion();
+			const FQuat Tip = FQuat(Right, FMath::DegreesToRadians(-55.f * A));   // top of the mug tips back toward your face
+			Handle->SetTargetLocationAndRotation(FMath::Lerp(Rest, Mouth, A), (Tip * Base).Rotator());
+		}
+		else if (IsHoldingMug() || IsHoldingSnack())   // small things are held closer, a little low, like a real hand
+		{
+			Handle->SetTargetLocationAndRotation(Loc + Rot.Vector() * MugHoldDistance - FVector(0.f, 0.f, 12.f),
+			                                     FRotator(HeldPitchRoll.Pitch, Rot.Yaw + HeldYawOffset, HeldPitchRoll.Roll));
 		}
 		else
 		{

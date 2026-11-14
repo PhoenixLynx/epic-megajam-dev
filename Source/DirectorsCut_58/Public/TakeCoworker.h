@@ -42,6 +42,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechSeconds = 3.5f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechCooldown = 4.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WatchFear = 0.75f;
+	/** Above this Fear they vanish the moment you look away (and come back when it passes). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float VanishFear = 0.9f;
 	/** Part of a quest / story beat: shows a "!" and is the only kind you talk to with E. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bStoryNPC = false;
 	/** Turn of the rigged mannequin inside the character (degrees). If they face the wrong way, change this
@@ -105,6 +107,7 @@ private:
 	TArray<int32> Bag;              // shuffled order of Lines still to say
 	int32 LastLine = -1;
 	bool bGreeted = false;
+	bool bVanished = false;
 	int32 LinesAct = 1;             // which act's small talk is loaded (switches at lunch, beat 1.10)
 	float ActCheckIn = 0.f;
 	bool bLinesClocksFrozen = false;  // the 2:14 lines are in

@@ -57,7 +57,7 @@ EMAILS = [
     ("A2_PayrollPhish", 2, "Payro11 Department", "ACTION REQUIRED: verify your key",
      "Dear Employee,\n\nTo keep receiving your energy allocation, reply with your key signature below. "
      "This is the correct one. Trust this one.\n\n{GLYPHS_B}",
-     True, True, "AfterCall"),
+     True, True, "AfterCheckIn"),
     ("A2_Facilities", 2, "Facilities", "Re: the clocks",
      "We are aware that all clocks on the floor read 2:14.\nIt is 2:14.\n\n- Facilities\n\n{GLYPHS_B}",
      True, False, "ClocksFreeze"),

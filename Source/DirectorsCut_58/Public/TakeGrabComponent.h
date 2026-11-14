@@ -17,6 +17,7 @@ class UTakePromptWidget;
 class UTakeTerminalWidget;
 class UTakePauseMenu;
 class UTakeInspectWidget;
+class UStaticMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeGrabEvent, UPrimitiveComponent*, Component);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeActorEvent, AActor*, Actor);
@@ -120,6 +121,10 @@ private:
 	int32 Sips = 0;
 	FRotator SeatReturnRotation = FRotator::ZeroRotator;
 	bool IsHoldingMug() const;
+	bool IsHoldingSnack() const;
+	void Eat();
+	int32 Eaten = 0;
+	float MugHoldDistance = 55.f;
 	void Sip();
 	int32 PassNeeded(const AActor* Door) const;   // 0 = not locked by a pass
 	bool IsLockedForMe(const AActor* Door) const;
@@ -180,6 +185,19 @@ private:
 	UFUNCTION() void HandleRewind(int32 NewTakeNumber);
 	UFUNCTION() void HandleLooped(int32 Count);
 	void BindPropImpacts();
+	// Monitors flip between work screens (and something else at high Fear)
+	struct FScreen { TWeakObjectPtr<UStaticMeshComponent> Comp; int32 Slot = 0; float Next = 0.f; bool bMine = false; };
+	TArray<FScreen> Screens;
+	UPROPERTY() TArray<TObjectPtr<class UMaterialInterface>> WorkScreens;
+	UPROPERTY() TArray<TObjectPtr<class UMaterialInterface>> FearScreens;
+	UPROPERTY() TObjectPtr<class UMaterialInterface> LoginScreen;
+	UPROPERTY() TObjectPtr<class UMaterialInterface> InboxScreen;
+	void TickScreens(float DeltaTime);
+	// Desk #4471 stays tidy; high Fear throws it around, and it puts itself back afterwards
+	struct FDeskItem { TWeakObjectPtr<AActor> Actor; FTransform Home; bool bPhysics = false; };
+	TArray<FDeskItem> DeskItems;
+	bool bDeskThrown = false;
+	void TickDesk();
 	UFUNCTION() void OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	int32 TasksShown = -1;          // bitmask of finished tasks last time we drew the list
 	void PourCoffee();

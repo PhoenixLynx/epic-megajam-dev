@@ -82,6 +82,25 @@ mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
 mel.recompile_material(base)
 unreal.EditorAssetLibrary.save_loaded_asset(base)
 
+# Monitor screens glow: same texture parameter, also fed into Emissive
+screen_base = get_or_create("M_ScreenTexture", MAT_DIR, unreal.Material, unreal.MaterialFactoryNew())
+mel.delete_all_material_expressions(screen_base)
+s_tex = mel.create_material_expression(screen_base, unreal.MaterialExpressionTextureSampleParameter2D, -500, 0)
+s_tex.set_editor_property("parameter_name", "Tex")
+s_gain = mel.create_material_expression(screen_base, unreal.MaterialExpressionScalarParameter, -500, 250)
+s_gain.set_editor_property("parameter_name", "Glow")
+s_gain.set_editor_property("default_value", 1.6)
+s_mul = mel.create_material_expression(screen_base, unreal.MaterialExpressionMultiply, -250, 120)
+mel.connect_material_expressions(s_tex, "RGB", s_mul, "A")
+mel.connect_material_expressions(s_gain, "", s_mul, "B")
+mel.connect_material_property(s_tex, "RGB", unreal.MaterialProperty.MP_BASE_COLOR)
+mel.connect_material_property(s_mul, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+s_rough = mel.create_material_expression(screen_base, unreal.MaterialExpressionConstant, -250, 300)
+s_rough.set_editor_property("r", 0.25)
+mel.connect_material_property(s_rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+mel.recompile_material(screen_base)
+unreal.EditorAssetLibrary.save_loaded_asset(screen_base)
+
 made = 0
 for path in unreal.EditorAssetLibrary.list_assets("/Game/Props/Textures", recursive=False):
     tex = unreal.EditorAssetLibrary.load_asset(path)
@@ -90,7 +109,7 @@ for path in unreal.EditorAssetLibrary.list_assets("/Game/Props/Textures", recurs
     name = tex.get_name()                       # T_Poster_Energy_Changed
     mi_name = "MI_" + name[2:] if name.startswith("T_") else "MI_" + name
     mi = get_or_create(mi_name, MAT_DIR, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
-    mel.set_material_instance_parent(mi, base)
+    mel.set_material_instance_parent(mi, screen_base if name.startswith("T_Screen_") else base)
     mel.set_material_instance_texture_parameter_value(mi, "Tex", tex)
     unreal.EditorAssetLibrary.save_loaded_asset(mi)
     made += 1

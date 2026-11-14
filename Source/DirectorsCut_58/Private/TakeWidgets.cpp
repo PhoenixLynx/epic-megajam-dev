@@ -221,6 +221,7 @@ void UTakeTerminalWidget::LoadMail()
 			if (When == TEXT("Act2Start"))    { return GI->CurrentAct() >= 2; }
 			if (When == TEXT("ClocksFreeze")) { return GI->bClocksFrozen; }
 			if (When == TEXT("AfterCall"))    { return GI->bJoinedCall; }
+			if (When == TEXT("AfterCheckIn")) { return GI->CoworkersCheckedIn >= 1 || GI->bJoinedCall; }
 			if (When == TEXT("AfterMeeting")) { return GI->bAttendedMeeting; }
 			return false;
 		};
@@ -659,6 +660,31 @@ TSharedRef<SWidget> UTakeInspectWidget::RebuildWidget()
 		if (!CaptionText.IsEmpty())
 		{
 			Col->AddChildToVerticalBox(Line(CaptionText, 16, FLinearColor(0.92f, 0.94f, 0.95f), false))->SetPadding(FMargin(0.f, 8.f, 0.f, 0.f));
+		}
+		if (GlyphBits > 0)   // the hidden signature, drawn in glyphs
+		{
+			UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+			for (int32 B = 0; B < GlyphBits; ++B)
+			{
+				const bool bLit = UTakeKeyLockLibrary::IsGlyphLit(GlyphValue, B);
+				const FString Path = FString::Printf(TEXT("/Game/UI/Glyphs/T_Glyph%d_%s_%s"), B % 8, GlyphNames[B % 8], bLit ? TEXT("Lit") : TEXT("Unlit"));
+				UWidget* Cell = nullptr;
+				if (UTexture2D* G = LoadObject<UTexture2D>(nullptr, *Path))
+				{
+					UImage* Img = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+					Img->SetBrushFromTexture(G, false);
+					Img->SetDesiredSizeOverride(FVector2D(44.f, 44.f));
+					Cell = Img;
+				}
+				else
+				{
+					Cell = Line(bLit ? TEXT("\u25A0") : TEXT("\u25A1"), 26, FLinearColor(0.50f, 0.83f, 0.77f), true);
+				}
+				Row->AddChildToHorizontalBox(Cell)->SetPadding(FMargin(4.f, 0.f));
+			}
+			UVerticalBoxSlot* RowSlot = Col->AddChildToVerticalBox(Row);
+			RowSlot->SetHorizontalAlignment(HAlign_Center);
+			RowSlot->SetPadding(FMargin(0.f, 14.f, 0.f, 0.f));
 		}
 		Col->AddChildToVerticalBox(Line(TEXT("E / Esc / click  -  put it back"), 12, FLinearColor(0.6f, 0.65f, 0.7f), false))->SetPadding(FMargin(0.f, 18.f, 0.f, 0.f));
 	}
