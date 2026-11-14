@@ -608,3 +608,13 @@ A running record of every AI tool used and what it did.
   - **Run 1, 00:45:** Act 1 progression: objectives on the HUD, the cold open (`TAKE 1`, PA "Good morning, team"), multi-line story NPC conversations, morning complete → 10:00 meeting slip → Corridor B wisp → loop break. Branch `overnight-run1`.
   - **Run 2, 03:15:** compile-readiness review of everything new, then beat 1.10 (clock jumps to 12:00, "Lunch is served.", Act 2 task list) and, if time allows, the repeating PA and clocks frozen at 2:14. Branch `overnight-run2`.
   - Morning: Claude reviews both branches, merges, copies into the project, rebuild.
+
+### Session 38: Fri Nov 13, 2026, 22:30 MST: Sitting fix, story NPCs wait for E
+
+- **My feedback:** I love the coffee sipping. Found a sitting error (screenshot). Also, when you press E on a story character like the badge guard, the subtitles should start *after* you press E. ![sitting error](screenshots/2026-11-13_sitting_error.png)
+- **Cause:** the seated coworker was spawned inside the chair's collision, so at Play the character physics pushed it out, and it sat in mid-air in front of the chair. Its chair could also be one of the deliberately backwards "WrongWay" chairs. The screenshot also showed "E  Talk" on an ordinary coworker: the look-at trace still counted every coworker, not just story characters.
+- **Fixes:**
+  - Seated coworkers no longer use walking physics or get pushed by furniture (they still block you). Their chair is squared up to the desk, held still, and the coworker is placed so the hips land on the seat.
+  - **Facing knob:** if a rigged mannequin faces the wrong way, `MeshYaw` (default -90) on the coworker fixes it. In Play you can test on everyone with the console command `TakeNPCYaw 90` (or 0 / 180 / -90).
+  - **Story characters (receptionist, closet guard, closet custodian) only talk when you press E**: no proximity or bump lines. Ordinary coworkers never show "E  Talk".
+- **AI tools used:** Claude (screenshot diagnosis, C++).

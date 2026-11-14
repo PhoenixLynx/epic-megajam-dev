@@ -1,5 +1,7 @@
 // TAKE 4471 - run state + console commands
 #include "TakeGameInstance.h"
+#include "TakeCoworker.h"
+#include "EngineUtils.h"
 #include "DirectorsCut_58.h"
 #include "TakeFearDirector.h"
 #include "TakeStalker.h"
@@ -70,5 +72,15 @@ void UTakeGameInstance::TakeSeed()
 			UE_LOG(LogTake, Log, TEXT("    frag %d %s%s"), I, *UTakeKeyLockLibrary::GlyphRowString(L.Fragments[I], L.Bits, L.HiddenMasks[I]),
 			       L.IsDecoy[I] ? TEXT("  <- malware") : TEXT(""));
 		}
+	}
+}
+
+void UTakeGameInstance::TakeNPCYaw(float Yaw)
+{
+	if (UWorld* World = GetWorld())
+	{
+		int32 N = 0;
+		for (TActorIterator<ATakeCoworker> It(World); It; ++It) { It->SetMeshYaw(Yaw); ++N; }
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] NPC mesh yaw = %.0f on %d coworker(s)"), Yaw, N);
 	}
 }

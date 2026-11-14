@@ -44,6 +44,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WatchFear = 0.75f;
 	/** Part of a quest / story beat: shows a "!" and is the only kind you talk to with E. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bStoryNPC = false;
+	/** Turn of the rigged mannequin inside the character (degrees). If they face the wrong way, change this
+	 *  (or type TakeNPCYaw 90 / 180 / 0 in the console during Play to try it on everyone). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float MeshYaw = -90.f;
+	UFUNCTION(BlueprintCallable, Category = "Coworker") void SetMeshYaw(float Yaw);
 	/** Sits at a desk typing (never wanders). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bSitsAtDesk = false;
 	/** Talk on their own when you walk past (no E needed). */

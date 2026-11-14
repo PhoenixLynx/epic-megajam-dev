@@ -165,7 +165,10 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 	const bool bNear = Hit.Distance <= UseRange;
 	if (A && bNear)
 	{
-		if (A->IsA<ATakeCoworker>()) { return ETakeLookKind::Coworker; }
+		if (const ATakeCoworker* C = Cast<ATakeCoworker>(A))
+		{
+			return C->bStoryNPC ? ETakeLookKind::Coworker : ETakeLookKind::None;   // extras talk on their own
+		}
 		if (A->ActorHasTag(TEXT("Terminal"))) { return ETakeLookKind::Terminal; }
 		if (A->ActorHasTag(TEXT("Openable"))) { return ETakeLookKind::Openable; }
 		if (A->ActorHasTag(TEXT("CoffeeMachine"))) { return ETakeLookKind::Coffee; }

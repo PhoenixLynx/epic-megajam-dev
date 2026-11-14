@@ -147,8 +147,13 @@ for row, col in SEATED_CUBICLES:
     cx, cy = 1800 + col * 350, 2100 + row * 450
     target = unreal.Vector(cx, cy - 5, 0)
     chair = min(chairs, key=lambda c: (c.get_actor_location() - target).length(), default=None)
-    at = chair.get_actor_location() if chair and (chair.get_actor_location() - target).length() < 80 else target
-    cw = actor_sys.spawn_actor_from_class(unreal.TakeCoworker, unreal.Vector(at.x, at.y, 92), unreal.Rotator(0, 0, -90))
+    if chair and (chair.get_actor_location() - target).length() < 80:
+        # square the chair up to the desk (never a WrongWay chair) and hold it still
+        chair.set_actor_location_and_rotation(target, unreal.Rotator(0, 0, 180), False, False)
+        chair.static_mesh_component.set_simulate_physics(False)
+        chair.set_editor_property("tags", [unreal.Name("SeatedChair")])
+    # the sitting animation puts the hips ~10 cm behind the capsule centre: stand the capsule a little forward
+    cw = actor_sys.spawn_actor_from_class(unreal.TakeCoworker, unreal.Vector(cx, cy - 13, 92), unreal.Rotator(0, 0, -90))
     cw.set_actor_label(f"{PREFIX}Coworker_Seated_{row}{col}")
     cw.set_folder_path("Gameplay/Coworkers")
     if mannequin:
@@ -157,8 +162,6 @@ for row, col in SEATED_CUBICLES:
     cw.set_editor_property("sits_at_desk", True)
     cw.set_editor_property("wanders", False)
     cw.set_editor_property("tags", [unreal.Name("NPC"), unreal.Name("Seated")])
-    if chair:   # keep the chair under them still
-        chair.static_mesh_component.set_simulate_physics(False)
     seated += 1
 
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()

@@ -80,8 +80,14 @@ void ATakeCoworker::BeginPlay()
 	if (bSitsAtDesk)
 	{
 		bWanders = false;
-		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);   // the chair under them
+		// Stay exactly in the chair: no walking physics, and don't get pushed out by the chair or desk
+		GetCharacterMovement()->DisableMovement();
+		GetCharacterMovement()->GravityScale = 0.f;
+		UCapsuleComponent* Cap = GetCapsuleComponent();
+		Cap->SetCollisionResponseToAllChannels(ECR_Ignore);
+		Cap->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);   // you still can't walk through them
 	}
+	if (bStoryNPC) { bTalksWhenNear = false; }   // story characters wait for you to press E
 	SetupSkeletal();
 	LoadLines();
 }
@@ -103,11 +109,17 @@ void ATakeCoworker::SetupSkeletal()
 	bSkeletal = true;
 	USkeletalMeshComponent* M = GetMesh();
 	M->SetSkeletalMeshAsset(SK);
-	M->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -90.f), FRotator(0.f, -90.f, 0.f));
+	M->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -90.f), FRotator(0.f, MeshYaw, 0.f));
 	M->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	M->SetHiddenInGame(false);
 	Body->SetHiddenInGame(true);   // still there for E / line-of-sight traces
 	PlayAnim(bSitsAtDesk && AnimSit ? AnimSit.Get() : AnimIdle.Get());
+}
+
+void ATakeCoworker::SetMeshYaw(float Yaw)
+{
+	MeshYaw = Yaw;
+	if (bSkeletal) { GetMesh()->SetRelativeRotation(FRotator(0.f, MeshYaw, 0.f)); }
 }
 
 void ATakeCoworker::PlayAnim(UAnimSequence* Anim)
@@ -353,8 +365,8 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 		const float Dist = FVector::Dist2D(Player->GetActorLocation(), GetActorLocation());
 		FCollisionQueryParams SightParams(SCENE_QUERY_STAT(TakeBark), false, Player);
 		SightParams.AddIgnoredActor(this);
-		// Bump: always reacts
-		if (Dist < 95.f) { Speak(TEXT("Bump")); }
+		// Bump: extras react (story characters wait for E)
+		if (Dist < 95.f && !bStoryNPC) { Speak(TEXT("Bump")); }
 		// Walk past: they talk on their own, one NPC at a time, not too often
 		else if (bTalksWhenNear && Dist < NearRange && NearCooldownLeft <= 0.f && GetFear() < WatchFear
 		         && GetWorld()->GetTimeSeconds() >= NextAnyoneMayTalk

@@ -55,5 +55,6 @@ public:
 	UFUNCTION(Exec) void TakeStalker();                  // activate the stalker now
 	UFUNCTION(Exec) void TakeRewind();                   // "CUT. AGAIN."
 	UFUNCTION(Exec) void TakeLoop(bool bEnable);         // force the Corridor B loop on/off
-	UFUNCTION(Exec) void TakeSeed();                     // print the run seed + Key 1..3 previews to the log
+	UFUNCTION(Exec) void TakeSeed();
+	UFUNCTION(Exec) void TakeNPCYaw(float Yaw);          // turn every rigged NPC's body (facing test)                     // print the run seed + Key 1..3 previews to the log
 };
