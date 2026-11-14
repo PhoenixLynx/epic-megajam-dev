@@ -155,6 +155,24 @@ PAGES["T_Whiteboard"] = (1200, 600, f"""<div style="position:absolute;inset:0;ba
 <div style="position:absolute;right:60px;bottom:40px;font:40px Caveat;color:#2a8a3a">(do not erase)</div>
 <div style="position:absolute;left:70px;bottom:50px;font:34px Caveat;color:#555">who keeps drawing squares on this?</div>""")
 
+def chart(header, lines, note=""):
+    return (600, 860, f"""<div style="position:absolute;inset:0;background:#fbfbf7"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:80px;background:#d9e6ea;font:700 26px/80px Poppins;color:{INK};padding-left:36px;letter-spacing:3px">HALCYON CARE &middot; {header}</div>
+<div style="position:absolute;left:36px;right:30px;top:110px;font:22px/1.5 'Courier New',monospace;color:#1b1b1b;white-space:pre-wrap">{lines}</div>
+<div style="position:absolute;left:36px;right:30px;bottom:60px;font:40px/1.1 Caveat;color:#b02a2a;transform:rotate(-3deg)">{note}</div>""")
+
+
+PAGES.update({
+    "T_Chart_4471": chart("PATIENT 4471", "ADMITTED:  today (again)\nCONDITION: looked closer\nTREATMENT: retake\n\nNOTES:\nPatient will read this chart.\nPatient is reading this chart\nnow.", "squares in the margin: copy them"),
+    "T_Chart_Stage": chart("BED 7", "INT. WARD - CONTINUOUS\n\n4471 turns to the next bed.\n         (beat)\nThey will hesitate here.\n\n4471 hesitates.", "same squares as 4471's chart"),
+    "T_Chart_4470": chart("PATIENT 4470", "ADMITTED:  yesterday\nSTATUS:    WRAPPED\n\nNOTES:\nThe squares on this chart\nwere added later, in a\ndifferent hand.", "don't trust this one"),
+    "T_Chart_Blank": chart("PATIENT ____", "ADMITTED:  next take\nCONDITION: pending\n\nNOTES:\n(blank)"),
+    "T_TrustMark": (512, 512, f"""<div style="position:absolute;inset:0;background:#eef6f4"></div>
+<div style="position:absolute;left:226px;top:30px;width:60px;height:452px;background:{MINT};transform:rotate(45deg)"></div>
+<div style="position:absolute;left:226px;top:30px;width:60px;height:452px;background:{MINT};transform:rotate(-45deg)"></div>"""),
+    "T_Sign_Service": sign("SERVICE ELEVATOR", "Staff and patients only.<br><br>Access pass 3.", colour="#5a6c72"),
+})
+
 if __name__ == "__main__":
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=os.environ.get("CHROME", "/usr/bin/google-chrome"))

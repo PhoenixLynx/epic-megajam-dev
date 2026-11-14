@@ -57,7 +57,7 @@ else:
             skeleton = a
             break
     others = []
-    for fbx in ("SK_MannequinGuard.fbx", "SK_MannequinCustodian.fbx", "SK_MannequinChef.fbx"):
+    for fbx in ("SK_MannequinGuard.fbx", "SK_MannequinCustodian.fbx", "SK_MannequinChef.fbx", "SK_MannequinStalker.fbx"):
         others += run(fbx, skeleton, animations=False)
     # Give the animations stable names the C++ can find: AS_Idle, AS_Walk, AS_SitDown, AS_SitType, AS_Reach, AS_Stare
     for path in lib.list_assets(DEST, recursive=False):

@@ -73,7 +73,9 @@ void UTakeGrabComponent::BeginPlay()
 		}
 	}
 	BindStoryEvents();
-	if (bPlayColdOpen) { StartSlate(false); }
+	const UTakeGameInstance* TitleGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (bPlayColdOpen && TitleGI && !TitleGI->bTitleDone) { ShowTitle(); }   // the title screen first, once per launch
+	else if (bPlayColdOpen) { StartSlate(false); }
 	else if (Prompt) { Prompt->SetSlate(0.f, FString(), 0.f); }
 }
 
@@ -218,7 +220,8 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 		if (A->ActorHasTag(TEXT("CoffeeMachine"))) { return ETakeLookKind::Coffee; }
 		if (A->ActorHasTag(TEXT("Vending"))) { return ETakeLookKind::Vending; }
 		if (A->ActorHasTag(TEXT("CallScreen")) && CanJoinCall()) { return ETakeLookKind::Call; }
-		if (A->ActorHasTag(TEXT("KeyLockPanel"))) { return ETakeLookKind::LockPanel; }
+		if (A->ActorHasTag(TEXT("KeyLockPanel")) || A->ActorHasTag(TEXT("KeyLockPanel=3"))) { return ETakeLookKind::LockPanel; }
+		if (A->ActorHasTag(TEXT("PassBlock=2"))) { return ETakeLookKind::Openable; }
 		if (!UseKey(A).IsEmpty()) { return ETakeLookKind::Use; }
 		if (RingingPhone.IsValid() && A == RingingPhone.Get()) { return ETakeLookKind::Phone; }
 		if (A->ActorHasTag(TEXT("Inspectable"))) { return ETakeLookKind::Inspect; }
@@ -251,7 +254,7 @@ void UTakeGrabComponent::Interact()
 	case ETakeLookKind::Inspect:   Inspect(Hit.GetActor()); break;
 	case ETakeLookKind::Call:      JoinCall(); break;
 	case ETakeLookKind::Vending:   Vend(Hit.GetActor()); break;
-	case ETakeLookKind::LockPanel: OpenLockPanel(2); break;
+	case ETakeLookKind::LockPanel: OpenLockPanel(Hit.GetActor()->ActorHasTag(TEXT("KeyLockPanel=3")) ? 3 : 2); break;
 	case ETakeLookKind::Use:       UseThing(Hit.GetActor()); break;
 	case ETakeLookKind::Wisp:      CollectWisp(Cast<ATakeWisp>(Hit.GetActor())); break;
 	case ETakeLookKind::Prop:      TryGrabOrDrop(); break;
@@ -318,6 +321,17 @@ void UTakeGrabComponent::Throw()
 void UTakeGrabComponent::ToggleOpen(AActor* Openable)
 {
 	if (!Openable) { return; }
+	if (Openable->ActorHasTag(TEXT("PassBlock=2")))   // the Wellness Center doors: they just let you through with pass 2
+	{
+		const FVector At = Openable->GetActorLocation();
+		if (GetSoulBits() < 2) { PlaySfx(TEXT("sfx_door_locked"), At); ShowSubtitle(TEXT(""), TEXT("WELLNESS CENTER. Access pass 2 required. Wellness is a privilege."), 3.f); return; }
+		PlaySfx(TEXT("sfx_badge_ok"), At, 0.8f);
+		PlaySfx(TEXT("sfx_door_open"), At, 0.8f);
+		Openable->SetActorHiddenInGame(true);
+		Openable->SetActorEnableCollision(false);
+		ShowSubtitle(TEXT(""), TEXT("The Wellness Center. It smells like a hospital pretending not to be one."), 3.5f);
+		return;
+	}
 	FSwing* S = Swings.Find(Openable);
 	if (!S)
 	{
@@ -933,6 +947,10 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		{ TEXT("Polaroid_4470"), TEXT("DESK 4471 - DAY 1"), TEXT("Your desk. Someone sitting at it, in a mint suit.\nThe face has been scribbled out. Hard. The pen went through the photo."), 0 },
 		{ TEXT("Sticky_4470"), TEXT("A NOTE"), TEXT("\"if you're reading this it's not your first day. LOOK CLOSER. - 4470\"\nThe handwriting looks a lot like yours."), 0 },
 		{ TEXT("Nameplate_4471"), TEXT("YOUR NAMEPLATE"), TEXT("4471, on a sticker. It doesn't quite cover the number underneath.\nPeel back the corner and it says 4470."), 0 },
+		{ TEXT("Chart_4471"), TEXT("PATIENT 4471"), TEXT("Admitted: today (again). Condition: looked closer.\n\"Patient is reading this chart now.\" Squares in the margin."), 3 },
+		{ TEXT("Chart_Stage"), TEXT("BED 7"), TEXT("INT. WARD - CONTINUOUS. \"4471 turns to the next bed. They will hesitate here.\"\nYou hesitate. The same squares, in the same pen."), 3 },
+		{ TEXT("Chart_4470"), TEXT("PATIENT 4470"), TEXT("Status: WRAPPED. The squares on this chart were added later.\nThe handwriting doesn't match."), 7 },
+		{ TEXT("Chart_Blank"), TEXT("PATIENT ____"), TEXT("Admitted: next take."), 0 },
 		{ TEXT("Whiteboard"), TEXT("THE WHITEBOARD"), TEXT("Q4 energy targets, up and to the right. Retention: 100%. Retakes: as needed.\nIn the corner, in a different marker: a row of squares."), 2 },
 		{ TEXT("KitchenBoard"), TEXT("KITCHEN NOTICES"), TEXT("Lost: red stapler. Cake in the fridge for 4471's birthday (again).\nSomeone keeps labelling a mug \"4470\". Morale is mandatory. Fun is at 2:14."), 0 },
 		{ TEXT("ScriptNotes"), TEXT("THE RECEPTIONIST'S SCRIPT"), TEXT("INT. HALCYON LOBBY - MORNING. \"Welcome back. (beat) Oh -- first day. Of course.\"\nIn red pen, from C: smile with the eyes. AGAIN."), 0 },
@@ -972,9 +990,15 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 	Inspecting->Setup(Tex, Title, Caption);
 	if (GlyphKey > 0)   // a Key Lock signature hidden in the artwork: shown as glyphs under the picture
 	{
+		// 7 = a decoy: squares from a different lock, noted under Key 3 (it's for you to notice they disagree)
 		const FTakeKeyLock Lock = UTakeKeyLockLibrary::GenerateKeyLockForRun(this, GlyphKey, 0);
 		Inspecting->SetGlyphs(Lock.Target, Lock.Bits);
-		NoteGlyphs(GlyphKey, Title.IsEmpty() ? FString(TEXT("a poster")) : FString::Printf(TEXT("poster \"%s\""), *Title.Left(28)));
+		const int32 NoteKey = GlyphKey == 7 ? 3 : GlyphKey;
+		const FString Source = Title.IsEmpty() ? FString(TEXT("a poster")) : FString::Printf(TEXT("\"%s\""), *Title.Left(28));
+		if (UTakeGameInstance* NGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+		{
+			if (NGI->AddGlyphNote(NoteKey, Source, Lock.Target, Lock.Bits)) { QueueSubtitle(TEXT(""), TEXT("(You note down the squares. Pause > Tasks to see your notes.)")); }
+		}
 	}
 	Inspecting->SetIsFocusable(true);
 	Inspecting->OnCloseRequested.AddDynamic(this, &UTakeGrabComponent::CloseInspect);
@@ -1206,7 +1230,8 @@ void UTakeGrabComponent::UpdatePrompt()
 		const FString K = UseKey(Hit.GetActor());
 		Prompt->SetPrompt(K == TEXT("Sink") ? TEXT("E  Wash your hands") : K == TEXT("Dryer") ? TEXT("E  Dry your hands")
 			: K == TEXT("Toilet") ? TEXT("E  Flush") : K == TEXT("Printer") ? TEXT("E  Print") : K == TEXT("Cooler") ? TEXT("E  Get some water")
-			: K == TEXT("Elevator") ? TEXT("E  Press a button") : TEXT("E  Use"));
+			: K == TEXT("Elevator") ? TEXT("E  Press a button") : K == TEXT("TrustFall") ? TEXT("E  Fall backward")
+			: K == TEXT("ServiceElevator") ? TEXT("E  Call the service elevator") : TEXT("E  Use"));
 		break;
 	}
 	case ETakeLookKind::Wisp:     Prompt->SetPrompt(TEXT("E  Reach for the light")); break;
@@ -1230,6 +1255,7 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickStory();
 	TickAct2(DeltaTime);
 	TickCall(DeltaTime);
+	TickAct3(DeltaTime);
 	TickFun(DeltaTime);
 	TickMail(DeltaTime);
 	TickFearReveals();

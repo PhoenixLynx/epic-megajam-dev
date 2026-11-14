@@ -1,5 +1,7 @@
 // TAKE 4471 - run state + console commands
 #include "TakeGameInstance.h"
+#include "TakeGrabComponent.h"
+#include "GameFramework/Pawn.h"
 #include "TakeCoworker.h"
 #include "EngineUtils.h"
 #include "DirectorsCut_58.h"
@@ -10,6 +12,7 @@
 #include "TakeKeyLockLibrary.h"
 #include "EngineUtils.h"
 #include "Misc/DateTime.h"
+#include "Kismet/GameplayStatics.h"
 #include "HAL/PlatformTime.h"
 
 void UTakeGameInstance::Init()
@@ -108,6 +111,13 @@ FString UTakeGameInstance::ObjectiveForBeat() const
 		if (CoworkersCheckedIn < 3)  { return FString(TEXT("Check in with Reception, Security and the Custodian (look for the !)")); }
 		if (!bRepliedChairman)       { return FString(TEXT("Reply to the Chairman (your terminal)")); }
 		return FString(TEXT("Wait for further direction."));
+	case ETakeBeat::Overtime:
+		if (SoulBits < 2) { return FString(TEXT("Team building needs access pass 2 (the Supply Closet terminal)")); }
+		return FString(TEXT("Mandatory team building: Wellness Center (end of Corridor B)"));
+	case ETakeBeat::Ward:
+		if (SoulBits < 3) { return FString(TEXT("Find Key 3 in the charts. The nurses' station terminal.")); }
+		return FString(TEXT("The service elevator (east end of the ward)"));
+	case ETakeBeat::Wrap:         return FString(TEXT("Press C."));
 	default:                      return FString();
 	}
 }
@@ -129,6 +139,17 @@ void UTakeGameInstance::TakeBeat(int32 NewBeat)
 	bJoinedCall = bAttendedMeeting = bRepliedChairman = bClocksFrozen = false;
 	CoworkersCheckedIn = 0;
 	bDevLunchNow = false;
+	if (Clamped >= static_cast<int32>(ETakeBeat::Overtime))
+	{
+		// Act 3 test: Act 2 done, clocks stopped; the story code starts Overtime on the next frame
+		Beat = ETakeBeat::Lunch;
+		bJoinedCall = bAttendedMeeting = bRepliedChairman = bClocksFrozen = true;
+		CoworkersCheckedIn = 3;
+		WorkdayMinutes = 14.f * 60.f + 14.f;
+		bDevAct3Now = true;
+		SetObjective(ObjectiveForBeat());
+		return;
+	}
 	if (Clamped >= static_cast<int32>(ETakeBeat::Lunch))
 	{
 		// Stop just before beat 1.10 and let the story code play it (12:00, "Lunch is served.", Act 2 tasks)
@@ -156,6 +177,11 @@ void UTakeGameInstance::TakeTime(int32 HHMM)
 FString UTakeGameInstance::TaskListText() const
 {
 	auto Box = [](bool bDone) { return bDone ? TEXT("[x]") : TEXT("[  ]"); };
+	if (CurrentAct() >= 3)
+	{
+		return FString::Printf(TEXT("%s  Access pass 2\n%s  Team building (Wellness Center)\n%s  Access pass 3\n%s  Press C"),
+		                       Box(SoulBits >= 2), Box(bTrustFell), Box(SoulBits >= 3), Box(bEndingSeen));
+	}
 	if (CurrentAct() >= 2)
 	{
 		const int32 Met = FMath::Clamp(CoworkersCheckedIn, 0, 3);
@@ -168,6 +194,10 @@ FString UTakeGameInstance::TaskListText() const
 
 int32 UTakeGameInstance::TaskSignature() const
 {
+	if (CurrentAct() >= 3)
+	{
+		return 0x400 | (SoulBits >= 2 ? 1 : 0) | (bTrustFell ? 2 : 0) | (SoulBits >= 3 ? 4 : 0) | (bEndingSeen ? 8 : 0) | (static_cast<int32>(Beat) << 4);
+	}
 	if (CurrentAct() >= 2)
 	{
 		return 0x100 | (bJoinedCall ? 1 : 0) | (bAttendedMeeting ? 2 : 0) | (bRepliedChairman ? 4 : 0) | (FMath::Clamp(CoworkersCheckedIn, 0, 3) << 4);
@@ -204,8 +234,36 @@ void UTakeGameInstance::TakeSkip()
 		TakeBeat(4);   // morning done: straight to lunch (beat 1.10)
 		return;
 	}
+	if (CurrentAct() >= 3)
+	{
+		if (const APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+		{
+			if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>()) { Hands->SkipAct3Step(); }
+		}
+		return;
+	}
+	if (bJoinedCall && bAttendedMeeting && bRepliedChairman && CoworkersCheckedIn >= 3) { bDevAct3Now = true; return; }   // already done: on to Act 3
 	bJoinedCall = bAttendedMeeting = bRepliedChairman = true;
 	CoworkersCheckedIn = 3;
 	WorkdayMinutes = FMath::Max(WorkdayMinutes, 14.f * 60.f + 10.f);   // four minutes to 2:14
+	SetObjective(ObjectiveForBeat());
+}
+
+void UTakeGameInstance::ResetRun()
+{
+	Beat = ETakeBeat::Morning;
+	SetSoulBits(0);
+	TrainingSlide = HRSlide = HRModulesDone = 0;
+	bTrainingComplete = bReadEmail = bGotCoffee = bMetReceptionist = bGotWisp = false;
+	bJoinedCall = bAttendedMeeting = bRepliedChairman = bClocksFrozen = bRepliedPhish = false;
+	bTrustFell = bEndingSeen = bDevLunchNow = bDevAct3Now = false;
+	CoworkersCheckedIn = CoworkersHit = GuardComplaints = CoffeesPoured = Baskets = BestTossStreak = 0;
+	WorkdayMinutes = 540.f;
+	Energy = 100.f;
+	RewindPoint = FVector::ZeroVector;
+	ReadMail.Reset();
+	MailReplies.Reset();
+	GlyphNotes.Reset();
+	TakeNumber += 1;   // it's a new take, after all
 	SetObjective(ObjectiveForBeat());
 }

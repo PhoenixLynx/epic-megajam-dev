@@ -281,6 +281,33 @@ private:
 	void OpenNotes();
 	void TakeScreenshot();
 	void TestStalker();
+	// ---- Act 3 + ending + title (TakeAct3.cpp) ----
+public:
+	void SkipAct3Step();
+private:
+	void TickAct3(float DeltaTime);
+	void StartOvertime();
+	void StartTrustFall();
+	void EnterWard();
+	void ExitWard();
+	void StartEnding();
+	void TeleportPlayer(const FVector& Where, float Yaw);
+	void ShowTitle();
+	UFUNCTION() void OnTitleChoice(int32 Choice);
+	UFUNCTION() void OnEndingChoice(int32 Choice);
+	UFUNCTION() void OnCreditsDone(int32 Unused);
+	UPROPERTY() TObjectPtr<class UTakeTitleWidget> TitleW;
+	UPROPERTY() TObjectPtr<class UTakeChoiceWidget> ChoiceW;
+	UPROPERTY() TObjectPtr<class UTakeCreditsWidget> CreditsW;
+	float OvertimeIn = -1.f;
+	float FallT = -1.f;
+	float StalkerIn = -1.f;
+	float ExitT = -1.f;
+	float EndT = -1.f;
+	int32 EndStep = 0;
+	float EndCardT = -1.f;
+	bool bEndingYes = false;
+	FString EndCardText;
 	float LastFear = 0.f;   // for the Fear stinger (crossing into watched territory)
 	// Energy (GameInstance->Energy): drains, coffee / food / the wisp refill it, low = a bit slower
 	float BaseWalkSpeed = -1.f;

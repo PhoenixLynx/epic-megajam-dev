@@ -541,9 +541,10 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 		ActCheckIn = 1.f;
 		const UTakeGameInstance* GameInst = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 		if (GameInst && (GameInst->CurrentAct() != LinesAct || GameInst->bClocksFrozen != bLinesClocksFrozen)) { LoadLines(); }
-		if (ActorHasTag(TEXT("Act2Reveal")))   // the lunch attendant only works lunch
+		if (ActorHasTag(TEXT("Act2Reveal")) || ActorHasTag(TEXT("Act3Reveal")))   // lunch attendant; the team-building circle
 		{
-			const bool bShow = GameInst && GameInst->CurrentAct() >= 2;
+			const int32 FromAct = ActorHasTag(TEXT("Act3Reveal")) ? 3 : 2;
+			const bool bShow = bAtParty || (GameInst && GameInst->CurrentAct() >= FromAct);
 			if (IsHidden() == bShow) { SetActorHiddenInGame(!bShow); SetActorEnableCollision(bShow); }
 		}
 	}
@@ -704,4 +705,27 @@ void ATakeCoworker::ReactToTheft()
 		TEXT("I had seventeen tabs open on that."), TEXT("Is this a team-building exercise? Nobody told me."),
 	};
 	SayLine(Snark[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Snark)) - 1)]);
+}
+
+void ATakeCoworker::JoinParty(const FVector& Where, const FVector& LookAt)
+{
+	bAtParty = true;
+	bWanders = false;
+	bVanished = false;
+	FrownHold = FaceFearHold = 0.f;
+	State = ETakeCoworkerState::Working;
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
+	if (AAIController* AI = Cast<AAIController>(GetController())) { AI->StopMovement(); }
+	SetActorLocation(Where, false, nullptr, ETeleportType::TeleportPhysics);
+	const FRotator Face = (LookAt - Where).Rotation();
+	SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));
+	Home = Where;
+	HomeRot = GetActorRotation();
+	if (bSitsAtDesk)   // everyone stands for the wrap party
+	{
+		bSitsAtDesk = false;
+		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Block);
+	}
+	SetFace(false);
 }

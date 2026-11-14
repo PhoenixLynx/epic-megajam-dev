@@ -493,6 +493,16 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 	auto Pick = [N](std::initializer_list<const TCHAR*> L) { return FString(*(L.begin() + FMath::Min<int32>(N, int32(L.size()) - 1))); };
 	if (Key == TEXT("Elevator"))
 	{
+		if (const UTakeGameInstance* EGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+		{
+			if (EGI->Beat == ETakeBeat::Wrap && EGI->SoulBits >= 3)
+			{
+				PlaySfx(TEXT("sfx_badge_ok"), Where, 0.8f);
+				ShowSubtitle(TEXT(""), TEXT("You press C. It was already lit."), 2.5f);
+				StartEnding();
+				return;
+			}
+		}
 		PlaySfx(TEXT("sfx_badge_ok"), Where, 0.5f);
 		static const TCHAR* Presses[] = {
 			TEXT("You press 2. The light comes on, then goes out. 2 hasn't happened yet."),
@@ -503,6 +513,24 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			TEXT("You press the alarm. Nothing. Then, very quietly, the PA: \"We heard you.\""),
 		};
 		ShowSubtitle(TEXT(""), Presses[N % int32(UE_ARRAY_COUNT(Presses))], 4.f);
+		return;
+	}
+	if (Key == TEXT("TrustFall"))
+	{
+		const UTakeGameInstance* TGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		if (TGI && TGI->Beat == ETakeBeat::Overtime) { StartTrustFall(); }
+		else { ShowSubtitle(TEXT(""), TEXT("A mint X on the floor. You're not supposed to stand on it yet."), 2.5f); }
+		return;
+	}
+	if (Key == TEXT("ServiceElevator"))
+	{
+		const UTakeGameInstance* SGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		if (SGI && SGI->SoulBits >= 3) { ExitWard(); }
+		else
+		{
+			PlaySfx(TEXT("sfx_door_locked"), Where);
+			ShowSubtitle(TEXT(""), TEXT("SERVICE ELEVATOR. Access pass 3 required. (The nurses' station terminal.)"), 3.f);
+		}
 		return;
 	}
 	if (Key == TEXT("Printer"))

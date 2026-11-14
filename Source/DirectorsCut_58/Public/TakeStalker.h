@@ -69,4 +69,8 @@ private:
 	APawn* GetPlayerPawn() const;
 	UFUNCTION() void OnCatchOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other, UPrimitiveComponent* OtherComp,
 	                                int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Sweep);
+	UPROPERTY() TObjectPtr<class UAnimSequence> AnimWalk;
+	UPROPERTY() TObjectPtr<class UAnimSequence> AnimStare;
+	UPROPERTY() TObjectPtr<class UAnimSequence> AnimPlaying;
+	bool bRigged = false;
 };

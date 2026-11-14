@@ -1,5 +1,10 @@
 // TAKE 4471 - the stalker
 #include "TakeStalker.h"
+#include "Engine/SkeletalMesh.h"
+#include "Animation/AnimSequence.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Materials/MaterialInterface.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "DirectorsCut_58.h"
 #include "TakeGameInstance.h"
 #include "TakeRewindSubsystem.h"
@@ -43,6 +48,25 @@ void ATakeStalker::BeginPlay()
 {
 	Super::BeginPlay();
 	SpawnLocation = GetActorLocation();
+	// The rigged mannequin (dark, tall), walking: no more sliding sideways
+	USkeletalMesh* SK = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequin/SK_MannequinStalker.SK_MannequinStalker"));
+	AnimWalk = LoadObject<UAnimSequence>(nullptr, TEXT("/Game/Characters/Mannequin/AS_Walk.AS_Walk"));
+	AnimStare = LoadObject<UAnimSequence>(nullptr, TEXT("/Game/Characters/Mannequin/AS_Stare.AS_Stare"));
+	if (SK && AnimWalk)
+	{
+		GetMesh()->SetSkeletalMeshAsset(SK);
+		GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -117.f), FRotator(0.f, -90.f, 0.f));
+		GetMesh()->SetRelativeScale3D(FVector(1.3f));
+		GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+		GetMesh()->PlayAnimation(AnimStare ? AnimStare.Get() : AnimWalk.Get(), true);
+		if (UMaterialInterface* Fear = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Fear.MI_Face_Fear"))) { GetMesh()->SetMaterialByName(FName(TEXT("M_Face")), Fear); }
+		Body->SetHiddenInGame(true);
+		bRigged = true;
+	}
+	else
+	{
+		Body->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));   // the static figure faces +Y: turn it to face where it walks
+	}
 	CatchSphere->OnComponentBeginOverlap.AddDynamic(this, &ATakeStalker::OnCatchOverlap);
 	Deactivate();
 }
@@ -128,6 +152,18 @@ void ATakeStalker::Tick(float DeltaSeconds)
 	APawn* Player = GetPlayerPawn();
 	AAIController* AI = Cast<AAIController>(GetController());
 	if (!Player || !AI) { return; }
+	if (bRigged)
+	{
+		const bool bMoving = GetVelocity().SizeSquared2D() > 100.f;
+		UAnimSequence* Want = (bMoving && AnimWalk) ? AnimWalk.Get() : (AnimStare ? AnimStare.Get() : AnimWalk.Get());
+		if (Want != AnimPlaying) { AnimPlaying = Want; GetMesh()->PlayAnimation(Want, true); }
+	}
+	// No nav mesh where we are (the ward)? Walk straight at them instead of standing still
+	if ((State == ETakeStalkerState::Chase || State == ETakeStalkerState::Stalk) && AI->GetMoveStatus() == EPathFollowingStatus::Idle)
+	{
+		const FVector To = Player->GetActorLocation() - GetActorLocation();
+		if (To.Size2D() > 60.f) { AddMovementInput(FVector(To.X, To.Y, 0.f).GetSafeNormal(), 1.f); }
+	}
 
 	switch (State)
 	{

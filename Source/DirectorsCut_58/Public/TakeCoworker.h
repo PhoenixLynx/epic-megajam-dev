@@ -76,6 +76,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Coworker") bool HasNewConversation() const;
 	/** You picked up their monitor / keyboard / mug: they turn, frown and say something. */
 	void ReactToTheft();
+	/** The wrap party: stand here, look at the guest of honour, smile. */
+	void JoinParty(const FVector& Where, const FVector& LookAt);
+	bool bAtParty = false;
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;

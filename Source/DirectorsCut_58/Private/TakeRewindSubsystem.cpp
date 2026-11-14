@@ -46,6 +46,12 @@ void UTakeRewindSubsystem::DoReset()
 		if (!Start || It->PlayerStartTag == TEXT("Desk4471")) { Start = *It; }
 	}
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC && PC->GetPawn() && GI && GI->Beat == ETakeBeat::Ward && !GI->RewindPoint.IsNearlyZero())
+	{
+		// Act 3: CUT. AGAIN. puts you back at the ward entrance, not your desk
+		PC->GetPawn()->SetActorLocation(GI->RewindPoint, false, nullptr, ETeleportType::ResetPhysics);
+		Start = nullptr;
+	}
 	if (PC && PC->GetPawn() && Start)
 	{
 		PC->GetPawn()->SetActorLocation(Start->GetActorLocation(), false, nullptr, ETeleportType::ResetPhysics);

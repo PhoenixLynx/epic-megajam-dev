@@ -168,6 +168,8 @@ for i, (a, tags) in enumerate(npcs):
         role, wanders = "Receptionist", False
     elif role_tag == "Chef":
         role, wanders = "Chef", False                                   # the lunch attendant stays at the island
+    elif role_tag.startswith("Circle_"):
+        role, wanders = "Coworker", False                               # the team-building circle stands still
     else:
         role, wanders = "Coworker", True
     comp = a.static_mesh_component
@@ -181,7 +183,7 @@ for i, (a, tags) in enumerate(npcs):
     cw.set_editor_property("is_agent", role == "Coworker" and i in agents)
     # Story NPCs: the only ones you talk to with E (they show a "!"); everyone else talks as you pass
     cw.set_editor_property("story_npc", role_tag in STORY_NPCS)
-    cw.set_editor_property("tags", [unreal.Name("NPC"), unreal.Name(role_tag)] + ([unreal.Name("Act2Reveal")] if "Act2Reveal" in tags else []))
+    cw.set_editor_property("tags", [unreal.Name("NPC"), unreal.Name(role_tag)] + [unreal.Name(t) for t in ("Act2Reveal", "Act3Reveal") if t in tags])
     if hasattr(cw, "rerun_construction_scripts"):
         cw.rerun_construction_scripts()
     # hide the dressed original (kept so this script can be re-run)
@@ -215,6 +217,27 @@ for row, col in SEATED_CUBICLES:
     cw.set_editor_property("sits_at_desk", True)
     cw.set_editor_property("wanders", False)
     cw.set_editor_property("tags", [unreal.Name("NPC"), unreal.Name("Seated")])
+    seated += 1
+
+# The security booth (lobby, NW): a guard sits watching the camera feeds
+guard_mesh = unreal.EditorAssetLibrary.load_asset("/Game/Props/Meshes/SM_MannequinGuard") \
+    if unreal.EditorAssetLibrary.does_asset_exist("/Game/Props/Meshes/SM_MannequinGuard") else mannequin
+for (bx, by, label) in ((1640, 710, "Guard_Booth"),):
+    target = unreal.Vector(bx, by, 0)
+    chair = min(chairs, key=lambda c: (c.get_actor_location() - target).length(), default=None)
+    if chair and (chair.get_actor_location() - target).length() < 80:
+        chair.set_actor_location_and_rotation(target, unreal.Rotator(0, 0, 180), False, False)
+        chair.static_mesh_component.set_simulate_physics(False)
+        chair.set_editor_property("tags", [unreal.Name("SeatedChair")])
+    cw = actor_sys.spawn_actor_from_class(unreal.TakeCoworker, unreal.Vector(bx, by - 8, 92), unreal.Rotator(0, 0, -90))
+    cw.set_actor_label(f"{PREFIX}Coworker_{label}")
+    cw.set_folder_path("Gameplay/Coworkers")
+    if guard_mesh:
+        cw.set_editor_property("body_mesh", guard_mesh)
+    cw.set_editor_property("npc_role", "Guard")
+    cw.set_editor_property("sits_at_desk", True)
+    cw.set_editor_property("wanders", False)
+    cw.set_editor_property("tags", [unreal.Name("NPC"), unreal.Name(label)])
     seated += 1
 
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()

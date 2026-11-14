@@ -304,6 +304,7 @@ VARIANTS = [
     ("SK_MannequinChef", "M_PlasticWhite", [("toque", "head", "cyl", (0.1, 0.16), (0, 0, 1.84), "M_Paper"),
                                              ("toque_puff", "head", "sphere", 0.12, (0, 0, 1.95), "M_Paper")]),   # lunch attendant (Act 2)
     ("SK_MannequinCustodian", "M_Yellow", []),
+    ("SK_MannequinStalker", "M_StalkerSkin", []),   # the stalker (scaled up 1.3x in game, Fear face)
 ]
 
 

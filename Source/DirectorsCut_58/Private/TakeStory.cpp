@@ -123,6 +123,10 @@ void UTakeGrabComponent::HandleRewind(int32 NewTakeNumber)
 {
 	StartSlate(true);
 	SlateTake = NewTakeNumber;
+	if (const UTakeGameInstance* RGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		if (RGI->Beat == ETakeBeat::Ward) { StalkerIn = 15.f; }   // CUT. AGAIN. at the ward door: it comes back soon
+	}
 }
 
 void UTakeGrabComponent::TickSlate(float DeltaTime)
@@ -397,13 +401,13 @@ void UTakeGrabComponent::TickAct2(float DeltaTime)
 	if (!bAct2Revealed) { RevealAct2(); }   // lunch is out (also after loading an Act 2 save)
 	// Beat 2.6: after the clocks stop, Fear never quite leaves (checked about once a second)
 	FloorCheckIn -= DeltaTime;
-	if (GI->bClocksFrozen && FloorCheckIn <= 0.f)
+	if (GI->bClocksFrozen && FloorCheckIn <= 0.f && GI->Beat != ETakeBeat::Wrap)
 	{
 		FloorCheckIn = 1.f;
 		ATakeFearDirector* FearDir = FindFearDirector();
 		if (FearDir && FearDir->TargetFear < FrozenFearFloor) { FearDir->StartCreep(FrozenFearFloor, 5.f); }
 	}
-	if (bSeated || Inspecting || PauseMenu) { return; }   // the PA waits until you can hear it
+	if (bSeated || Inspecting || PauseMenu || GI->Beat != ETakeBeat::Lunch) { return; }   // the PA waits until you can hear it (and stops after lunch)
 	if (LunchPAIn < 0.f)   // nothing planned (e.g. after loading an Act 2 save): the next one comes later
 	{
 		LunchPAIn = FMath::FRandRange(LunchPAGapMin, LunchPAGapMax);

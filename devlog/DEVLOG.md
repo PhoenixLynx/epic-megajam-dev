@@ -947,3 +947,24 @@ A running record of every AI tool used and what it did.
   - **F7** = the stalker, now (playtest), alongside F8 skip.
 - **Answered:** "why fear again at 12:19?": Fear rises from certain email replies (sending your key to "Payro11", *"What camera?"* to the Chairman, *"Something is wrong"* to Wellness) and from throwing things during Fear. To be checked in my notes.
 - **AI tools used:** Claude (C++, Blender, HTML whiteboard, level dressing). Sol / ChatGPT (uncanny minimalism faces).
+
+### Session 59: Sat Nov 14, 2026, 17:10 MST: Act 3, the ending, and the title screen
+
+- **Starting Act 3.** One last note first: the security booth chair clipped through the counter and the booth needed a seated guard. Fixed: the counter moved in front of the chair and a guard now sits at the booth watching the feeds.
+- **I got the Max plan** 🎉
+- **Title screen (new):** the game launches to Sol's lobby key art (v11) with **TAKE 4471 · START / CONTINUE / QUIT**. CONTINUE appears when there's a save. The office waits paused behind it; START plays the cold open.
+- **Act 3: Overtime** (compact version of the storyboard):
+  1. **SCENE 4 · OVERTIME** (2:14 PM, still): 20 s after the clocks stop with the Act 2 list done, the PA announces mandatory team building in the Wellness Center. Objective: get **access pass 2** (the supply-closet terminal) if you haven't, then go to the Wellness Center. Its doors now open with pass 2.
+  2. **Team building:** six coworkers stand in a circle around a mint X. E on the X: *"Fall back, 4471. We'll catch you."* The view tips back...
+  3. **SCENE 5 · THE WARD:** *"...Nobody caught you."* You're in the hospital below: beds in rows like cubicles, cold lights, a red REC light. Fear stays at or above 0.55. **The stalker** comes after about 25 s; throw things to stun it. If it catches you: **CUT. AGAIN.** at the ward door (not your desk), and it returns 15 s later.
+  4. **The charts are script pages.** *PATIENT 4471* and *BED 7* (*"They will hesitate here." You hesitate.*) carry **Key 3's squares**. *PATIENT 4470* has squares *"added later, in a different hand"*: a **decoy**. All three go into your notes, so you can see two agree and one doesn't. (The Smile poster from Act 1 also has Key 3.)
+  5. **The nurses' station terminal** (Key Lock 3, signature hidden) → **access pass 3**.
+  6. **The service elevator** (pass 3) → **SCENE 6 · C**: you're back in the elevator upstairs. C is lit.
+- **The ending: WRAP PARTY.** Press C → *??:?? · WRAP PARTY*. Everyone in the lobby in a half ring, smiling at you, applause, paper confetti (paper balls and brochures). *"That's a wrap on Employee 4471!"*, *"(The clock over the elevator still reads 2:14.)"*, then **the Collector**: *"...You just have to hand over your keys."*
+  - **YES** → *"A bright palace... everyone smiling a beat too long."* → **THE THEATRICAL CUT**
+  - **NO** → your passes are gone; three seconds of the uncut office (empty desks, badges on hooks) → **THE DIRECTOR'S CUT**
+  - Then *SOUL SIGHT / THE COLLECTOR IS ██████*, cut to black, **credits** (cast: *Employee 4470: also you*; the Chairman: *(camera off)*; **Directed by ________**) → back to the title. START begins a new take.
+- **The stalker** now uses the rigged mannequin (dark, 1.3x tall, Fear face) with the walk animation, faces where it walks (no more sliding sideways), and walks straight at you where there's no navigation mesh (the ward).
+- **Playtest:** F8 steps through Act 3 (pass 2 → fall → pass 3 → elevator → ending); `TakeBeat 5` jumps to Act 3.
+- **New:** SK_MannequinStalker; textures for 4 charts, the X, the service sign; `sfx_applause`; ward lights.
+- **AI tools used:** Claude (C++ Act 3, ending, title and credits widgets, Blender stalker variant, HTML textures, applause synthesis, level dressing). Sol / ChatGPT (title art).

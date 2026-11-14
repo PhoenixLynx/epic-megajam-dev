@@ -1073,11 +1073,12 @@ void UTakeLockPanelWidget::Rebuild()
 	if (!Box) { return; }
 	Box->ClearChildren();
 	auto Add = [this](UWidget* W, float Top = 0.f) { Box->AddChildToVerticalBox(W)->SetPadding(FMargin(0.f, Top, 0.f, 0.f)); };
-	Add(MakeText(TEXT("HALCYON ACCESS  \u00B7  SUPPLY  \u00B7  EMPLOYEE 4471"), 13, Mint, true));
+	Add(MakeText(Key >= 3 ? TEXT("HALCYON CARE  \u00B7  NURSES' STATION  \u00B7  PATIENT 4471") : TEXT("HALCYON ACCESS  \u00B7  SUPPLY  \u00B7  EMPLOYEE 4471"), 13, Mint, true));
 	if (bSolved)
 	{
 		Add(MakeText(TEXT("Welcome back, 4470."), 34, Ink, true), 8.f);
-		Add(MakeText(TEXT("Access pass 2 granted.\n\n...4470? The badge says 4471. The screen doesn't care."), 17, Ink), 14.f);
+		Add(MakeText(Key >= 3 ? TEXT("Access pass 3 granted. Discharge approved.\n\nThe service elevator is at the east end of the ward.")
+			: TEXT("Access pass 2 granted.\n\n...4470? The badge says 4471. The screen doesn't care."), 17, Ink), 14.f);
 		Add(MakeText(TEXT("E / Esc  -  step away"), 13, Muted), 26.f);
 		return;
 	}
@@ -1132,7 +1133,8 @@ void UTakeLockPanelWidget::Submit(int32 Unused)
 			if (GI->SoulBits < Key) { GI->SetSoulBits(Key); }
 		}
 		if (USoundBase* Snd = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/Placeholder/sfx_badge_ok.sfx_badge_ok"))) { UGameplayStatics::PlaySound2D(this, Snd, 0.7f); }
-		if (Hands) { Hands->ShowSubtitle(TEXT(""), TEXT("Pass 2. Something in my chest feels... less missing."), 4.5f); }
+		if (Hands) { Hands->ShowSubtitle(TEXT(""), Key >= 3 ? TEXT("Pass 3. All of me, nearly. Somewhere upstairs, a button lights up.") : TEXT("Pass 2. Something in my chest feels... less missing."), 4.5f); }
+		if (UTakeGameInstance* KGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { KGI->SetObjective(KGI->ObjectiveForBeat()); }
 	}
 	else
 	{

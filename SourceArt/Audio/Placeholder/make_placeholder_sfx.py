@@ -244,3 +244,14 @@ motor = np.sin(2 * np.pi * 120 * x) * 0.2 * (x < 2.3)
 drop = pad(bandpass_noise(0.2, 1000, 6000) * env(0.2, 0.005, 0.05), 2.6)
 drop = np.roll(drop, int(SR * 2.35))
 write("sfx_printer", whirr * 0.7 + motor + drop * 0.6, peak=0.5)
+
+# Applause: many clappers (short bright noise bursts at random times), swelling in and fading out, plus a "woo"
+x = t(6.0)
+clap = np.zeros(len(x))
+for _ in range(900):
+    at = rng.uniform(0.0, 5.6)
+    burst = bandpass_noise(0.03, 900, 6000) * env(0.03, 0.001, 0.008) * rng.uniform(0.4, 1.0)
+    i = int(SR * at)
+    clap[i:i + len(burst)] += burst[: len(clap) - i]
+shape = np.clip(x / 0.8, 0, 1) * np.clip((6.0 - x) / 1.5, 0, 1)
+write("sfx_applause", clap * shape, peak=0.6)

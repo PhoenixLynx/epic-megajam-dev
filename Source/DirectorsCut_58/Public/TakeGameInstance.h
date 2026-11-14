@@ -18,6 +18,9 @@ enum class ETakeBeat : uint8
 	Corridor,       // the slip happened: something is at the end of Corridor B (the loop is allowed now)
 	ReturnToDesk,   // picked up the wisp: go back to your desk (beat 1.10 is next)
 	Lunch,          // beat 1.10 done: 12:00, "Lunch is served.", Act 2 task list (beats 2.1-2.2)
+	Overtime,       // Act 3 (3.1): clocks stuck at 2:14, "mandatory team building in the Wellness Center"
+	Ward,           // 3.2-3.5: you fell through the floor into the hospital ward; Key 3; the stalker
+	Wrap,           // 3.6 + ending: back in the elevator, C is lit -> the wrap party
 	Count UMETA(Hidden)
 };
 
@@ -74,7 +77,15 @@ public:
 	/** You picked up the soul-energy wisp at the end of Corridor B (beat 1.8a). */
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bGotWisp = false;
 	/** Act 1 = the morning, Act 2 = midday (from beat 1.10 on). */
-	UFUNCTION(BlueprintPure, Category = "Take") int32 CurrentAct() const { return Beat >= ETakeBeat::Lunch ? 2 : 1; }
+	UFUNCTION(BlueprintPure, Category = "Take") int32 CurrentAct() const { return Beat >= ETakeBeat::Overtime ? 3 : (Beat >= ETakeBeat::Lunch ? 2 : 1); }
+	/** Act 3: where a capture rewinds you to (the ward entrance), and story flags. */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Act3") FVector RewindPoint = FVector::ZeroVector;
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Act3") bool bTrustFell = false;
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Act3") bool bEndingSeen = false;
+	/** The title screen shows once per launch (Start / Continue). */
+	UPROPERTY(Transient) bool bTitleDone = false;
+	/** Start a new run from the morning (Title > Start after an ending). Keeps settings and the take count. */
+	void ResetRun();
 
 	/** Act 2 badge tasks (beat 2.2). */
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Act2") bool bJoinedCall = false;
@@ -117,6 +128,8 @@ public:
 
 	/** Dev: TakeBeat 4 starts beat 1.10 right away instead of waiting for you to reach your desk. */
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") bool bDevLunchNow = false;
+	/** Dev: start Act 3 now (TakeBeat 5, or F8 once Act 2 is done). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") bool bDevAct3Now = false;
 	/** Dev: TakeLoop 1 forces the Corridor B loop on outside its beat. */
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") bool bDevForceLoop = false;
 

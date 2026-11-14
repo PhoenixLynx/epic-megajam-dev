@@ -17,6 +17,7 @@ yaw 180 faces south, 90 faces east, -90 faces west.
 If imported props all face the wrong way, change YAW_FIX (try 90, -90 or 180).
 If they're 100x too small or big, change SCALE_FIX.
 """
+import math
 import random
 
 import unreal
@@ -156,7 +157,7 @@ put("SM_WaterCooler", 2740, 1260, 0, -90, ["Use=Cooler"])
 put("SM_Desk", 1640, 620, 0, 180)        # security booth, NW corner (clear of the Chairman's portrait)
 put("SM_Monitor", 1605, 595, 75, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])
 put("SM_Monitor", 1675, 595, 75, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])
-put("SM_OfficeChair", 1640, 700, 0, 0)
+put("SM_OfficeChair", 1640, 710, 0, 0)   # a guard sits here (place_cpp_actors.py)
 # Security cameras (they turn to follow you; C++ 'SecurityCam')
 for x, y, z, yaw in ((2785, 515, 265, -45), (1415, 515, 265, 45), (815, 1715, 265, 45), (3385, 3685, 265, -135),
                      (3785, 515, 265, -45), (1385, 3715, 265, 45), (215, 515, 265, 45)):
@@ -277,11 +278,28 @@ for r in range(3):
     for c in range(5):
         put("SM_HospitalBed", 800 + c * 500, 5800 + r * 650, -1500)
 
+# --- Act 3 ---------------------------------------------------------------------------------
+# Team building (3.1): six coworkers in a circle around a mint X in the Wellness Center (hidden until Act 3)
+CIRCLE = (1100, 6650)
+for i in range(6):
+    a = math.radians(i * 60 + 30)
+    x, y = CIRCLE[0] + 240 * math.cos(a), CIRCLE[1] + 240 * math.sin(a)
+    face = math.degrees(math.atan2(-math.cos(a), math.sin(a)))   # put-yaw that faces the centre
+    put("SM_Mannequin", x, y, 0, face, ["NPC", f"Circle_{i}", "Act3Reveal"])
+# The ward (3.3-3.6): nurses' station terminal (Key Lock 3) and the service elevator (BOXES below)
+put("SM_Desk", 2200, 7520, -1500, 180, ["KeyLockPanel=3"])
+put("SM_Monitor", 2200, 7495, -1425, 180, ["KeyLockPanel=3", "FixedScreen", "SlotMI=M_Screen:MI_Screen_Login"])
+
 
 # --- Janitor closet: SW corner of the open office, door in its east wall --------------
 #     walls/lintel are engine cubes (BOXES), the door is SM_Door on its hinge (Openable)
 BOXES = []   # (label, x, y, z_centre, sx, sy, sz, material path, tags)
 PM = "/Game/Props/Materials/"
+BOXES += [
+    ("TrustFallMark", 1100, 6650, 0.6, 90, 90, 1, PM + "MI_TrustMark", ["Use=TrustFall"]),
+    ("ServiceElevatorDoor", 3000, 7690, -1390, 130, 4, 220, PM + "M_BrushedSteel", ["Use=ServiceElevator"]),
+    ("Sign_Service", 3000, 7686, -1240, 40, 2, 40, PM + "MI_Sign_Service", []),
+]
 BOXES += [
     # Lunch board on the island (Act 2)
     ("LunchSpecials", 3245, 860, 115, 34, 2, 48, PM + "MI_LunchSpecials", ["Act2Reveal", "Inspectable"]),
@@ -309,7 +327,7 @@ BOXES += [
     ("Elevator_Floor", 2100, 250, 0.6, 580, 480, 1.2, PM + "M_BrushedSteel", []),
     ("Elevator_Rail", 2100, 22, 95, 520, 4, 5, PM + "M_BrushedSteel", []),
     # Security booth front: a low counter
-    ("SecurityBooth_Front", 1640, 715, 55, 220, 8, 110, "/Game/Fear/MI_Greybox_Walls", []),
+    ("SecurityBooth_Front", 1640, 775, 55, 220, 8, 110, "/Game/Fear/MI_Greybox_Walls", []),
     # Conference room whiteboard (east wall); the scribbles hide Key 2's squares
     ("Whiteboard", 1388, 1400, 160, 2, 220, 110, PM + "MI_Whiteboard", ["Inspectable"]),
 ]
@@ -469,6 +487,10 @@ def main():
               "GB_Poster_3": "MI_Poster_Energy", "GB_Poster_4": "MI_Poster_Present", "GB_Poster_5": "MI_Poster_CorridorB",
               "GB_ChairmanPortrait": "MI_ChairmanPortrait", "GB_BulletinBoard": "MI_CallSheet",
               "GB_CallScreen": "MI_Screen_Call", "GB_KeyLock2_Panel": "MI_Screen_Login"}
+    # Act 3 ward charts: two carry Key 3's squares, one is a decoy, the rest are blank
+    for r in range(3):
+        for c in range(5):
+            boards[f"GB_HospChart_{r}{c}"] = {(0, 1): "MI_Chart_4471", (1, 3): "MI_Chart_Stage", (2, 0): "MI_Chart_4470"}.get((r, c), "MI_Chart_Blank")
     for a in actor_sys.get_all_level_actors():
         mi_name = boards.get(a.get_actor_label())
         if mi_name and asset_lib.does_asset_exist(f"/Game/Props/Materials/{mi_name}"):
@@ -476,9 +498,24 @@ def main():
             if not mi_name.startswith("MI_Screen"):
                 tags = [t for t in a.tags if str(t) != "Inspectable"] + [unreal.Name("Inspectable")]   # E: look closer
                 a.set_editor_property("tags", tags)
-        extra = {"GB_CallScreen": "CallScreen", "GB_KeyLock2_Panel": "KeyLockPanel"}.get(a.get_actor_label())
+        extra = {"GB_CallScreen": "CallScreen", "GB_KeyLock2_Panel": "KeyLockPanel", "GB_Door_Wellness": "PassBlock=2"}.get(a.get_actor_label())
         if extra and unreal.Name(extra) not in a.tags:                         # E: join the call / log in (Key Lock 2)
             a.set_editor_property("tags", list(a.tags) + [unreal.Name(extra)])
+
+    # The ward needs light: cold ceiling lights in rows, and one red REC light by a doorway
+    lights = [(x, y, -1240, 5000.0, (0.78, 0.88, 1.0)) for x in (900, 1600, 2300, 3000) for y in (5700, 6450, 7200)]
+    lights += [(3150, 5400, -1300, 900.0, (1.0, 0.1, 0.08))]
+    for k, (x, y, z, inten, col) in enumerate(lights):
+        lt = actor_sys.spawn_actor_from_class(unreal.PointLight, unreal.Vector(x, y, z), unreal.Rotator(0, 0, 0))
+        lt.set_actor_label(f"{PREFIX}WardLight_{k:02d}")
+        lt.set_folder_path("Dressing/Hospital/Lights")
+        try:
+            lc = lt.get_editor_property("light_component")
+            lc.set_editor_property("intensity", inten)
+            lc.set_editor_property("light_color", unreal.Color(r=int(col[0] * 255), g=int(col[1] * 255), b=int(col[2] * 255), a=255))
+            lc.set_editor_property("attenuation_radius", 900.0)
+        except Exception as e:   # (a light with default settings is still a light)
+            unreal.log_warning(f"[TAKE 4471] Ward light settings: {e}")
 
     unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
     unreal.log(f"[TAKE 4471] Dressed campus: placed {placed}, removed {removed} old actors")
