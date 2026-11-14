@@ -948,7 +948,7 @@ A running record of every AI tool used and what it did.
 - **Answered:** "why fear again at 12:19?": Fear rises from certain email replies (sending your key to "Payro11", *"What camera?"* to the Chairman, *"Something is wrong"* to Wellness) and from throwing things during Fear. To be checked in my notes.
 - **AI tools used:** Claude (C++, Blender, HTML whiteboard, level dressing). Sol / ChatGPT (uncanny minimalism faces).
 
-### Session 59: Sat Nov 14, 2026, 17:10 MST: Act 3, the ending, and the title screen
+### Session 59: Sat Nov 14, 2026, 16:40 MST: Act 3, the ending, and the title screen
 
 - **Starting Act 3.** One last note first: the security booth chair clipped through the counter and the booth needed a seated guard. Fixed: the counter moved in front of the chair and a guard now sits at the booth watching the feeds.
 - **I got the Max plan** 🎉
@@ -968,3 +968,4 @@ A running record of every AI tool used and what it did.
 - **Playtest:** F8 steps through Act 3 (pass 2 → fall → pass 3 → elevator → ending); `TakeBeat 5` jumps to Act 3.
 - **New:** SK_MannequinStalker; textures for 4 charts, the X, the service sign; `sfx_applause`; ward lights.
 - **AI tools used:** Claude (C++ Act 3, ending, title and credits widgets, Blender stalker variant, HTML textures, applause synthesis, level dressing). Sol / ChatGPT (title art).
+- **Packaging fix found while planning:** the rigged characters live in `/Game/Characters` and are loaded by code, which the cook (the packaging step that converts assets for the build) doesn't follow, so a packaged build would have shown the old static mannequins. Added `/Game/Characters` to `DirectoriesToAlwaysCook` in `Config/DefaultGame.ini`.
