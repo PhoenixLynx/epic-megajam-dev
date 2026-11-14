@@ -124,8 +124,44 @@ TSharedRef<SWidget> UTakePromptWidget::RebuildWidget()
 		DotSlot->SetAnchors(FAnchors(0.5f, 0.5f));
 		DotSlot->SetAlignment(FVector2D(0.5f, 0.5f));
 		DotSlot->SetSize(FVector2D(4.f, 4.f));
+
+		// Slate: full-screen black + "TAKE n" (cold open, rewind). Added last so it covers the rest of the HUD.
+		SlateBlack = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("SlateBlack"));
+		SlateBlack->SetBrushColor(FLinearColor(0.f, 0.f, 0.f, 1.f));
+		UCanvasPanelSlot* BlackSlot = Root->AddChildToCanvas(SlateBlack);
+		BlackSlot->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+		BlackSlot->SetOffsets(FMargin(0.f));
+		SlateBlack->SetVisibility(ESlateVisibility::Collapsed);
+		SlateText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SlateText"));
+		FSlateFontInfo SlateFont = SlateText->GetFont();
+		SlateFont.Size = 64;
+		SlateFont.TypefaceFontName = TEXT("Bold");
+		SlateFont.LetterSpacing = 300;
+		SlateText->SetFont(SlateFont);
+		SlateText->SetColorAndOpacity(FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.f)));
+		SlateText->SetJustification(ETextJustify::Center);
+		UCanvasPanelSlot* SlateTextSlot = Root->AddChildToCanvas(SlateText);
+		SlateTextSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+		SlateTextSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+		SlateTextSlot->SetAutoSize(true);
+		SlateText->SetVisibility(ESlateVisibility::Collapsed);
 	}
 	return Super::RebuildWidget();
+}
+
+void UTakePromptWidget::SetSlate(float BlackAlpha, const FString& Text, float TextAlpha)
+{
+	if (!SlateBlack || !SlateText) { return; }
+	const bool bBlack = BlackAlpha > 0.001f;
+	const bool bText = TextAlpha > 0.001f && !Text.IsEmpty();
+	SlateBlack->SetVisibility(bBlack ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	if (bBlack) { SlateBlack->SetBrushColor(FLinearColor(0.f, 0.f, 0.f, FMath::Clamp(BlackAlpha, 0.f, 1.f))); }
+	SlateText->SetVisibility(bText ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	if (bText)
+	{
+		if (Text != CurrentSlate) { CurrentSlate = Text; SlateText->SetText(FText::FromString(Text)); }
+		SlateText->SetColorAndOpacity(FSlateColor(FLinearColor(1.f, 1.f, 1.f, FMath::Clamp(TextAlpha, 0.f, 1.f))));
+	}
 }
 
 void UTakePromptWidget::SetTasks(const FString& Text)

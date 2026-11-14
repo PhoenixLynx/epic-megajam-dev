@@ -62,6 +62,14 @@ public:
 	/** Say a random line (bump, E, or scripted). Returns false while on cooldown. */
 	UFUNCTION(BlueprintCallable, Category = "Coworker") bool Speak(const FString& Context = TEXT(""));
 	UFUNCTION(BlueprintCallable, Category = "Coworker") void SayLine(const FString& Line);
+	/** E on a story NPC: the next line of its current conversation (DT_NPCLines Context Story1, Story2, ...;
+	 *  Pass1Story1.. once you hold pass 1, DoneStory1.. once the morning is done, SlipStory1.. after the 10:00 slip).
+	 *  Once a conversation is finished, E gives small talk. Non-story NPCs just Speak(). */
+	UFUNCTION(BlueprintCallable, Category = "Coworker") bool Talk();
+	/** Part-way through a conversation (the prompt says "E  Continue"). */
+	UFUNCTION(BlueprintPure, Category = "Coworker") bool IsInConversation() const { return bInConversation; }
+	/** Has a conversation you haven't heard yet (shows the "!"). */
+	UFUNCTION(BlueprintPure, Category = "Coworker") bool HasNewConversation() const;
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
@@ -97,6 +105,13 @@ private:
 	TArray<int32> Bag;              // shuffled order of Lines still to say
 	int32 LastLine = -1;
 	bool bGreeted = false;
+	// Story conversations: set name ("", "Pass1", "Done", "Slip") -> lines in order
+	TMap<FString, TArray<FString>> StorySets;
+	TSet<FString> FinishedSets;
+	FString ActiveSet;
+	int32 StoryIndex = 0;
+	bool bInConversation = false;
+	bool CurrentStorySet(FString& OutSet) const;
 	FString NextLine();
 	TArray<TWeakObjectPtr<AActor>> Spots;
 	TWeakObjectPtr<class ATakeFearDirector> FearDirector;

@@ -25,6 +25,11 @@ public:
 	UPROPERTY() FVector PlayerLocation = FVector::ZeroVector;
 	UPROPERTY() FRotator PlayerRotation = FRotator::ZeroRotator;
 	UPROPERTY() FDateTime SavedAt;
+	// story (overnight run 1)
+	UPROPERTY() int32 BeatIndex = 0;          // ETakeBeat as a number
+	UPROPERTY() FString Objective;
+	UPROPERTY() bool bMetReceptionist = false;
+	UPROPERTY() bool bGotWisp = false;
 
 	// settings
 	UPROPERTY() float MasterVolume = 1.f;

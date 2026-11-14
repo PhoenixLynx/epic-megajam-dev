@@ -7,6 +7,18 @@
 #include "TakeGameInstance.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeSoulBitsChanged, int32, NewSoulBits);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeObjectiveChanged, const FString&, NewObjective);
+
+/** Where the story is. Act 1: morning tasks -> 10:00 meeting (the slip) -> Corridor B (loop + wisp) -> back to your desk. */
+UENUM(BlueprintType)
+enum class ETakeBeat : uint8
+{
+	Morning,        // badge tasks (check in at Reception first)
+	Meeting,        // all three tasks done: go to the 10:00 in the Conference Room
+	Corridor,       // the slip happened: something is at the end of Corridor B (the loop is allowed now)
+	ReturnToDesk,   // picked up the wisp: go back to your desk (beat 1.10 is next)
+	Count UMETA(Hidden)
+};
 
 UCLASS()
 class DIRECTORSCUT_58_API UTakeGameInstance : public UGameInstance
@@ -45,6 +57,21 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bGotCoffee = false;
 	UFUNCTION(BlueprintPure, Category = "Take") bool MorningTasksDone() const { return bReadEmail && bGotCoffee && bTrainingComplete; }
 
+	/** Story progress (see ETakeBeat) and the one-line objective shown under the badge task list. */
+	UPROPERTY(BlueprintReadWrite, Category = "Take") ETakeBeat Beat = ETakeBeat::Morning;
+	UPROPERTY(BlueprintReadOnly, Category = "Take") FString Objective;
+	UPROPERTY(BlueprintAssignable, Category = "Take") FTakeObjectiveChanged OnObjectiveChanged;
+	/** Set the objective (the HUD shows it and gives a short "New objective" cue when it changes). */
+	UFUNCTION(BlueprintCallable, Category = "Take") void SetObjective(const FString& NewObjective);
+	/** The standard objective text for the current beat. */
+	UFUNCTION(BlueprintPure, Category = "Take") FString ObjectiveForBeat() const;
+	/** You've had the receptionist's morning brief. */
+	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bMetReceptionist = false;
+	/** You picked up the soul-energy wisp at the end of Corridor B (beat 1.8a). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bGotWisp = false;
+	/** Dev: TakeLoop 1 forces the Corridor B loop on outside its beat. */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") bool bDevForceLoop = false;
+
 	/** Access pass N (1..3) is held once you have N soul bits. */
 	UFUNCTION(BlueprintPure, Category = "Take") bool HasPass(int32 PassNumber) const { return SoulBits >= PassNumber; }
 
@@ -56,5 +83,6 @@ public:
 	UFUNCTION(Exec) void TakeRewind();                   // "CUT. AGAIN."
 	UFUNCTION(Exec) void TakeLoop(bool bEnable);         // force the Corridor B loop on/off
 	UFUNCTION(Exec) void TakeSeed();
-	UFUNCTION(Exec) void TakeNPCYaw(float Yaw);          // turn every rigged NPC's body (facing test)                     // print the run seed + Key 1..3 previews to the log
+	UFUNCTION(Exec) void TakeNPCYaw(float Yaw);          // turn every rigged NPC's body (facing test)
+	UFUNCTION(Exec) void TakeBeat(int32 NewBeat);        // jump to a story beat: 0 morning, 1 meeting, 2 corridor, 3 return to desk
 };

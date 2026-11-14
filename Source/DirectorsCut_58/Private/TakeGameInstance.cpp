@@ -57,6 +57,7 @@ void UTakeGameInstance::TakeRewind()
 
 void UTakeGameInstance::TakeLoop(bool bEnable)
 {
+	bDevForceLoop = bEnable;   // the Fear Director otherwise only allows the loop during the Corridor B beat
 	for (TActorIterator<ATakeLoopTrigger> It(GetWorld()); It; ++It) { It->SetLoopEnabled(bEnable); }
 }
 
@@ -83,4 +84,43 @@ void UTakeGameInstance::TakeNPCYaw(float Yaw)
 		for (TActorIterator<ATakeCoworker> It(World); It; ++It) { It->SetMeshYaw(Yaw); ++N; }
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] NPC mesh yaw = %.0f on %d coworker(s)"), Yaw, N);
 	}
+}
+
+void UTakeGameInstance::SetObjective(const FString& NewObjective)
+{
+	if (Objective == NewObjective) { return; }
+	Objective = NewObjective;
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Objective: %s"), *Objective);
+	OnObjectiveChanged.Broadcast(Objective);
+}
+
+FString UTakeGameInstance::ObjectiveForBeat() const
+{
+	switch (Beat)
+	{
+	case ETakeBeat::Morning:      return bMetReceptionist ? FString(TEXT("Finish your badge tasks before noon")) : FString(TEXT("Check in at Reception (Lobby)"));
+	case ETakeBeat::Meeting:      return FString(TEXT("Attend the 10:00 meeting (Conference Room)"));
+	case ETakeBeat::Corridor:     return FString(TEXT("Something is at the end of Corridor B."));
+	case ETakeBeat::ReturnToDesk: return FString(TEXT("Return to your desk."));
+	default:                      return FString();
+	}
+}
+
+void UTakeGameInstance::TakeBeat(int32 NewBeat)
+{
+	const int32 Clamped = FMath::Clamp(NewBeat, 0, static_cast<int32>(ETakeBeat::Count) - 1);
+	if (Clamped == static_cast<int32>(ETakeBeat::Morning))
+	{
+		bReadEmail = false;   // otherwise the morning would complete again on the next frame
+		bGotCoffee = false;
+	}
+	else
+	{
+		bReadEmail = bGotCoffee = bTrainingComplete = bMetReceptionist = true;
+		if (SoulBits < 1) { SetSoulBits(1); }
+	}
+	Beat = static_cast<ETakeBeat>(Clamped);
+	bGotWisp = Beat == ETakeBeat::ReturnToDesk;
+	SetObjective(ObjectiveForBeat());
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Beat -> %d"), Clamped);
 }

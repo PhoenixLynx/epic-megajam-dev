@@ -44,6 +44,8 @@ public:
 	void SetTasks(const FString& Text);
 	/** Clock / take / passes, top right. */
 	void SetClock(const FString& Text);
+	/** Full-screen slate for the cold open and "CUT. AGAIN.": black (0..1) with big white text on top (0..1). */
+	void SetSlate(float BlackAlpha, const FString& Text, float TextAlpha);
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 private:
@@ -53,6 +55,9 @@ private:
 	UPROPERTY() TObjectPtr<UTextBlock> ClockText;
 	FString CurrentClock;
 	UPROPERTY() TObjectPtr<class UBorder> TaskPanel;
+	UPROPERTY() TObjectPtr<class UBorder> SlateBlack;
+	UPROPERTY() TObjectPtr<UTextBlock> SlateText;
+	FString CurrentSlate;
 	FString Current;
 	FString CurrentTasks;
 };

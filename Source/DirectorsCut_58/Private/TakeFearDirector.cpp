@@ -15,6 +15,8 @@
 #include "EngineUtils.h"
 #include "TimerManager.h"
 #include "GameFramework/Pawn.h"
+#include "TakeGameInstance.h"
+#include "Camera/PlayerCameraManager.h"
 
 ATakeFearDirector::ATakeFearDirector()
 {
@@ -77,6 +79,28 @@ void ATakeFearDirector::BeginPlay()
 		GetWorld()->GetTimerManager().SetTimer(T, this, &ATakeFearDirector::EnsurePlayerCanGrab, 0.3f, false);
 	}
 	SetFearImmediate(Fear);
+	if (bColdOpenFade)
+	{
+		if (APlayerCameraManager* PCM = UGameplayStatics::GetPlayerCameraManager(this, 0))
+		{
+			PCM->StartCameraFade(1.f, 0.f, 3.f, FLinearColor::Black, false, false);
+		}
+	}
+}
+
+void ATakeFearDirector::FlickerBurst(float Seconds)
+{
+	BurstLeft = FMath::Max(BurstLeft, Seconds);
+}
+
+bool ATakeFearDirector::LoopAllowed(float& OutNeed) const
+{
+	OutNeed = LoopFear;
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!GI) { return true; }   // no story state (editor preview / other game instance): old behaviour
+	if (GI->bDevForceLoop) { OutNeed = 0.f; return true; }
+	OutNeed = BeatLoopFear;
+	return GI->Beat == ETakeBeat::Corridor;
 }
 
 void ATakeFearDirector::StartCreep(float Target, float Seconds)
@@ -100,6 +124,7 @@ void ATakeFearDirector::Tick(float DeltaSeconds)
 	if (bPlaying)
 	{
 		Fear = FMath::FInterpConstantTo(Fear, TargetFear, DeltaSeconds, CreepSpeed);
+		BurstLeft = FMath::Max(0.f, BurstLeft - DeltaSeconds);
 		UpdateStage();
 	}
 	FlickerClock += DeltaSeconds;
@@ -118,7 +143,9 @@ void ATakeFearDirector::UpdateStage()
 		OnFearStageChanged.Broadcast(Stage);
 		if (Stalker && Old < StageThresholds.Num() && NewStage >= StageThresholds.Num()) { Stalker->Activate(); }
 	}
-	for (ATakeLoopTrigger* Loop : LoopTriggers) { if (Loop) { Loop->SetLoopEnabled(Fear >= LoopFear); } }
+	float Need = LoopFear;
+	const bool bAllowed = LoopAllowed(Need);
+	for (ATakeLoopTrigger* Loop : LoopTriggers) { if (Loop) { Loop->SetLoopEnabled(bAllowed && Fear >= Need); } }
 }
 
 void ATakeFearDirector::ApplyFear()
@@ -152,10 +179,12 @@ void ATakeFearDirector::ApplyFear()
 		float& Base = BaseIntensity.FindOrAdd(L, L->GetLightComponent()->Intensity);
 		// dim with Fear; above 0.5, flicker irregularly
 		float Scale = FMath::Lerp(1.f, 0.25f, F);
-		if (F > 0.5f)
+		const bool bBurst = BurstLeft > 0.f;
+		if (F > 0.5f || bBurst)
 		{
 			const float N = FMath::Sin(FlickerClock * 23.f) * FMath::Sin(FlickerClock * 7.3f + 1.3f);
-			if (N > 0.85f - (F - 0.5f)) { Scale *= 0.15f; }
+			const float Threshold = bBurst ? 0.15f : 0.85f - (F - 0.5f);
+			if (N > Threshold) { Scale *= 0.15f; }
 		}
 		L->GetLightComponent()->SetIntensity(Base * Scale);
 	}

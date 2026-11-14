@@ -9,6 +9,8 @@ Places the gameplay actors into L_Campus_Greybox:
   - TakeCoworker x N       (replaces every NPC-tagged DR_ mannequin; the original is hidden, not deleted)
   - WorkSpot TargetPoints  (coffee machine, fridge, water cooler, printer, filing, lobby: where coworkers wander)
   - DataTables             /Game/Data/DT_Emails and DT_NPCLines from Data/Text/*.csv (HALCYON Mail + dialogue)
+  - TakeBeatTrigger x 2    (overnight run 1) ConferenceRoom (the 10:00 meeting slip) + CorridorB (entrance)
+  - TakeWisp               (overnight run 1) on GB_SoulEnergy_Act1, the end of Corridor B, with /Game/Fear/M_Wisp
 Safe to re-run (removes previous CPP_ actors). Re-run it after dress_campus.py.
 """
 import unreal
@@ -55,6 +57,55 @@ loop.set_editor_property("loop_offset", unreal.Vector(0, -1000, 0))
 
 stalker_loc = loc_of("GB_Stalker_Spawn_Act1", (1400, 5650, 50))
 stalker = spawn(unreal.TakeStalker, "Stalker", unreal.Vector(stalker_loc.x, stalker_loc.y, 120), yaw=-90)
+
+
+# --- Act 1 story (overnight run 1): beat triggers + the Corridor B wisp -------------
+def make_wisp_material():
+    """/Game/Fear/M_Wisp: unlit, bright mint emissive. Made once; re-runs keep it."""
+    path = "/Game/Fear/M_Wisp"
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        return unreal.EditorAssetLibrary.load_asset(path)
+    mat = unreal.AssetToolsHelpers.get_asset_tools().create_asset("M_Wisp", "/Game/Fear", unreal.Material, unreal.MaterialFactoryNew())
+    if mat is None:
+        unreal.log_warning("[TAKE 4471] Could not create M_Wisp; the wisp will use the default material")
+        return None
+    mat.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_UNLIT)
+    mel = unreal.MaterialEditingLibrary
+    col = mel.create_material_expression(mat, unreal.MaterialExpressionConstant3Vector, -400, 0)
+    col.set_editor_property("constant", unreal.LinearColor(0.5, 0.95, 0.85, 1.0))
+    mul = mel.create_material_expression(mat, unreal.MaterialExpressionMultiply, -200, 0)
+    mul.set_editor_property("const_b", 12.0)
+    mel.connect_material_expressions(col, "", mul, "A")
+    mel.connect_material_property(mul, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    mel.recompile_material(mat)
+    unreal.EditorAssetLibrary.save_asset(path)
+    return mat
+
+
+story_placed = []
+if hasattr(unreal, "TakeBeatTrigger"):
+    # Room bounds from build_greybox_campus.py: ConferenceRoom x 200-1400, y 500-1700 (door on the lobby side, x 1400);
+    # CorridorB x 1200-1600, y 3700-5700 (entrance at y 3700; the loop teleports you back to y ~3950, so the
+    # entrance box stays south of that).
+    for name, loc, half in (("ConferenceRoom", (750, 1100, 150), (450, 500, 150)),
+                            ("CorridorB", (1400, 3780, 150), (190, 60, 150))):
+        bt = spawn(unreal.TakeBeatTrigger, f"Beat_{name}", unreal.Vector(*loc))
+        bt.set_editor_property("beat_name", unreal.Name(name))
+        bt.set_editor_property("box_half_size", unreal.Vector(*half))
+        if hasattr(bt, "rerun_construction_scripts"):
+            bt.rerun_construction_scripts()
+        story_placed.append(f"Beat_{name}")
+else:
+    unreal.log_warning("[TAKE 4471] unreal.TakeBeatTrigger not found: rebuild the C++ (overnight run 1) to get the Act 1 beats")
+if hasattr(unreal, "TakeWisp"):
+    wisp_loc = loc_of("GB_SoulEnergy_Act1", (1400, 5400, 0))
+    wisp = spawn(unreal.TakeWisp, "Wisp_Act1", unreal.Vector(wisp_loc.x, wisp_loc.y, 140))
+    wisp_mat = make_wisp_material()
+    if wisp_mat:
+        wisp.set_editor_property("orb_material", wisp_mat)
+    story_placed.append("Wisp_Act1")
+else:
+    unreal.log_warning("[TAKE 4471] unreal.TakeWisp not found: rebuild the C++ (overnight run 1)")
 
 
 # --- DataTables ----------------------------------------------------------------
@@ -166,5 +217,6 @@ for row, col in SEATED_CUBICLES:
 
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
 unreal.log(f"[TAKE 4471] Seated {seated} coworker(s) at their desks.")
+unreal.log(f"[TAKE 4471] Act 1 story actors: {', '.join(story_placed) or 'none'}")
 unreal.log(f"[TAKE 4471] Placed Fear Director, fog, loop trigger, stalker, {made} coworker(s), {len(WORKSPOTS)} work spots, "
            f"{tables}/3 DataTables. Press Play: E talks / opens / picks up; E at your monitor logs in; 1-4 / 0 = Fear.")

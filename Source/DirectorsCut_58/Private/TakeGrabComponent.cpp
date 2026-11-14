@@ -6,6 +6,7 @@
 #include "TakeFearDirector.h"
 #include "TakeWidgets.h"
 #include "TakePauseMenu.h"
+#include "TakeWisp.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -70,6 +71,8 @@ void UTakeGrabComponent::BeginPlay()
 			if (Prompt) { Prompt->AddToViewport(5); }
 		}
 	}
+	BindStoryEvents();
+	if (bPlayColdOpen) { StartSlate(false); }
 }
 
 void UTakeGrabComponent::EndPlay(const EEndPlayReason::Type Reason)
@@ -170,6 +173,12 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 		Hit = FHitResult(C, nullptr, C->GetActorLocation(), FVector::UpVector);
 		return ETakeLookKind::Coworker;
 	}
+	// The soul-energy wisp: small and bobbing, so facing it roughly is enough
+	if (ATakeWisp* W = WispInView())
+	{
+		Hit = FHitResult(W, nullptr, W->GetActorLocation(), FVector::UpVector);
+		return ETakeLookKind::Wisp;
+	}
 	// A ringing phone right next to you wins over the desk, the monitor and the props around it
 	if (PhoneRingingNear())
 	{
@@ -198,6 +207,7 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 		if (A->ActorHasTag(TEXT("CoffeeMachine"))) { return ETakeLookKind::Coffee; }
 		if (RingingPhone.IsValid() && A == RingingPhone.Get()) { return ETakeLookKind::Phone; }
 		if (A->ActorHasTag(TEXT("Inspectable"))) { return ETakeLookKind::Inspect; }
+		if (const ATakeWisp* W = Cast<ATakeWisp>(A)) { return W->IsAvailable() ? ETakeLookKind::Wisp : ETakeLookKind::None; }
 	}
 	if (Comp && Comp->IsSimulatingPhysics() && Hit.Distance <= CurrentRange())
 	{
@@ -213,12 +223,13 @@ void UTakeGrabComponent::Interact()
 	FHitResult Hit;
 	switch (Look(Hit))
 	{
-	case ETakeLookKind::Coworker:  Cast<ATakeCoworker>(Hit.GetActor())->Speak(TEXT("Talk")); break;
+	case ETakeLookKind::Coworker:  if (ATakeCoworker* C = Cast<ATakeCoworker>(Hit.GetActor())) { C->Talk(); } break;
 	case ETakeLookKind::Terminal:  SitAndLogIn(Hit.GetActor()); break;
 	case ETakeLookKind::Openable:  ToggleOpen(Hit.GetActor()); break;
 	case ETakeLookKind::Coffee:    PourCoffee(); break;
 	case ETakeLookKind::Phone:     AnswerPhone(Hit.GetActor()); break;
 	case ETakeLookKind::Inspect:   Inspect(Hit.GetActor()); break;
+	case ETakeLookKind::Wisp:      CollectWisp(Cast<ATakeWisp>(Hit.GetActor())); break;
 	case ETakeLookKind::Prop:      TryGrabOrDrop(); break;
 	default: break;
 	}
@@ -572,8 +583,9 @@ void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 
 void UTakeGrabComponent::ShowSubtitleSequence(const FString& Who, const TArray<FString>& Lines)
 {
-	SubWho = Who;
 	SubQueue = Lines;
+	SubQueueWho.Reset();
+	for (int32 I = 0; I < Lines.Num(); ++I) { SubQueueWho.Add(Who); }
 	SubtitleLeft = 0.f;   // start now
 }
 
@@ -703,6 +715,7 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		}
 	}
 	const FString Name = Tex ? Tex->GetName() : FString();
+	const bool bBrokeLoop = TryBreakLoopAt(Target);   // after reading the texture: breaking restores the poster
 	FString Title, Caption;
 	if (Name.Contains(TEXT("Chairman")))
 	{
@@ -728,6 +741,11 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 	{
 		Title = TEXT("HALCYON");
 		Caption = TEXT("Every hallway has one. Every hallway has this one.");
+	}
+	if (bBrokeLoop)
+	{
+		Title = TEXT("HALCYON");
+		Caption = TEXT("That's the one. It wasn't like this a minute ago.\nSomewhere ahead, the hum stops.");
 	}
 	Inspecting = CreateWidget<UTakeInspectWidget>(PC, UTakeInspectWidget::StaticClass());
 	if (!Inspecting) { return; }
@@ -777,7 +795,9 @@ void UTakeGrabComponent::UpdateTasks()
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (!GI) { return; }
 	const int32 Mask = (GI->bReadEmail ? 1 : 0) | (GI->bGotCoffee ? 2 : 0) | (GI->bTrainingComplete ? 4 : 0);
-	if (Mask == TasksShown) { return; }
+	const bool bObjectiveChanged = GI->Objective != ObjectiveShown;
+	if (Mask == TasksShown && !bObjectiveChanged) { return; }
+	ObjectiveShown = GI->Objective;
 	const int32 NewlyDone = TasksShown < 0 ? 0 : (Mask & ~TasksShown);
 	TasksShown = Mask;
 	auto Box = [](bool bDone) { return bDone ? TEXT("[x]") : TEXT("[  ]"); };
@@ -785,12 +805,18 @@ void UTakeGrabComponent::UpdateTasks()
 	Text += FString::Printf(TEXT("%s  Check email\n"), Box(GI->bReadEmail));
 	Text += FString::Printf(TEXT("%s  Get coffee\n"), Box(GI->bGotCoffee));
 	Text += FString::Printf(TEXT("%s  Complete Compliance Training"), Box(GI->bTrainingComplete));
-	if (Mask == 7) { Text += TEXT("\n\nNext: 10:00 meeting, Conference Room"); }
+	if (!GI->Objective.IsEmpty()) { Text += FString::Printf(TEXT("\n\nNEXT  \u00B7  %s"), *GI->Objective); }
+	else if (Mask == 7) { Text += TEXT("\n\nNext: 10:00 meeting, Conference Room"); }
 	Prompt->SetTasks(Text);
 	if (Mask == 7 && NewlyDone)
 	{
 		ShowSubtitle(TEXT("PA"), TEXT("Thank you, 4471. Your morning is complete. Please proceed to your 10:00 in the Conference Room."), 6.f);
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Morning tasks complete"));
+	}
+	if (bObjectiveChanged && !GI->Objective.IsEmpty())   // after the PA line above, so the cue queues behind it
+	{
+		QueueSubtitle(TEXT(""), FString::Printf(TEXT("New objective:  %s"), *GI->Objective));
+		PlaySfx2D(TEXT("sfx_badge_ok"), 0.35f);
 	}
 }
 
@@ -813,7 +839,12 @@ void UTakeGrabComponent::UpdatePrompt()
 	FHitResult Hit;
 	switch (Look(Hit))
 	{
-	case ETakeLookKind::Coworker: Prompt->SetPrompt(TEXT("E  Talk")); break;
+	case ETakeLookKind::Coworker:
+	{
+		const ATakeCoworker* C = Cast<ATakeCoworker>(Hit.GetActor());
+		Prompt->SetPrompt((C && C->IsInConversation()) ? TEXT("E  Continue") : TEXT("E  Talk"));
+		break;
+	}
 	case ETakeLookKind::Terminal: Prompt->SetPrompt(TEXT("E  Sit and log in")); break;
 	case ETakeLookKind::Openable:
 	{
@@ -824,6 +855,7 @@ void UTakeGrabComponent::UpdatePrompt()
 	case ETakeLookKind::Coffee:   Prompt->SetPrompt(TEXT("E  Pour a coffee")); break;
 	case ETakeLookKind::Phone:    Prompt->SetPrompt(TEXT("E  Answer the phone")); break;
 	case ETakeLookKind::Inspect:  Prompt->SetPrompt(TEXT("E  Look closer")); break;
+	case ETakeLookKind::Wisp:     Prompt->SetPrompt(TEXT("E  Reach for the light")); break;
 	case ETakeLookKind::Prop:     Prompt->SetPrompt(TEXT("E  Pick up")); break;
 	case ETakeLookKind::TooHeavy: Prompt->SetPrompt(TEXT("Too heavy")); break;
 	default:                      Prompt->SetPrompt(TEXT("")); break;
@@ -838,6 +870,8 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickClock(DeltaTime);
 	TickFootsteps(DeltaTime);
 	TickPhones(DeltaTime);
+	TickSlate(DeltaTime);
+	TickStory();
 	UpdatePrompt();
 	UpdateTasks();
 	if (SubtitleLeft > 0.f)
@@ -848,8 +882,10 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	if (SubtitleLeft <= 0.f && SubQueue.Num() > 0)
 	{
 		const FString Next = SubQueue[0];
+		const FString NextWho = SubQueueWho.Num() > 0 ? SubQueueWho[0] : FString();
 		SubQueue.RemoveAt(0);
-		ShowSubtitle(SubWho, Next, FMath::Max(2.5f, Next.Len() / 14.f));
+		if (SubQueueWho.Num() > 0) { SubQueueWho.RemoveAt(0); }
+		ShowSubtitle(NextWho, Next, FMath::Max(2.5f, Next.Len() / 14.f));
 	}
 	if (!IsHolding()) { return; }
 	FVector Loc; FRotator Rot;

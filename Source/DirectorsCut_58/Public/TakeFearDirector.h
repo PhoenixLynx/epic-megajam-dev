@@ -52,6 +52,10 @@ public:
 	/** Loop triggers switch on at LoopFear (fog hides the teleport by then). */
 	UPROPERTY(EditAnywhere, Category = "Fear|Targets") TArray<TObjectPtr<ATakeLoopTrigger>> LoopTriggers;
 	UPROPERTY(EditAnywhere, Category = "Fear|Targets") float LoopFear = 0.5f;
+	/** The loop only switches on during the Corridor B beat (ETakeBeat::Corridor); during that beat it needs this much Fear. */
+	UPROPERTY(EditAnywhere, Category = "Fear|Targets") float BeatLoopFear = 0.3f;
+	/** Fade in from black at Play (the cold open's "TAKE n" slate sits on top of it). */
+	UPROPERTY(EditAnywhere, Category = "Fear|Targets") bool bColdOpenFade = true;
 	/** The stalker activates at the last stage. */
 	UPROPERTY(EditAnywhere, Category = "Fear|Targets") TObjectPtr<ATakeStalker> Stalker;
 	/** Find MPC_Fear, the Fear post-process volume, fog, loop triggers, the stalker and FearLight-tagged lights automatically. */
@@ -73,6 +77,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Fear") void Calm(float Seconds = 3.f) { StartCreep(0.f, Seconds); }
 	UFUNCTION(BlueprintCallable, Category = "Fear") void SetFearImmediate(float Value);
 	UFUNCTION(BlueprintCallable, Category = "Fear") void ApplyFear();
+	/** Make the FearLight lights flicker hard for a moment, whatever the Fear level (the 10:00 meeting slip). */
+	UFUNCTION(BlueprintCallable, Category = "Fear") void FlickerBurst(float Seconds = 2.5f);
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -85,6 +91,8 @@ public:
 private:
 	TMap<TObjectPtr<ALight>, float> BaseIntensity;
 	float FlickerClock = 0.f;
+	float BurstLeft = 0.f;
+	bool LoopAllowed(float& OutNeed) const;
 	void UpdateStage();
 	void AutoWire();
 	void EnsurePlayerCanGrab();

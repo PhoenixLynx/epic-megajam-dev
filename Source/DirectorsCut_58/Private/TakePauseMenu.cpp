@@ -189,7 +189,8 @@ void UTakePauseMenu::RefreshTasks()
 	auto Box = [](bool bDone) { return bDone ? TEXT("[x]") : TEXT("[  ]"); };
 	FString T = FString::Printf(TEXT("%s  Check email\n%s  Get coffee\n%s  Complete Compliance Training\n\n"),
 	                            Box(GI->bReadEmail), Box(GI->bGotCoffee), Box(GI->bTrainingComplete));
-	T += GI->MorningTasksDone() ? TEXT("Next:  10:00 meeting, Conference Room.") : TEXT("Your desk is #4471, by the window.");
+	if (!GI->Objective.IsEmpty()) { T += FString::Printf(TEXT("Next:  %s"), *GI->Objective); }
+	else { T += GI->MorningTasksDone() ? TEXT("Next:  10:00 meeting, Conference Room.") : TEXT("Your desk is #4471, by the window."); }
 	T += FString::Printf(TEXT("\n\nAccess passes:  %d / 3"), GI->SoulBits);
 	TasksText->SetText(FText::FromString(T));
 }
@@ -302,6 +303,10 @@ bool UTakePauseMenu::SaveProgress(const UObject* WorldContext)
 	S->bReadEmail = GI->bReadEmail;
 	S->bGotCoffee = GI->bGotCoffee;
 	S->RunSeed = GI->RunSeed;
+	S->BeatIndex = static_cast<int32>(GI->Beat);
+	S->Objective = GI->Objective;
+	S->bMetReceptionist = GI->bMetReceptionist;
+	S->bGotWisp = GI->bGotWisp;
 	S->SavedAt = FDateTime::Now();
 	if (const APawn* P = UGameplayStatics::GetPlayerPawn(WorldContext, 0))
 	{
@@ -329,6 +334,10 @@ bool UTakePauseMenu::LoadProgress(const UObject* WorldContext)
 	GI->bReadEmail = S->bReadEmail;
 	GI->bGotCoffee = S->bGotCoffee;
 	GI->RunSeed = S->RunSeed;   // same seed = same Key Locks as when you saved
+	GI->Beat = static_cast<ETakeBeat>(FMath::Clamp(S->BeatIndex, 0, static_cast<int32>(ETakeBeat::Count) - 1));
+	GI->bMetReceptionist = S->bMetReceptionist;
+	GI->bGotWisp = S->bGotWisp;
+	GI->SetObjective(S->Objective.IsEmpty() ? GI->ObjectiveForBeat() : S->Objective);
 	if (APawn* P = UGameplayStatics::GetPlayerPawn(WorldContext, 0))
 	{
 		if (!S->PlayerLocation.IsNearlyZero())

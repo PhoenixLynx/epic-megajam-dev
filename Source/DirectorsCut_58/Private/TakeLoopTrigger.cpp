@@ -122,3 +122,14 @@ void ATakeLoopTrigger::ResetLoop()
 	CurrentChangedPoster = nullptr;
 	RestorePosters();
 }
+
+void ATakeLoopTrigger::ForceBreak()
+{
+	if (bBroken) { return; }
+	bBroken = true;
+	bLoopEnabled = false;
+	RestorePosters();
+	CurrentChangedPoster = nullptr;
+	OnLoopBroken.Broadcast();
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Loop let go after %d loops (no changed poster)"), LoopCount);
+}

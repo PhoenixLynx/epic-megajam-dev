@@ -135,17 +135,35 @@ void ATakeCoworker::LoadLines()
 	Lines.Reset();
 	Greetings.Reset();
 	CoffeeLines.Reset();
+	StorySets.Reset();
 	auto Matches = [this](const FString& RowRole) { return RowRole.Equals(NPCRole, ESearchCase::IgnoreCase); };
 	if (const UDataTable* Table = LoadObject<UDataTable>(nullptr, TEXT("/Game/Data/DT_NPCLines.DT_NPCLines")))
 	{
 		TArray<FTakeNPCLineRow*> Rows;
 		Table->GetAllRows<FTakeNPCLineRow>(TEXT("TakeCoworker"), Rows);
+		TMap<FString, TArray<TPair<int32, FString>>> Story;   // set -> (order, line)
 		for (const FTakeNPCLineRow* R : Rows)
 		{
 			if (!R || R->Act != 1 || !Matches(R->Role) || (R->IsAgent && !bIsAgent)) { continue; }
+			// Story conversations ("Story1", "Pass1Story2", ...): only story NPCs use them, never as small talk
+			const int32 StoryAt = R->Context.Find(TEXT("Story"), ESearchCase::CaseSensitive);
+			if (StoryAt != INDEX_NONE && R->Context.Mid(StoryAt + 5).IsNumeric())
+			{
+				if (bStoryNPC)
+				{
+					Story.FindOrAdd(R->Context.Left(StoryAt)).Add(TPair<int32, FString>(FCString::Atoi(*R->Context.Mid(StoryAt + 5)), R->Line));
+				}
+				continue;
+			}
 			if (R->Context == TEXT("Greeting") || R->Context == TEXT("BadgeCheck")) { Greetings.Add(R->Line); }
 			else if (R->Context == TEXT("AfterCoffee")) { CoffeeLines.Add(R->Line); }
 			else { Lines.Add(R->Line); }
+		}
+		for (auto& Set : Story)
+		{
+			Set.Value.Sort([](const TPair<int32, FString>& A, const TPair<int32, FString>& B) { return A.Key < B.Key; });
+			TArray<FString>& Ordered = StorySets.FindOrAdd(Set.Key);
+			for (const TPair<int32, FString>& L : Set.Value) { Ordered.Add(L.Value); }
 		}
 	}
 	if (Lines.Num() == 0)   // fallback until the DataTable is imported
@@ -207,12 +225,16 @@ void ATakeCoworker::UpdateOverhead(const FVector& Eye)
 {
 	if (SpokenLine.IsEmpty())
 	{
-		if (bStoryNPC && State != ETakeCoworkerState::Watching)   // someone to talk to
+		if (bStoryNPC && State != ETakeCoworkerState::Watching && HasNewConversation())   // someone to talk to
 		{
 			Speech->SetWorldRotation(FRotator(0.f, (Eye - Speech->GetComponentLocation()).Rotation().Yaw, 0.f));
 			Speech->SetTextRenderColor(FColor(80, 200, 180));
 			Speech->SetWorldSize(16.f);
 			Speech->SetText(FText::FromString(TEXT("!")));
+		}
+		else if (bStoryNPC)
+		{
+			Speech->SetText(FText::GetEmpty());   // heard everything for now: the "!" goes away
 		}
 		return;
 	}
@@ -243,6 +265,62 @@ bool ATakeCoworker::Speak(const FString& Context)
 	const FString Line = NextLine();
 	if (Line.IsEmpty()) { return false; }
 	SayLine(Line);
+	return true;
+}
+
+bool ATakeCoworker::CurrentStorySet(FString& OutSet) const
+{
+	if (StorySets.Num() == 0) { return false; }
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (GI)
+	{
+		if (GI->Beat >= ETakeBeat::Corridor && StorySets.Contains(TEXT("Slip"))) { OutSet = TEXT("Slip"); return true; }
+		if (GI->MorningTasksDone() && StorySets.Contains(TEXT("Done")))   { OutSet = TEXT("Done"); return true; }
+		if (GI->HasPass(1) && StorySets.Contains(TEXT("Pass1")))          { OutSet = TEXT("Pass1"); return true; }
+	}
+	if (StorySets.Contains(FString())) { OutSet = FString(); return true; }
+	return false;
+}
+
+bool ATakeCoworker::HasNewConversation() const
+{
+	if (StorySets.Num() == 0) { return true; }   // DataTable not re-imported yet: keep the old always-on "!"
+	FString Set;
+	return CurrentStorySet(Set) && (bInConversation || !FinishedSets.Contains(Set));
+}
+
+bool ATakeCoworker::Talk()
+{
+	FString Set;
+	if (!bStoryNPC || !CurrentStorySet(Set)) { return Speak(TEXT("Talk")); }
+	const TArray<FString>* Convo = StorySets.Find(Set);
+	if (!Convo || Convo->Num() == 0) { return Speak(TEXT("Talk")); }
+	if (!bInConversation || ActiveSet != Set)
+	{
+		if (FinishedSets.Contains(Set) && !(bInConversation && ActiveSet != Set))
+		{
+			// Heard it already: small talk (no cooldown for E), or the last line again if there is none
+			const FString Small = NextLine();
+			SayLine(Small.IsEmpty() ? Convo->Last() : Small);
+			return true;
+		}
+		ActiveSet = Set;
+		StoryIndex = 0;
+		bInConversation = true;
+		bGreeted = true;   // the conversation is the greeting
+	}
+	const int32 LineIndex = FMath::Clamp(StoryIndex, 0, Convo->Num() - 1);
+	SayLine((*Convo)[LineIndex]);
+	++StoryIndex;
+	if (StoryIndex >= Convo->Num())
+	{
+		bInConversation = false;
+		FinishedSets.Add(Set);
+		if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+		{
+			if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>()) { Hands->OnStoryTalkFinished(NPCRole, Set); }
+		}
+	}
 	return true;
 }
 

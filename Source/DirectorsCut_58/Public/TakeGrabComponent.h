@@ -22,7 +22,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeGrabEvent, UPrimitiveComponent*
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeActorEvent, AActor*, Actor);
 
 UENUM()
-enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Inspect, Prop, TooHeavy };
+enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Inspect, Prop, TooHeavy, Wisp };
 
 UCLASS(ClassGroup = (Take), meta = (BlueprintSpawnableComponent, DisplayName = "Take Grab"))
 class DIRECTORSCUT_58_API UTakeGrabComponent : public UActorComponent
@@ -74,6 +74,16 @@ public:
 	/** Make a desk phone ring now (nullptr = your phone at #4471). */
 	UFUNCTION(BlueprintCallable, Category = "Grab") void RingPhone(AActor* Phone = nullptr);
 
+	// ---- Story (Act 1 progression, TakeStory.cpp) ----
+	/** Black, "TAKE n", PA chime + "Good morning, team." when Play starts. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story") bool bPlayColdOpen = true;
+	/** A TakeBeatTrigger box was entered (ConferenceRoom, CorridorB, ...). */
+	UFUNCTION(BlueprintCallable, Category = "Story") void OnBeatTrigger(FName TriggerName);
+	/** A story NPC finished a conversation ("" = its first one, "Pass1", "Done", "Slip"). */
+	void OnStoryTalkFinished(const FString& RoleName, const FString& SetName);
+	/** Show this subtitle after whatever is showing now (and anything already queued). */
+	void QueueSubtitle(const FString& Who, const FString& Line);
+
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -121,9 +131,28 @@ private:
 	void AnswerPhone(AActor* Phone);
 	bool PhoneRingingNear() const;
 	void StopRinging();
-	// Queued subtitles
+	// Queued subtitles (each line has its own speaker)
 	TArray<FString> SubQueue;
-	FString SubWho;
+	TArray<FString> SubQueueWho;
+	// Story (TakeStory.cpp)
+	float SlateT = -1.f;          // < 0 = no slate showing
+	bool bSlateRewind = false;
+	bool bSlateClap = false;
+	bool bSlatePA = false;
+	int32 SlateTake = 1;
+	bool bCorridorEntered = false;
+	FString ObjectiveShown;
+	void StartSlate(bool bRewind);
+	void TickSlate(float DeltaTime);
+	void TickStory();
+	void PlaySfx2D(const TCHAR* Name, float Volume = 1.f);
+	void CollectWisp(class ATakeWisp* Wisp);
+	class ATakeWisp* WispInView() const;
+	class ATakeFearDirector* FindFearDirector() const;
+	bool TryBreakLoopAt(AActor* Poster);
+	void BindStoryEvents();
+	UFUNCTION() void HandleRewind(int32 NewTakeNumber);
+	UFUNCTION() void HandleLooped(int32 Count);
 	void BindPropImpacts();
 	UFUNCTION() void OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	int32 TasksShown = -1;          // bitmask of finished tasks last time we drew the list

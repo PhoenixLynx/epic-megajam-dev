@@ -47,6 +47,8 @@ public:
 	/** Call when the player interacts with a poster. Returns true if it was the changed one (loop broken). */
 	UFUNCTION(BlueprintCallable, Category = "Loop") bool TryBreakLoop(AActor* InteractedPoster);
 	UFUNCTION(BlueprintCallable, Category = "Loop") void ResetLoop();
+	/** Break the loop without the poster (mercy, e.g. when no _Changed poster materials exist). */
+	UFUNCTION(BlueprintCallable, Category = "Loop") void ForceBreak();
 
 	virtual void BeginPlay() override;
 
