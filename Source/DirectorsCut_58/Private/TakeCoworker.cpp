@@ -18,6 +18,8 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 
+double ATakeCoworker::NextAnyoneMayTalk = 0.0;
+
 ATakeCoworker::ATakeCoworker()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -37,10 +39,10 @@ ATakeCoworker::ATakeCoworker()
 
 	Speech = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Speech"));
 	Speech->SetupAttachment(GetCapsuleComponent());
-	Speech->SetRelativeLocation(FVector(0.f, 0.f, 105.f));
+	Speech->SetRelativeLocation(FVector(0.f, 0.f, 98.f));
 	Speech->SetHorizontalAlignment(EHTA_Center);
 	Speech->SetVerticalAlignment(EVRTA_TextBottom);
-	Speech->SetWorldSize(14.f);
+	Speech->SetWorldSize(9.f);
 	Speech->SetTextRenderColor(FColor(30, 40, 48));
 	Speech->SetText(FText::GetEmpty());
 
@@ -135,6 +137,37 @@ FString ATakeCoworker::NextLine()
 	return Lines[LastLine];
 }
 
+FString ATakeCoworker::WrapLine(const FString& In, int32 Width)
+{
+	TArray<FString> Words;
+	In.ParseIntoArray(Words, TEXT(" "));
+	FString Out, LineSoFar;
+	for (const FString& W : Words)
+	{
+		if (!LineSoFar.IsEmpty() && LineSoFar.Len() + 1 + W.Len() > Width) { Out += LineSoFar + TEXT("<br>"); LineSoFar.Reset(); }
+		LineSoFar += LineSoFar.IsEmpty() ? W : TEXT(" ") + W;
+	}
+	return Out + LineSoFar;
+}
+
+void ATakeCoworker::UpdateOverhead(const FVector& Eye)
+{
+	if (SpokenLine.IsEmpty()) { return; }
+	const FVector Here = Speech->GetComponentLocation();
+	Speech->SetWorldRotation(FRotator(0.f, (Eye - Here).Rotation().Yaw, 0.f));
+	// Scale with distance so it is always about the same size on screen and never runs off it
+	const float Dist = FVector::Dist(Eye, Here);
+	Speech->SetWorldSize(FMath::Clamp(Dist * 0.028f, 4.f, 14.f));
+	if (TakeSettings::DialogueMode == 0)
+	{
+		Speech->SetText(FText::FromString(TEXT("...")));   // who's talking; the words are in the subtitle
+	}
+	else
+	{
+		Speech->SetText(FText::FromString(WrapLine(SpokenLine, 26)));
+	}
+}
+
 float ATakeCoworker::GetFear() const
 {
 	return FearDirector.IsValid() ? FearDirector->Fear : 0.f;
@@ -152,14 +185,19 @@ bool ATakeCoworker::Speak(const FString& Context)
 void ATakeCoworker::SayLine(const FString& Line)
 {
 	const FString Filled = TakeText::Fill(this, Line);
-	Speech->SetText(FText::FromString(Filled));
-	SpeechLeft = SpeechSeconds;
+	SpokenLine = Filled;
+	// Long lines stay up longer: ~14 characters a second, at least SpeechSeconds
+	SpeechLeft = FMath::Max(SpeechSeconds, Filled.Len() / 14.f);
 	CooldownLeft = SpeechCooldown;
-	if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+	if (const UWorld* World = GetWorld()) { NextAnyoneMayTalk = World->GetTimeSeconds() + SpeechLeft * 0.8f; }
+	if (TakeSettings::DialogueMode != 1)   // subtitles
 	{
-		if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>())
+		if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
 		{
-			Hands->ShowSubtitle(NPCRole, Filled, SpeechSeconds + 0.5f);
+			if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>())
+			{
+				Hands->ShowSubtitle(NPCRole, Filled, SpeechLeft + 0.5f);
+			}
 		}
 	}
 	// Turn to face the player while talking
@@ -239,21 +277,31 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	CooldownLeft = FMath::Max(0.f, CooldownLeft - DeltaSeconds);
+	NearCooldownLeft = FMath::Max(0.f, NearCooldownLeft - DeltaSeconds);
 	if (SpeechLeft > 0.f)
 	{
 		SpeechLeft -= DeltaSeconds;
-		if (SpeechLeft <= 0.f) { Speech->SetText(FText::GetEmpty()); }
+		if (SpeechLeft <= 0.f) { SpokenLine.Reset(); Speech->SetText(FText::GetEmpty()); }
 	}
 
 	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
 	if (Player)
 	{
-		// Speech text faces the camera
 		FVector Eye; FRotator View;
 		Player->GetActorEyesViewPoint(Eye, View);
-		Speech->SetWorldRotation(FRotator(0.f, (Eye - Speech->GetComponentLocation()).Rotation().Yaw, 0.f));
-		// Bump
-		if (FVector::Dist2D(Player->GetActorLocation(), GetActorLocation()) < 95.f) { Speak(TEXT("Bump")); }
+		UpdateOverhead(Eye);
+		const float Dist = FVector::Dist2D(Player->GetActorLocation(), GetActorLocation());
+		FCollisionQueryParams SightParams(SCENE_QUERY_STAT(TakeBark), false, Player);
+		SightParams.AddIgnoredActor(this);
+		// Bump: always reacts
+		if (Dist < 95.f) { Speak(TEXT("Bump")); }
+		// Walk past: they talk on their own, one NPC at a time, not too often
+		else if (bTalksWhenNear && Dist < NearRange && NearCooldownLeft <= 0.f && GetFear() < WatchFear
+		         && GetWorld()->GetTimeSeconds() >= NextAnyoneMayTalk
+		         && GetWorld()->LineTraceTestByChannel(Eye, GetActorLocation() + FVector(0.f, 0.f, 60.f), ECC_Visibility, SightParams) == false)
+		{
+			if (Speak(TEXT("Near"))) { NearCooldownLeft = FMath::FRandRange(NearCooldownMin, NearCooldownMax); }
+		}
 	}
 
 	AAIController* AI = Cast<AAIController>(GetController());
@@ -266,6 +314,8 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 		if (State != ETakeCoworkerState::Watching)
 		{
 			State = ETakeCoworkerState::Watching;
+			SpokenLine.Reset();
+			SpeechLeft = 0.f;
 			Speech->SetText(FText::GetEmpty());
 		}
 		if (PlayerCanSee(Player))

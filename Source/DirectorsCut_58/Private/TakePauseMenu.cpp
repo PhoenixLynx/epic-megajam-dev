@@ -3,6 +3,7 @@
 #include "DirectorsCut_58.h"
 #include "TakeWidgets.h"
 #include "TakeSaveGame.h"
+#include "TakeTypes.h"
 #include "TakeGameInstance.h"
 #include "TakeFearDirector.h"
 #include "Blueprint/WidgetTree.h"
@@ -79,7 +80,7 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 		UCanvasPanelSlot* CardSlot = Root->AddChildToCanvas(Card);
 		CardSlot->SetAnchors(FAnchors(0.5f, 0.5f));
 		CardSlot->SetAlignment(FVector2D(0.5f, 0.5f));
-		CardSlot->SetSize(FVector2D(980.f, 600.f));
+		CardSlot->SetSize(FVector2D(1040.f, 700.f));
 
 		UVerticalBox* Col = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
 		Card->SetContent(Col);
@@ -151,6 +152,17 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 			W->AddChildToHorizontalBox(B)->SetPadding(FMargin(0.f, 0.f, 8.f, 0.f));
 		}
 		SetPage->AddChildToVerticalBox(W)->SetPadding(FMargin(0.f, 6.f, 0.f, 18.f));
+
+		SetPage->AddChildToVerticalBox(MakeText(TEXT("DIALOGUE"), 13, PMuted, true));
+		UHorizontalBox* D = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+		const TCHAR* DModes[] = { TEXT("Subtitles"), TEXT("Over their heads"), TEXT("Both") };
+		for (int32 M = 0; M < 3; ++M)
+		{
+			UTakeIndexedButton* B = MakeButton(DModes[M], M);
+			B->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnDialogueMode);
+			D->AddChildToHorizontalBox(B)->SetPadding(FMargin(0.f, 0.f, 8.f, 0.f));
+		}
+		SetPage->AddChildToVerticalBox(D)->SetPadding(FMargin(0.f, 6.f, 0.f, 18.f));
 
 		SetPage->AddChildToVerticalBox(MakeText(TEXT("CONTROLS"), 13, PMuted, true));
 		SetPage->AddChildToVerticalBox(MakeText(
@@ -260,7 +272,22 @@ void UTakePauseMenu::ApplySavedSettings()
 	if (const UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0)))
 	{
 		FApp::SetVolumeMultiplier(S->MasterVolume);
+		TakeSettings::DialogueMode = FMath::Clamp(S->DialogueMode, 0, 2);
 	}
+}
+
+void UTakePauseMenu::OnDialogueMode(int32 Mode)
+{
+	TakeSettings::DialogueMode = FMath::Clamp(Mode, 0, 2);
+	UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0));
+	if (!S) { S = Cast<UTakeSaveGame>(UGameplayStatics::CreateSaveGameObject(UTakeSaveGame::StaticClass())); }
+	if (S)
+	{
+		S->DialogueMode = TakeSettings::DialogueMode;
+		UGameplayStatics::SaveGameToSlot(S, UTakeSaveGame::SettingsSlot, 0);
+	}
+	const TCHAR* Names[] = { TEXT("Subtitles"), TEXT("Over their heads"), TEXT("Both") };
+	SetStatus(FString::Printf(TEXT("Dialogue: %s"), Names[TakeSettings::DialogueMode]));
 }
 
 bool UTakePauseMenu::SaveProgress(const UObject* WorldContext)

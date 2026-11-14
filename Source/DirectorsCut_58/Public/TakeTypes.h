@@ -45,6 +45,12 @@ struct FTakeTrainingRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Training") FString Options;
 };
 
+namespace TakeSettings
+{
+	/** How NPC lines are shown: 0 = subtitles (+ a small "..." over the speaker), 1 = overhead text, 2 = both. */
+	extern DIRECTORSCUT_58_API int32 DialogueMode;
+}
+
 namespace TakeText
 {
 	/** Fill {EMP}, {TAKE} and glyph placeholders. */

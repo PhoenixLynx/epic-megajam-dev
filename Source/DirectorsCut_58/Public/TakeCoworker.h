@@ -41,6 +41,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechSeconds = 3.5f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechCooldown = 4.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WatchFear = 0.75f;
+	/** Talk on their own when you walk past (no E needed). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") bool bTalksWhenNear = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float NearRange = 260.f;
+	/** Seconds before this NPC talks on its own again. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float NearCooldownMin = 18.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float NearCooldownMax = 35.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Coworker") ETakeCoworkerState State = ETakeCoworkerState::Working;
 
@@ -59,6 +65,11 @@ private:
 	float StateTimer = 0.f;
 	float SpeechLeft = 0.f;
 	float CooldownLeft = 0.f;
+	float NearCooldownLeft = 0.f;
+	FString SpokenLine;
+	static double NextAnyoneMayTalk;   // only one NPC talks at a time
+	static FString WrapLine(const FString& In, int32 Width);
+	void UpdateOverhead(const FVector& Eye);
 	float Phase = 0.f;
 	float StuckTimer = 0.f;
 	FVector LastPos;

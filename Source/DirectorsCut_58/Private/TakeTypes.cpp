@@ -25,3 +25,5 @@ FString TakeText::Fill(const UObject* WorldContext, const FString& In)
 	Out.ReplaceInline(TEXT("{GLYPHS_C}"), *Marks(K3.Target, 7, 0));
 	return Out;
 }
+
+int32 TakeSettings::DialogueMode = 0;

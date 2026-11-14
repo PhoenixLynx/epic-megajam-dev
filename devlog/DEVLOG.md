@@ -578,3 +578,15 @@ A running record of every AI tool used and what it did.
 - **Decisions & why:** a controls *reference* now; real key rebinding (Enhanced Input user settings) is a polish-day task if there's time. Volume uses the engine's master volume, so it covers music, ambience and voices without extra sound mixes.
 - **AI tools used:** Claude (pause menu, save system).
 - **21:47: first package succeeded!** `Builds/FridayNight/Windows/DirectorsCut_58.exe`, 1.1 GB, Development build, AutomationTool exit code 0, compiled and cooked in about 7 minutes. The riskiest step of the jam has worked once on Friday night. 📸 a screenshot of the packaged game running goes in the devlog.
+
+### Session 36: Fri Nov 13, 2026, 22:00 MST: The .exe works!
+
+- **My feedback:** the packaged .exe works! There's just no way to exit without Ctrl+Alt+Delete. NPCs in the opening shouldn't need E to talk to most of them; their dialogue can just appear when you're near. And we can't show both the subtitle and the overhead text at once; we need to pick one (not sure which yet). The overhead text is cool, but it can get clipped. I also made a gameplay capture (`devlog/Recording 2026-11-13 215749_FirstBuild.mp4`, 31 s).
+- **What the capture shows** (one frame per second): walking the open office (a coworker: *"Printer's jammed. It's fine. I'll stand here until it isn't."*), Corridor B with the custodian (*"Same scuffs every morning. Same exact scuffs."*), the Wellness Center door, then desk #4471 → HALCYON Mail with the real emails and the **Training (1 due)** tab, so the DataTables made it into the package. The overhead text is clipped at the top of the screen when you stand close to the custodian. The clip ends in Task Manager, since there's no Quit yet. ![first build frames](screenshots/2026-11-13_first_build_frames.jpg)
+- **Done (waiting with the overnight C++):**
+  - **NPCs talk when you walk past** (within ~2.6 m, in line of sight, no E). Only one NPC talks at a time; each waits 18–35 s before talking on its own again. Bumping into someone or pressing E still gets a line right away.
+  - **Dialogue display is a setting** (pause menu → Settings → Dialogue), so we can try both and decide: **Subtitles** (default; a small "..." floats over whoever is talking) · **Over their heads** · **Both**. Saved between sessions.
+  - **Overhead text no longer clips:** wraps at about 26 characters per line, sits just above the head, and scales with distance so it stays about the same size on screen.
+  - Lines stay up longer when they're long (about 14 characters a second).
+  - Exiting: the pause menu (P / Esc) has **Quit to desktop**. It arrives with the morning rebuild.
+- **AI tools used:** Claude (video frame review, C++).

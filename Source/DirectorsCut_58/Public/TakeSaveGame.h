@@ -28,4 +28,5 @@ public:
 
 	// settings
 	UPROPERTY() float MasterVolume = 1.f;
+	UPROPERTY() int32 DialogueMode = 0;   // 0 subtitles, 1 overhead, 2 both
 };

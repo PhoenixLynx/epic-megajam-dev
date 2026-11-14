@@ -24,6 +24,7 @@ public:
 	UFUNCTION() void OnQuality(int32 Level);
 	UFUNCTION() void OnWindowMode(int32 Mode);
 	UFUNCTION() void OnVolume(float Value);
+	UFUNCTION() void OnDialogueMode(int32 Mode);
 
 	/** Save / load the workday. Static so other code (autosave) can call them too. */
 	static bool SaveProgress(const UObject* WorldContext);
