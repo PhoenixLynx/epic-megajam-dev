@@ -5,6 +5,7 @@
 #include "TakeCoworker.h"
 #include "TakeFearDirector.h"
 #include "TakeWidgets.h"
+#include "TakePauseMenu.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -38,6 +39,7 @@ void UTakeGrabComponent::BeginPlay()
 		Handle->RegisterComponent();
 	}
 	if (bHideTemplateMeshes) { HideTemplateMeshes(); }
+	UTakePauseMenu::ApplySavedSettings();
 	if (bAutoBindKeys)
 	{
 		// Input component exists once the pawn is possessed; try now and shortly after.
@@ -60,6 +62,7 @@ void UTakeGrabComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
 	if (Prompt) { Prompt->RemoveFromParent(); Prompt = nullptr; }
 	if (Terminal) { Terminal->RemoveFromParent(); Terminal = nullptr; }
+	if (PauseMenu) { PauseMenu->RemoveFromParent(); PauseMenu = nullptr; }
 	Super::EndPlay(Reason);
 }
 
@@ -86,6 +89,8 @@ void UTakeGrabComponent::BindKeys()
 	IC->BindKey(EKeys::E, IE_Pressed, this, &UTakeGrabComponent::Interact);
 	IC->BindKey(EKeys::RightMouseButton, IE_Pressed, this, &UTakeGrabComponent::Throw);
 	IC->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &UTakeGrabComponent::ThrowInput);   // only while holding
+	IC->BindKey(EKeys::P, IE_Pressed, this, &UTakeGrabComponent::TogglePause);
+	IC->BindKey(EKeys::Escape, IE_Pressed, this, &UTakeGrabComponent::TogglePause);   // in the editor Esc stops Play: use P
 	if (bDebugFearKeys)
 	{
 		IC->BindKey(EKeys::Zero, IE_Pressed, this, &UTakeGrabComponent::Fear0);
@@ -326,6 +331,36 @@ void UTakeGrabComponent::LogOut()
 	}
 	if (ACharacter* C = Cast<ACharacter>(Pawn)) { C->UnCrouch(); }
 	OnLoggedOut.Broadcast(SeatedAt.Get());
+}
+
+// ------------------------------------------------------------------ Pause
+void UTakeGrabComponent::TogglePause()
+{
+	APawn* Pawn = Cast<APawn>(GetOwner());
+	APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+	if (!PC || bSeated) { return; }
+	if (PauseMenu)   // resume
+	{
+		PauseMenu->RemoveFromParent();
+		PauseMenu = nullptr;
+		UGameplayStatics::SetGamePaused(this, false);
+		PC->SetInputMode(FInputModeGameOnly());
+		PC->SetShowMouseCursor(false);
+		if (Prompt) { Prompt->SetVisibility(ESlateVisibility::HitTestInvisible); }
+		return;
+	}
+	Drop();
+	PauseMenu = CreateWidget<UTakePauseMenu>(PC, UTakePauseMenu::StaticClass());
+	if (!PauseMenu) { return; }
+	PauseMenu->SetIsFocusable(true);
+	PauseMenu->OnResumeRequested.AddDynamic(this, &UTakeGrabComponent::HandleResume);
+	PauseMenu->AddToViewport(50);
+	if (Prompt) { Prompt->SetVisibility(ESlateVisibility::Collapsed); }
+	UGameplayStatics::SetGamePaused(this, true);
+	FInputModeUIOnly Mode;
+	Mode.SetWidgetToFocus(PauseMenu->TakeWidget());
+	PC->SetInputMode(Mode);
+	PC->SetShowMouseCursor(true);
 }
 
 // ------------------------------------------------------------------ Debug Fear keys

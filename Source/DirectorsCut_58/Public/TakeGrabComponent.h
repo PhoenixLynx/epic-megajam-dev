@@ -14,6 +14,7 @@ class UPhysicsHandleComponent;
 class UPrimitiveComponent;
 class UTakePromptWidget;
 class UTakeTerminalWidget;
+class UTakePauseMenu;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeGrabEvent, UPrimitiveComponent*, Component);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeActorEvent, AActor*, Actor);
@@ -62,6 +63,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Grab") bool IsHolding() const;
 	UFUNCTION(BlueprintPure, Category = "Grab") bool IsSeated() const { return bSeated; }
 	UFUNCTION(BlueprintPure, Category = "Grab") float CurrentRange() const;
+	/** Esc (packaged build) or P: pause with the HALCYON break menu. */
+	UFUNCTION(BlueprintCallable, Category = "Grab") void TogglePause();
 	/** Show "Who: line" at the bottom of the screen for a few seconds. */
 	UFUNCTION(BlueprintCallable, Category = "Grab") void ShowSubtitle(const FString& Who, const FString& Line, float Seconds = 4.f);
 
@@ -75,6 +78,8 @@ private:
 	UPROPERTY() TObjectPtr<UPhysicsHandleComponent> Handle;
 	UPROPERTY() TObjectPtr<UTakePromptWidget> Prompt;
 	UPROPERTY() TObjectPtr<UTakeTerminalWidget> Terminal;
+	UPROPERTY() TObjectPtr<UTakePauseMenu> PauseMenu;
+	UFUNCTION() void HandleResume() { if (PauseMenu) { TogglePause(); } }
 	TMap<TWeakObjectPtr<AActor>, FSwing> Swings;
 	bool bSeated = false;
 	float SubtitleLeft = 0.f;

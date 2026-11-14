@@ -564,3 +564,16 @@ A running record of every AI tool used and what it did.
   - Task list text uses plain [x] / [ ] marks: Unreal's default font may not have checkbox symbols.
 - **AI tools used:** Claude (C++ dialogue + tasks, 25 dialogue lines, Blender rig + animations, pose preview renders, import script, runbook).
 - **Next:** see `docs/MORNING.md`.
+
+### Session 35: Fri Nov 13, 2026, 21:45 MST: Package started, pause menu
+
+- **Me:** started packaging into `EpicJam/Builds/FridayNight`. We need a way to check your tasks in-game that also pauses, and an Escape menu to save, fix keyboard/audio settings and quit. Making tea, then another hour or so.
+- **Package check (21:43):** the Windows game executable compiled (C++ ok for the shipping-style target); cooking is under way.
+- **Done:** `UTakePauseMenu`, the **HALCYON break menu** (pauses the game):
+  - **Tasks:** today's checklist, what's next, access passes 0–3, and when you last saved.
+  - **Settings:** master volume slider (remembered between sessions); graphics Low / Medium / High / Epic; Fullscreen / Borderless / Windowed (both saved through Unreal's user settings); a controls reference.
+  - **Save / Load:** one slot with take number, passes, training progress, tasks, the run seed (same seed = the same Key Locks after loading), Fear, and where you're standing.
+  - **Quit to desktop.**
+  - Opens with **P**, or **Esc** in the packaged game (in the editor Esc stops Play). P/Esc again or Resume closes it.
+- **Decisions & why:** a controls *reference* now; real key rebinding (Enhanced Input user settings) is a polish-day task if there's time. Volume uses the engine's master volume, so it covers music, ambience and voices without extra sound mixes.
+- **AI tools used:** Claude (pause menu, save system).

@@ -1,0 +1,329 @@
+// TAKE 4471 - pause menu
+#include "TakePauseMenu.h"
+#include "DirectorsCut_58.h"
+#include "TakeWidgets.h"
+#include "TakeSaveGame.h"
+#include "TakeGameInstance.h"
+#include "TakeFearDirector.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Border.h"
+#include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/Slider.h"
+#include "Components/TextBlock.h"
+#include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
+#include "Components/WidgetSwitcher.h"
+#include "Components/WidgetSwitcherSlot.h"
+#include "GameFramework/GameUserSettings.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "Engine/Engine.h"
+#include "EngineUtils.h"
+#include "InputCoreTypes.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Misc/App.h"
+
+namespace
+{
+	const FLinearColor PInk(0.05f, 0.09f, 0.11f);
+	const FLinearColor PMuted(0.33f, 0.40f, 0.45f);
+	const FLinearColor PMint(0.50f, 0.83f, 0.77f);
+	const FLinearColor PSoft(0.93f, 0.96f, 0.97f);
+	enum EItem { Resume, Tasks, Settings, Save, Load, Quit };
+}
+
+UTextBlock* UTakePauseMenu::MakeText(const FString& Text, int32 Size, const FLinearColor& Color, bool bBold)
+{
+	UTextBlock* T = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+	FSlateFontInfo Font = T->GetFont();
+	Font.Size = Size;
+	if (bBold) { Font.TypefaceFontName = TEXT("Bold"); }
+	T->SetFont(Font);
+	T->SetColorAndOpacity(FSlateColor(Color));
+	T->SetText(FText::FromString(Text));
+	T->SetAutoWrapText(true);
+	return T;
+}
+
+UTakeIndexedButton* UTakePauseMenu::MakeButton(const FString& Text, int32 Index, bool bPrimary)
+{
+	UTakeIndexedButton* B = WidgetTree->ConstructWidget<UTakeIndexedButton>(UTakeIndexedButton::StaticClass());
+	B->SetBackgroundColor(bPrimary ? PMint : PSoft);
+	B->Init(Index);
+	UTextBlock* T = MakeText(Text, 16, bPrimary ? FLinearColor::White : PInk, true);
+	T->SetAutoWrapText(false);
+	B->AddChild(T);
+	return B;
+}
+
+TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
+{
+	if (WidgetTree && !WidgetTree->RootWidget)
+	{
+		UCanvasPanel* Root = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("Root"));
+		WidgetTree->RootWidget = Root;
+
+		UBorder* Dim = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+		Dim->SetBrushColor(FLinearColor(0.f, 0.02f, 0.03f, 0.55f));
+		UCanvasPanelSlot* DimSlot = Root->AddChildToCanvas(Dim);
+		DimSlot->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+		DimSlot->SetOffsets(FMargin(0.f));
+
+		UBorder* Card = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+		Card->SetBrushColor(FLinearColor(0.97f, 0.98f, 0.99f, 0.98f));
+		Card->SetPadding(FMargin(36.f, 30.f));
+		UCanvasPanelSlot* CardSlot = Root->AddChildToCanvas(Card);
+		CardSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+		CardSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+		CardSlot->SetSize(FVector2D(980.f, 600.f));
+
+		UVerticalBox* Col = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		Card->SetContent(Col);
+		const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		Col->AddChildToVerticalBox(MakeText(TEXT("HALCYON  ·  BREAK"), 13, PMint, true));
+		Col->AddChildToVerticalBox(MakeText(FString::Printf(TEXT("Paused.  Take %d."), GI ? GI->TakeNumber : 1), 30, PInk, true));
+
+		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+		UVerticalBoxSlot* RowSlot = Col->AddChildToVerticalBox(Row);
+		RowSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+		RowSlot->SetPadding(FMargin(0.f, 20.f, 0.f, 0.f));
+
+		// Left: menu
+		UVerticalBox* Menu = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		Row->AddChildToHorizontalBox(Menu)->SetPadding(FMargin(0.f, 0.f, 30.f, 0.f));
+		const TCHAR* Items[] = { TEXT("Resume"), TEXT("Tasks"), TEXT("Settings"), TEXT("Save"), TEXT("Load"), TEXT("Quit to desktop") };
+		for (int32 I = 0; I < int32(UE_ARRAY_COUNT(Items)); ++I)
+		{
+			UTakeIndexedButton* B = MakeButton(Items[I], I, I == Resume);
+			B->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnMenu);
+			Menu->AddChildToVerticalBox(B)->SetPadding(FMargin(0.f, 0.f, 0.f, 8.f));
+		}
+		StatusText = MakeText(TEXT(""), 14, PMuted);
+		Menu->AddChildToVerticalBox(StatusText)->SetPadding(FMargin(0.f, 12.f, 0.f, 0.f));
+
+		// Right: pages
+		Pages = WidgetTree->ConstructWidget<UWidgetSwitcher>(UWidgetSwitcher::StaticClass());
+		Row->AddChildToHorizontalBox(Pages)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+
+		// Page 0: tasks
+		UVerticalBox* TasksPage = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		TasksPage->AddChildToVerticalBox(MakeText(TEXT("TODAY"), 13, PMuted, true));
+		TasksText = MakeText(TEXT(""), 18, PInk);
+		TasksPage->AddChildToVerticalBox(TasksText)->SetPadding(FMargin(0.f, 8.f, 0.f, 0.f));
+		SaveInfo = MakeText(TEXT(""), 13, PMuted);
+		TasksPage->AddChildToVerticalBox(SaveInfo)->SetPadding(FMargin(0.f, 24.f, 0.f, 0.f));
+		Pages->AddChild(TasksPage);
+
+		// Page 1: settings
+		UVerticalBox* SetPage = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		SetPage->AddChildToVerticalBox(MakeText(TEXT("VOLUME"), 13, PMuted, true));
+		USlider* Vol = WidgetTree->ConstructWidget<USlider>(USlider::StaticClass());
+		Vol->SetMinValue(0.f);
+		Vol->SetMaxValue(1.f);
+		Vol->SetValue(FApp::GetVolumeMultiplier());
+		Vol->SetSliderBarColor(PMuted);
+		Vol->SetSliderHandleColor(PMint);
+		Vol->OnValueChanged.AddDynamic(this, &UTakePauseMenu::OnVolume);
+		SetPage->AddChildToVerticalBox(Vol)->SetPadding(FMargin(0.f, 6.f, 0.f, 18.f));
+
+		SetPage->AddChildToVerticalBox(MakeText(TEXT("GRAPHICS"), 13, PMuted, true));
+		UHorizontalBox* Q = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+		const TCHAR* Levels[] = { TEXT("Low"), TEXT("Medium"), TEXT("High"), TEXT("Epic") };
+		for (int32 L = 0; L < 4; ++L)
+		{
+			UTakeIndexedButton* B = MakeButton(Levels[L], L);
+			B->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnQuality);
+			Q->AddChildToHorizontalBox(B)->SetPadding(FMargin(0.f, 0.f, 8.f, 0.f));
+		}
+		SetPage->AddChildToVerticalBox(Q)->SetPadding(FMargin(0.f, 6.f, 0.f, 18.f));
+
+		SetPage->AddChildToVerticalBox(MakeText(TEXT("WINDOW"), 13, PMuted, true));
+		UHorizontalBox* W = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+		const TCHAR* Modes[] = { TEXT("Fullscreen"), TEXT("Borderless"), TEXT("Windowed") };
+		for (int32 M = 0; M < 3; ++M)
+		{
+			UTakeIndexedButton* B = MakeButton(Modes[M], M);
+			B->OnIndexedClicked.AddDynamic(this, &UTakePauseMenu::OnWindowMode);
+			W->AddChildToHorizontalBox(B)->SetPadding(FMargin(0.f, 0.f, 8.f, 0.f));
+		}
+		SetPage->AddChildToVerticalBox(W)->SetPadding(FMargin(0.f, 6.f, 0.f, 18.f));
+
+		SetPage->AddChildToVerticalBox(MakeText(TEXT("CONTROLS"), 13, PMuted, true));
+		SetPage->AddChildToVerticalBox(MakeText(
+			TEXT("WASD  move      Mouse  look      Space  jump\n")
+			TEXT("E  use / talk / pick up / drop      Click or Right Mouse  throw\n")
+			TEXT("E or Tab  log out of your terminal      Esc or P  pause"), 15, PInk))->SetPadding(FMargin(0.f, 6.f, 0.f, 0.f));
+		Pages->AddChild(SetPage);
+	}
+	return Super::RebuildWidget();
+}
+
+void UTakePauseMenu::NativeConstruct()
+{
+	Super::NativeConstruct();
+	SetIsFocusable(true);
+	RefreshTasks();
+	RefreshSaveInfo();
+}
+
+void UTakePauseMenu::RefreshTasks()
+{
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!TasksText || !GI) { return; }
+	auto Box = [](bool bDone) { return bDone ? TEXT("[x]") : TEXT("[  ]"); };
+	FString T = FString::Printf(TEXT("%s  Check email\n%s  Get coffee\n%s  Complete Compliance Training\n\n"),
+	                            Box(GI->bReadEmail), Box(GI->bGotCoffee), Box(GI->bTrainingComplete));
+	T += GI->MorningTasksDone() ? TEXT("Next:  10:00 meeting, Conference Room.") : TEXT("Your desk is #4471, by the window.");
+	T += FString::Printf(TEXT("\n\nAccess passes:  %d / 3"), GI->SoulBits);
+	TasksText->SetText(FText::FromString(T));
+}
+
+void UTakePauseMenu::RefreshSaveInfo()
+{
+	if (!SaveInfo) { return; }
+	if (const UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::ProgressSlot, 0)))
+	{
+		SaveInfo->SetText(FText::FromString(FString::Printf(TEXT("Last save: Take %d, %s"), S->TakeNumber, *S->SavedAt.ToString(TEXT("%H:%M")))));
+	}
+	else
+	{
+		SaveInfo->SetText(FText::FromString(TEXT("No save yet.")));
+	}
+}
+
+void UTakePauseMenu::SetStatus(const FString& Text)
+{
+	if (StatusText) { StatusText->SetText(FText::FromString(Text)); }
+}
+
+void UTakePauseMenu::OnMenu(int32 Item)
+{
+	switch (Item)
+	{
+	case Resume:   OnResumeRequested.Broadcast(); break;
+	case Tasks:    if (Pages) { Pages->SetActiveWidgetIndex(0); } RefreshTasks(); break;
+	case Settings: if (Pages) { Pages->SetActiveWidgetIndex(1); } break;
+	case Save:     SetStatus(SaveProgress(this) ? TEXT("Saved. HALCYON remembers.") : TEXT("Save failed.")); RefreshSaveInfo(); break;
+	case Load:
+		if (LoadProgress(this)) { SetStatus(TEXT("Loaded.")); RefreshTasks(); OnResumeRequested.Broadcast(); }
+		else { SetStatus(TEXT("No save to load.")); }
+		break;
+	case Quit:
+		UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
+		break;
+	default: break;
+	}
+}
+
+void UTakePauseMenu::OnQuality(int32 Level)
+{
+	if (UGameUserSettings* S = GEngine ? GEngine->GetGameUserSettings() : nullptr)
+	{
+		S->SetOverallScalabilityLevel(Level);
+		S->ApplySettings(false);
+		S->SaveSettings();
+		const TCHAR* Names[] = { TEXT("Low"), TEXT("Medium"), TEXT("High"), TEXT("Epic") };
+		SetStatus(FString::Printf(TEXT("Graphics: %s"), Names[FMath::Clamp(Level, 0, 3)]));
+	}
+}
+
+void UTakePauseMenu::OnWindowMode(int32 Mode)
+{
+	if (UGameUserSettings* S = GEngine ? GEngine->GetGameUserSettings() : nullptr)
+	{
+		const EWindowMode::Type M = Mode == 0 ? EWindowMode::Fullscreen : (Mode == 1 ? EWindowMode::WindowedFullscreen : EWindowMode::Windowed);
+		S->SetFullscreenMode(M);
+		S->ApplySettings(false);
+		S->SaveSettings();
+		SetStatus(Mode == 0 ? TEXT("Fullscreen") : (Mode == 1 ? TEXT("Borderless") : TEXT("Windowed")));
+	}
+}
+
+void UTakePauseMenu::OnVolume(float Value)
+{
+	FApp::SetVolumeMultiplier(Value);
+	UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0));
+	if (!S) { S = Cast<UTakeSaveGame>(UGameplayStatics::CreateSaveGameObject(UTakeSaveGame::StaticClass())); }
+	if (S)
+	{
+		S->MasterVolume = Value;
+		UGameplayStatics::SaveGameToSlot(S, UTakeSaveGame::SettingsSlot, 0);
+	}
+}
+
+void UTakePauseMenu::ApplySavedSettings()
+{
+	if (const UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::SettingsSlot, 0)))
+	{
+		FApp::SetVolumeMultiplier(S->MasterVolume);
+	}
+}
+
+bool UTakePauseMenu::SaveProgress(const UObject* WorldContext)
+{
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(WorldContext));
+	UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::CreateSaveGameObject(UTakeSaveGame::StaticClass()));
+	if (!GI || !S) { return false; }
+	S->TakeNumber = GI->TakeNumber;
+	S->SoulBits = GI->SoulBits;
+	S->TrainingSlide = GI->TrainingSlide;
+	S->bTrainingComplete = GI->bTrainingComplete;
+	S->bReadEmail = GI->bReadEmail;
+	S->bGotCoffee = GI->bGotCoffee;
+	S->RunSeed = GI->RunSeed;
+	S->SavedAt = FDateTime::Now();
+	if (const APawn* P = UGameplayStatics::GetPlayerPawn(WorldContext, 0))
+	{
+		S->PlayerLocation = P->GetActorLocation();
+		S->PlayerRotation = P->GetControlRotation();
+	}
+	if (UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr)
+	{
+		for (TActorIterator<ATakeFearDirector> It(World); It; ++It) { S->Fear = It->Fear; break; }
+	}
+	const bool bOk = UGameplayStatics::SaveGameToSlot(S, UTakeSaveGame::ProgressSlot, 0);
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Save %s"), bOk ? TEXT("ok") : TEXT("FAILED"));
+	return bOk;
+}
+
+bool UTakePauseMenu::LoadProgress(const UObject* WorldContext)
+{
+	const UTakeSaveGame* S = Cast<UTakeSaveGame>(UGameplayStatics::LoadGameFromSlot(UTakeSaveGame::ProgressSlot, 0));
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(WorldContext));
+	if (!S || !GI) { return false; }
+	GI->TakeNumber = S->TakeNumber;
+	GI->SetSoulBits(S->SoulBits);
+	GI->TrainingSlide = S->TrainingSlide;
+	GI->bTrainingComplete = S->bTrainingComplete;
+	GI->bReadEmail = S->bReadEmail;
+	GI->bGotCoffee = S->bGotCoffee;
+	GI->RunSeed = S->RunSeed;   // same seed = same Key Locks as when you saved
+	if (APawn* P = UGameplayStatics::GetPlayerPawn(WorldContext, 0))
+	{
+		if (!S->PlayerLocation.IsNearlyZero())
+		{
+			P->SetActorLocation(S->PlayerLocation, false, nullptr, ETeleportType::TeleportPhysics);
+			if (AController* C = P->GetController()) { C->SetControlRotation(S->PlayerRotation); }
+		}
+	}
+	if (UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr)
+	{
+		for (TActorIterator<ATakeFearDirector> It(World); It; ++It) { It->SetFearImmediate(S->Fear); break; }
+	}
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Loaded save from %s"), *S->SavedAt.ToString());
+	return true;
+}
+
+FReply UTakePauseMenu::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (!InKeyEvent.IsRepeat() && (InKeyEvent.GetKey() == EKeys::Escape || InKeyEvent.GetKey() == EKeys::P))
+	{
+		OnResumeRequested.Broadcast();
+		return FReply::Handled();
+	}
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}

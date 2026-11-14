@@ -22,6 +22,7 @@ Made overnight Friday. Everything below is already on your PC.
 - **E at the coffee machine:** "You pour a coffee. It's exactly the right temperature. It always is."
 - **Coworkers:** greet you the first time, then cycle through their small talk with no repeats until they've said everything. After your coffee some of them notice. The receptionist, guards and custodians have their own lines.
 - **Finish all three tasks:** the PA sends you to the 10:00 meeting.
+- **P** (or Esc in the packaged game) pauses with the **HALCYON break menu**: Resume · Tasks · Settings (volume, graphics Low–Epic, fullscreen/borderless/windowed, controls) · Save · Load · Quit. Save, quit Play, Play again, P → Load: you're back where you saved, with the same tasks and passes.
 - Open `/Game/Characters/Mannequin` and double-click an animation (Idle, Walk, SitDown, SitType, Reach, Stare) to preview it 📸.
 
 ## 4. Today's plan (checkpoint: Act 1 playable by 2 PM)
