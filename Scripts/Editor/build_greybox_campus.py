@@ -15,6 +15,8 @@ Units are centimetres (Unreal's default). Top-down layout:
   +X = east (right on the storyboard map), +Y = south (down on the map).
 """
 
+import os
+
 import unreal
 
 # --------------------------------------------------------------------------
@@ -288,7 +290,6 @@ def build():
             light.point_light_component.set_intensity(5000.0)
             light.point_light_component.set_attenuation_radius(max(w, d))
             light.set_editor_property("tags", [unreal.Name("FearLight")])   # dims/flickers with Fear
-        spawn_simple(unreal.SkyLight, "SkyLight", 2000, 3000, 1000, "Lights")
         for label, x, y in MARKERS:
             spawn_simple(unreal.TargetPoint, label, x, y, 50, "Markers")
         # Unbound post-process volume: the Fear effects will drive this one.
@@ -304,6 +305,12 @@ def build():
 
     level_sys.save_current_level()
     unreal.log(f"[TAKE 4471] Grey-box campus built and saved to {LEVEL_PATH}")
+
+    # Bright daylight (sun, sky, real-time sky light, fog): same as running add_daylight.py
+    daylight = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir()),
+                            "Scripts", "Editor", "add_daylight.py")
+    if os.path.exists(daylight):
+        exec(compile(open(daylight, encoding="utf-8").read(), daylight, "exec"), {"__name__": "__main__"})
 
 
 build()

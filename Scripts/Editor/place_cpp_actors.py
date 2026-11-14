@@ -38,7 +38,8 @@ def loc_of(label, fallback):
 
 
 fear = spawn(unreal.TakeFearDirector, "FearDirector", unreal.Vector(2000, 3000, 300))
-spawn(unreal.ExponentialHeightFog, "Fog", unreal.Vector(2000, 3000, 0))
+if not any(isinstance(a, unreal.ExponentialHeightFog) for a in actor_sys.get_all_level_actors()):
+    spawn(unreal.ExponentialHeightFog, "Fog", unreal.Vector(2000, 3000, 0))   # add_daylight.py usually made one
 
 loop_loc = loc_of("GB_LoopTrigger", (1400, 4950, 150))
 if "GB_LoopTrigger" in by_label:
