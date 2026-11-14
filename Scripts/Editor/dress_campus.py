@@ -49,8 +49,8 @@ def put(mesh, x, y, z=0.0, yaw=0.0, tags=()):
 
 
 # --- Your desk #4471 ----------------------------------------------------------
-put("SM_Desk", 1300, 2300, 0, 180)
-put("SM_Monitor", 1300, 2265, DESK_TOP, 180)
+put("SM_Desk", 1300, 2300, 0, 180, ["Terminal", "Desk4471"])
+put("SM_Monitor", 1300, 2265, DESK_TOP, 180, ["Terminal", "Monitor4471"])   # E here = sit and log in
 put("SM_Keyboard", 1300, 2325, DESK_TOP, 180)
 put("SM_Mug", 1235, 2310, DESK_TOP, 0, ["ChangeOnRewind"])
 put("SM_DeskPhone", 1390, 2290, DESK_TOP, 160)
@@ -258,7 +258,7 @@ def main():
         room = "Hospital" if z <= -1000 else "Campus"
         a.set_folder_path(f"Dressing/{room}/{'NPC' if 'NPC' in tags else 'Props'}")
         all_tags = list(tags)
-        if mesh in THROWABLE:
+        if mesh in THROWABLE and "Terminal" not in tags:
             comp.set_mobility(unreal.ComponentMobility.MOVABLE)
             comp.set_simulate_physics(True)
             comp.set_notify_rigid_body_collision(True)

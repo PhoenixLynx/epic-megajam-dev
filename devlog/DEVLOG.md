@@ -481,3 +481,21 @@ A running record of every AI tool used and what it did.
   - Fonts used in textures are open-licensed and listed as sourced in RESOURCES.md.
 - **AI tools used:** Claude (props, textures, dressing, ambience).
 - **Next:** batch 2 C++: interact (E: use or pick up), terminal/desk login with HALCYON Mail, openable doors/fridge, hide template arms, Fear debug keys, **wandering coworker mannequins with bump dialogue**.
+
+### Session 28: Fri Nov 13, 2026, 19:06 MST: Wishlist batch 2 (C++ interaction, terminal, coworkers)
+
+- **Goal:** make the office playable: one E key for everything, sit at desk #4471 and read mail, doors and fridge that open, no template arms, quick Fear keys, and coworkers who look busy and talk.
+- **Done (C++, needs one rebuild):**
+  - `UTakeGrabComponent` is now the player's hands. **E** = talk to a coworker / sit and log in at your desk / open or close a door or the fridge / pick up or drop a prop; **Right Mouse** = throw. A prompt under the crosshair says what E will do ("E  Pick up", "E  Open", "Too heavy"). Hides the template's arms and body. **1–4 / 0** set Fear 0.25 / 0.5 / 0.75 / 0.95 / calm (eases over 1.5 s).
+  - Doors and the fridge swing on their hinge (eased, 0.6 s); the fridge notes swing with the door.
+  - **Desk #4471:** you crouch into your seat facing the monitor, the cursor appears and **HALCYON Mail** opens (built in C++, no Widget Blueprint): inbox on the left, reader on the right, Act 1 emails from `DT_Emails` with `{EMP}` filled in. E or Tab logs out.
+  - `ATakeCoworker`: the mannequins type at their desks (small lean, glancing between screens), get up every 8–25 s to visit a WorkSpot (coffee machine, fridge, water cooler, kitchen counter, printer, filing cabinets, lobby, office aisle), wait 4–10 s shifting their weight, and walk back. Bump into one or press E and a random line floats above its head. The receptionist and the guards stay at their posts; the closet custodian stays in the closet. Two coworkers are secretly agents (they get the uncanny lines). **Above Fear 0.75 they stop pretending:** they freeze and stare while you look at them, and creep closer when you look away. When Fear drops they walk back to their desks as if nothing happened.
+  - 20 new Act 1 "Bump" lines in `DT_NPCLines` (coworkers, guards, custodians), e.g. *"Printer's jammed. It's fine. I'll stand here until it isn't."*
+  - `place_cpp_actors.py` now also imports `DT_Emails` and `DT_NPCLines` as DataTables, places 8 WorkSpots and swaps the 11 NPC mannequins for coworkers (the dressed originals are hidden, so the script can be re-run). `dress_campus.py` tags your desk and monitor `Terminal` and keeps them off physics.
+- **Decisions & why:**
+  - Desk login lives in the grab component instead of a separate subsystem: one place handles E, so there's no fight over the key.
+  - Coworkers are static mannequins moved by code (lean, bob, sway), no skeletal animation: fits "mannequin coworkers", and it's cheap to build in a jam.
+  - Esc isn't used to log out in the editor because Esc stops Play in PIE.
+- **Problems:** written without a compiler in the cloud; the first rebuild on the PC is the real test.
+- **AI tools used:** Claude (C++ interaction system, coworker AI, UI, dialogue lines, scripts).
+- **Next:** rebuild → re-run `dress_campus.py` + `place_cpp_actors.py` → playtest 📸 (screenshot of HALCYON Mail and a coworker talking) → answer the pick-up questions → Act 1 beats.

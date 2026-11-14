@@ -9,7 +9,7 @@ public class DirectorsCut_58 : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core", "CoreUObject", "Engine", "InputCore",
-			"AIModule", "NavigationSystem", "PhysicsCore", "UMG"
+			"AIModule", "NavigationSystem", "PhysicsCore", "UMG", "Slate", "SlateCore"
 		});
 	}
 }
