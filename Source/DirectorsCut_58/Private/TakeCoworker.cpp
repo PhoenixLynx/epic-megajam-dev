@@ -97,7 +97,8 @@ void ATakeCoworker::BeginPlay()
 void ATakeCoworker::SetupSkeletal()
 {
 	const TCHAR* MeshName = NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase) ? TEXT("SK_MannequinGuard")
-		: NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase) ? TEXT("SK_MannequinCustodian") : TEXT("SK_Mannequin");
+		: NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase) ? TEXT("SK_MannequinCustodian")
+		: NPCRole.Equals(TEXT("Chef"), ESearchCase::IgnoreCase) ? TEXT("SK_MannequinChef") : TEXT("SK_Mannequin");
 	auto Load = [](const TCHAR* Name) -> UAnimSequence*
 	{
 		return LoadObject<UAnimSequence>(nullptr, *FString::Printf(TEXT("/Game/Characters/Mannequin/%s.%s"), Name, Name));
@@ -268,6 +269,12 @@ FString ATakeCoworker::NextLine()
 		CoffeeLines.RemoveAt(I);
 		return L;
 	}
+	// Now and then, a nudge toward whatever's next on your list (finished tasks -> "don't be late for the 12:30")
+	if (GI && !bStoryNPC && FMath::FRand() < 0.3f)
+	{
+		const FString Hint = TaskHint(GI);
+		if (!Hint.IsEmpty() && Hint != LastHint) { LastHint = Hint; return Hint; }
+	}
 	// Small talk: shuffle bag, every line once before any repeats, never the same line twice in a row
 	if (Lines.Num() == 0) { return FString(); }
 	if (Bag.Num() == 0)
@@ -278,6 +285,32 @@ FString ATakeCoworker::NextLine()
 	}
 	LastLine = Bag.Pop();
 	return Lines[LastLine];
+}
+
+FString ATakeCoworker::TaskHint(const UTakeGameInstance* GI) const
+{
+	if (NPCRole.Equals(TEXT("Chef"), ESearchCase::IgnoreCase))
+	{
+		static const TCHAR* Chef[] = {
+			TEXT("Today's special is the special. Every day."), TEXT("Turkey? You asked for turkey. You always ask for turkey."),
+			TEXT("Don't read the sprinkles."), TEXT("Lunch is served. Lunch is served. ...Sorry. Habit."),
+		};
+		return Chef[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Chef)) - 1)];
+	}
+	if (GI->CurrentAct() < 2)
+	{
+		if (!GI->bTrainingComplete) { return TEXT("Done your compliance training yet? It's mandatory. Everything is."); }
+		if (!GI->bReadEmail) { return TEXT("Inbox zero yet? HALCYON loves an inbox zero."); }
+		if (!GI->bGotCoffee) { return TEXT("Coffee's fresh in the kitchen. It's always fresh."); }
+		if (GI->Beat <= ETakeBeat::Meeting) { return TEXT("Ten o'clock, conference room. Don't be late. You're never late."); }
+		return FString();
+	}
+	if (GI->bClocksFrozen) { return TEXT("Is it just me or has it been 2:14 for a while?"); }
+	if (!GI->bJoinedCall) { return TEXT("Twelve thirty, conference room. The Chairman's calling in. Camera off, as usual."); }
+	if (!GI->bAttendedMeeting) { return TEXT("One o'clock, same room. Same meeting. You'll see."); }
+	if (GI->CoworkersCheckedIn < 3) { return TEXT("Have you said hi to everyone? Say hi to everyone."); }
+	if (!GI->bRepliedChairman) { return TEXT("Did you answer the Chairman's email? He reads every reply. He writes some of them too."); }
+	return FString();
 }
 
 FString ATakeCoworker::WrapLine(const FString& In, int32 Width)
@@ -333,7 +366,7 @@ float ATakeCoworker::GetFear() const
 
 bool ATakeCoworker::Speak(const FString& Context)
 {
-	if (CooldownLeft > 0.f) { return false; }
+	if (CooldownLeft > 0.f || IsHidden()) { return false; }
 	const FString Line = NextLine();
 	if (Line.IsEmpty()) { return false; }
 	SayLine(Line);
@@ -508,6 +541,11 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 		ActCheckIn = 1.f;
 		const UTakeGameInstance* GameInst = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 		if (GameInst && (GameInst->CurrentAct() != LinesAct || GameInst->bClocksFrozen != bLinesClocksFrozen)) { LoadLines(); }
+		if (ActorHasTag(TEXT("Act2Reveal")))   // the lunch attendant only works lunch
+		{
+			const bool bShow = GameInst && GameInst->CurrentAct() >= 2;
+			if (IsHidden() == bShow) { SetActorHiddenInGame(!bShow); SetActorEnableCollision(bShow); }
+		}
 	}
 	if (SpeechLeft > 0.f)
 	{

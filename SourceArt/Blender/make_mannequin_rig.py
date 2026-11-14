@@ -301,6 +301,8 @@ def build_actions(arm):
 VARIANTS = [
     ("SK_Mannequin", "M_FabricMint", [("badge", "chest", "box", (0.08, 0.01, 0.11), (0.1, -0.115, 1.28), "M_PlasticWhite")]),
     ("SK_MannequinGuard", "M_BinderBlue", [("cap", "head", "cyl", (0.12, 0.05), (0, 0, 1.78), "M_MetalDark")]),
+    ("SK_MannequinChef", "M_PlasticWhite", [("toque", "head", "cyl", (0.1, 0.16), (0, 0, 1.84), "M_Paper"),
+                                             ("toque_puff", "head", "sphere", 0.12, (0, 0, 1.95), "M_Paper")]),   # lunch attendant (Act 2)
     ("SK_MannequinCustodian", "M_Yellow", []),
 ]
 

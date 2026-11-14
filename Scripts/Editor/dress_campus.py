@@ -28,7 +28,7 @@ SCALE_FIX = 1.0
 DESK_TOP = 76.0  # cm
 
 # Throwable meshes get physics
-THROWABLE = {"SM_PaperBall", "SM_Sandwich", "SM_PizzaSlice", "SM_SaladBowl", "SM_Donut", "SM_CoffeeBag", "SM_TeaBox", "SM_CupStack", "SM_SnackBag", "SM_SnackBox", "SM_SodaCan",
+THROWABLE = {"SM_Brochure", "SM_PaperBall", "SM_Sandwich", "SM_PizzaSlice", "SM_SaladBowl", "SM_Donut", "SM_CoffeeBag", "SM_TeaBox", "SM_CupStack", "SM_SnackBag", "SM_SnackBox", "SM_SodaCan",
              "SM_WaterBottle", "SM_MilkCarton", "SM_LunchBox", "SM_FruitBowl", "SM_Mug", "SM_Keyboard", "SM_OfficeChair", "SM_ReamOfPaper", "SM_FireExtinguisher", "SM_WetFloorSign",
              "SM_MopBucket", "SM_Binder", "SM_BinderMint", "SM_BinderRed", "SM_Stapler", "SM_TapeDispenser",
              "SM_PenCup", "SM_DeskLamp", "SM_DeskPhone", "SM_Laptop", "SM_PCTower", "SM_TrashBin", "SM_PlantDesk",
@@ -145,8 +145,13 @@ put("SM_ExitSign", 2100, 1688, 270, 0)
 put("SM_MeetingChair", 1700, 1590, 0, 0)
 put("SM_MeetingChair", 1830, 1590, 0, 0)
 put("SM_PlantDesk", 1760, 1430, 44)
+for i, (x, y, yaw) in enumerate(((1790, 1470, 15), (1805, 1395, -20), (1725, 1475, 40))):
+    put("SM_Brochure", x, y, 45, yaw, [f"SlotMI=M_SignFace:{'MI_Brochure' if i < 2 else 'MI_Magazine'}"])
+put("SM_PlantTall", 2000, 1650)
+put("SM_Monitor", 2235, 1285, 109, 0, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])   # reception sees everything
+put("SM_PlantDesk", 2280, 1300, 109)
 put("SM_PlantTall", 1440, 1650)
-put("SM_WaterCooler", 2740, 1180, 0, -90)
+put("SM_WaterCooler", 2740, 1260, 0, -90, ["Use=Cooler"])
 # Security desk by the elevator: two monitors showing the camera feeds (one of them is you, from behind)
 put("SM_Desk", 2560, 610, 0, 180)
 put("SM_Monitor", 2525, 585, 75, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])
@@ -171,7 +176,7 @@ put("SM_KitchenIsland", 3300, 830, 0, 180)         # more worktop; ~2 m aisle to
 put("SM_FridgeBody", 3710, 545, 0, 180)
 FRIDGE = (3710, 545, 180)   # door, notes and food are placed relative to this below
 put("SM_VendingMachine", 3750, 900, 0, -90, ["Vending"])          # E = a snack (always the same one)
-put("SM_WaterCooler", 3730, 1250, 0, -90)
+put("SM_WaterCooler", 3730, 1250, 0, -90, ["Use=Cooler"])
 for tx, ty in ((3100, 1150), (3450, 1250)):
     put("SM_CafeTable", tx, ty)
     put("SM_BarStool", tx - 55, ty + 30)
@@ -201,6 +206,7 @@ put("SM_WaterBottle", 3290, 860, 91)
 put("SM_SodaCan", 3100, 1150, 103)        # on the cafe tables
 put("SM_WaterBottle", 3470, 1240, 103)
 put("SM_SnackBag", 3430, 1270, 103, 60)
+put("SM_Mannequin", 3300, 690, 0, 180, ["NPC", "Chef", "Act2Reveal"])   # the lunch attendant, behind the island (chef's hat)
 # Lunch is served (Act 2): on the kitchen island (top 90 cm), under a TODAY'S SPECIALS board. Hidden until 12:00.
 for mesh, x, y in (("SM_PizzaSlice", 3305, 800), ("SM_PizzaSlice", 3308, 848), ("SM_Sandwich", 3345, 800),
                    ("SM_Sandwich", 3348, 848), ("SM_SaladBowl", 3378, 805), ("SM_Donut", 3378, 852)):
@@ -277,7 +283,12 @@ BOXES += [
     ("LunchSpecials", 3245, 860, 115, 34, 2, 48, PM + "MI_LunchSpecials", ["Act2Reveal", "Inspectable"]),
     # Reception: the sign-in clipboard, and a sign
     ("SignInSheet", 1985, 1285, 109.6, 23, 32, 0.4, PM + "MI_SignInSheet", ["Inspectable"]),
-    ("Sign_Wait", 2230, 1262, 125, 30, 2, 30, PM + "MI_Sign_Wait", []),
+    ("Sign_Wait", 1930, 1262, 125, 30, 2, 30, PM + "MI_Sign_Wait", []),
+    ("ScriptNotes", 2120, 1290, 109.6, 22, 30, 0.4, PM + "MI_ScriptNotes", ["Inspectable"]),
+    # Kitchen: a bulletin board (west wall) and morale posters
+    ("KitchenBoard", 2812, 1300, 160, 1, 150, 100, PM + "MI_KitchenBoard", ["Inspectable"]),
+    ("Poster_Smile_Kitchen", 3600, 1488, 165, 60, 1, 85, PM + "MI_Poster_Smile", ["Inspectable"]),
+    ("Poster_Energy_Kitchen", 2812, 700, 165, 1, 60, 85, PM + "MI_Poster_Energy", ["Inspectable"]),
     # Lobby: rug, magazine, promo screen on the west wall
     ("Lobby_Rug", 1760, 1450, 0.6, 360, 240, 1, PM + "MI_Rug", []),
     ("Magazine", 1720, 1415, 44.4, 21, 27, 0.6, PM + "MI_Magazine", ["Inspectable"]),
@@ -303,12 +314,12 @@ BOXES += [("JanitorWall_N", 950, 3350, 150, 320, 20, 300, WALL_MAT, []),
 put("SM_DoorFrame", 1100, 3525, 0, -90)
 put("SM_Door", 1100, 3480, 0, -90, ["Openable", "OpenYaw=90", "JanitorDoor", "NeedsPass=1"])     # hinge at y 3480, swings in
 put("SM_UtilityShelf", 835, 3525, 0, -90)
-put("SM_MopBucket", 1000, 3420)
-put("SM_WetFloorSign", 1040, 3640, 0, 15)
-put("SM_TrashBin", 870, 3660)
+put("SM_MopBucket", 1050, 3395)
+put("SM_WetFloorSign", 850, 3655, 0, 15)
+put("SM_TrashBin", 950, 3672)
 for i in range(3):
     put(["SM_ReamOfPaper", "SM_SnackBox", "SM_TeaBox"][i], 835, 3470 + i * 40, 61)   # odd things stored on the shelf
-put("SM_MannequinCustodian", 960, 3560, 0, 90, ["NPC", "Custodian_Closet"])
+put("SM_MannequinCustodian", 1190, 3620, 0, 90, ["NPC", "Custodian_Closet"])   # by the closet door, outside
 # 4470: the employee before you. Their things are boxed up in here.
 put("SM_MovingBox", 905, 3410, 0, -90, ["Inspectable", "InspectTex=MI_Label_4470"])
 BOXES += [("Label_4470", 928, 3410, 16, 1, 30, 16, "/Game/Props/Materials/MI_Label_4470", ["Inspectable"]),          # on the box, facing the door
@@ -324,7 +335,7 @@ BOXES += [("Poster_Smile_Office", 812, 2150, 165, 1, 60, 85, POSTER("Smile"), ["
           ("Poster_Mark_Office", 3388, 2600, 165, 1, 60, 85, POSTER("Mark"), ["Inspectable"]),           # east wall
           ("Poster_Wellness_Office", 2000, 3688, 165, 60, 1, 85, POSTER("Wellness"), ["Inspectable"]),   # south wall
           ("Poster_Smile_Conference", 1050, 512, 165, 60, 1, 85, POSTER("Smile"), ["Inspectable"]),      # north wall
-          ("Poster_Energy_Lobby", 2788, 1100, 165, 1, 60, 85, POSTER("Energy"), ["Inspectable"]),        # lobby east wall
+          ("Poster_Energy_Lobby", 2788, 760, 165, 1, 60, 85, POSTER("Energy"), ["Inspectable"]),        # lobby east wall
           ("Poster_Present_Kitchen", 3788, 1300, 165, 1, 60, 85, POSTER("Present"), ["Inspectable"])]    # kitchen east wall
 BOXES += [("Logo_ReceptionFront", 2100, 1261, 62, 250, 1, 62, PROPMAT + "MI_HalcyonLogoPanel", []),
           ("Logo_LobbyWall", 1412, 800, 190, 1, 110, 110, PROPMAT + "MI_HalcyonLogo", []),

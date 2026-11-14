@@ -51,6 +51,7 @@ void UTakeGrabComponent::JoinCall()
 	bCallIsMeeting = GI->bJoinedCall;
 	if (RingingPhone.IsValid() && ReminderRinging > 0) { StopRinging(); ReminderRinging = 0; }   // you're here: no reminder needed
 	if (bCallIsMeeting) { bMeetingReminded = true; } else { bCallReminded = true; }
+	GI->AddEnergy(-10.f);   // meetings are draining (that's the joke; it's also the mechanic)
 	GI->WorkdayMinutes = FMath::Max(GI->WorkdayMinutes, bCallIsMeeting ? 13.f * 60.f : 12.f * 60.f + 30.f);
 	PlaySfx2D(TEXT("sfx_badge_ok"), 0.5f);
 
@@ -270,7 +271,7 @@ void UTakeGrabComponent::CollectFunProps()
 		UStaticMeshComponent* SM = It->GetStaticMeshComponent();
 		if (!SM || !SM->GetStaticMesh()) { continue; }
 		const FString N = SM->GetStaticMesh()->GetName();
-		if (It->ActorHasTag(TEXT("Act2Reveal")))
+		if (It->ActorHasTag(TEXT("Act2Reveal")) && !It->ActorHasTag(TEXT("NPC")))   // (NPC placeholders stay hidden: the real one is a coworker)
 		{
 			FReveal R;
 			R.Actor = *It;
@@ -454,6 +455,11 @@ void UTakeGrabComponent::TickMail(float DeltaTime)
 }
 
 // ------------------------------------------------------------------ restroom and other "Use=<Key>" things
+static void GI_AddEnergy(const UObject* Ctx, float Amount)
+{
+	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(Ctx))) { GI->AddEnergy(Amount); }
+}
+
 FString UTakeGrabComponent::UseKey(const AActor* Thing)
 {
 	if (!Thing) { return FString(); }
@@ -485,6 +491,21 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			TEXT("You press the alarm. Nothing. Then, very quietly, the PA: \"We heard you.\""),
 		};
 		ShowSubtitle(TEXT(""), Presses[N % int32(UE_ARRAY_COUNT(Presses))], 4.f);
+		return;
+	}
+	if (Key == TEXT("Cooler"))
+	{
+		PlaySfx(TEXT("sfx_tap_water"), Where, 0.5f);
+		GI_AddEnergy(this, 5.f);
+		static const TCHAR* Gossip[] = {
+			TEXT("(by the cooler) ...did you hear about 4470? No? ...Nobody did."),
+			TEXT("(by the cooler) I heard the Chairman's never been in the building. I heard he's always in the building."),
+			TEXT("(by the cooler) Don't drink from the one in Corridor B. There isn't one in Corridor B."),
+			TEXT("(by the cooler) The new one's doing well. They always do well. Until the retake."),
+			TEXT("(by the cooler) ...shh. They're here."),
+		};
+		ShowSubtitle(TEXT("Coworker"), Gossip[N % int32(UE_ARRAY_COUNT(Gossip))], 4.f);
+		QueueSubtitle(TEXT(""), TEXT("A paper cup of water. Cold. Exactly cold."));
 		return;
 	}
 	if (Key == TEXT("Sink"))
@@ -532,7 +553,12 @@ void UTakeGrabComponent::TickEnergy(float DeltaTime)
 	ACharacter* Me = Cast<ACharacter>(GetOwner());
 	if (!GI || !Me || PauseMenu || SlateT >= 0.f) { return; }
 	if (BaseWalkSpeed < 0.f) { BaseWalkSpeed = Me->GetCharacterMovement()->MaxWalkSpeed; }
-	GI->Energy = FMath::Max(0.f, GI->Energy - DeltaTime * (100.f / 900.f));   // full to empty in about 15 minutes
+	const float FearNow = FindFearDirector() ? FindFearDirector()->Fear : 0.f;
+	// Full to empty in about 15 minutes; Fear burns it three times as fast
+	GI->Energy = FMath::Max(0.f, GI->Energy - DeltaTime * (100.f / 900.f) * (FearNow >= 0.5f ? 3.f : 1.f));
+	// Fear stinger: the moment the office turns (crossing 0.6, where coworkers start to stare)
+	if (FearNow >= 0.6f && LastFear < 0.6f) { PlaySfx2D(TEXT("sfx_fear_hit"), 0.9f); }
+	LastFear = FearNow;
 	const bool bLow = GI->Energy < 25.f;
 	Me->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * (bLow ? 0.8f : 1.f);
 	if (bLow && !bLowEnergyNoted)
@@ -573,4 +599,17 @@ void UTakeGrabComponent::OpenNotes()
 {
 	if (!PauseMenu) { TogglePause(); }          // pauses the game (not while seated / inspecting)
 	if (PauseMenu) { PauseMenu->OnMenu(6); }    // 6 = the Playtest notes page, typing box focused
+}
+
+void UTakeGrabComponent::TakeScreenshot()
+{
+	if (APawn* Pawn = Cast<APawn>(GetOwner()))
+	{
+		if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
+		{
+			PC->ConsoleCommand(TEXT("HighResShot 1"));
+			PlaySfx2D(TEXT("sfx_clapper_snap"), 0.25f);
+			ShowSubtitle(TEXT(""), TEXT("(Screenshot saved: Saved/Screenshots)"), 1.5f);
+		}
+	}
 }

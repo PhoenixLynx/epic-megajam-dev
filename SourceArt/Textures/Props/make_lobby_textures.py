@@ -98,6 +98,45 @@ today      <span style="color:#b02a2a">sign here &rarr;</span></div>"""),
     "T_Sign_Wait": sign("RECEPTION", "Please wait to be called.<br><br>You will be called.", colour="#4fa596"),
 }
 
+PAGES.update({
+    "T_KitchenBoard": (1200, 800, f"""
+<div style="position:absolute;inset:0;background:#b98b5a;border:24px solid #6e4f31"></div>
+<div style="position:absolute;left:60px;top:60px;width:300px;height:220px;background:#fff6a8;transform:rotate(-3deg);font:40px/1.1 Caveat;padding:18px;color:#1f2a6e">LOST: red stapler.<br>(not that one. the other red one)</div>
+<div style="position:absolute;left:420px;top:50px;width:340px;height:260px;background:{PAPER};transform:rotate(2deg);font:600 26px/1.3 Poppins;padding:20px;color:{INK}">FIRE DRILL<br><span style="font-weight:400;font-size:22px">Date: you'll know.<br>Please remain calm.<br>Please remain.</span></div>
+<div style="position:absolute;left:820px;top:70px;width:300px;height:250px;background:#ffd1dc;transform:rotate(-2deg);font:46px/1.05 Caveat;padding:18px;color:#7a1c3c">Cake in the fridge<br>for 4471's birthday!!<br><span style="font-size:32px">(again)</span></div>
+<div style="position:absolute;left:80px;top:360px;width:420px;height:330px;background:{MINT};transform:rotate(1.5deg);padding:24px;color:#fff;font:800 40px/1.1 Poppins">MORALE IS<br>MANDATORY<div style="font:500 22px Poppins;margin-top:16px">Attendance at Fun is tracked.<br>Fun has been scheduled for 2:14.</div></div>
+<div style="position:absolute;left:560px;top:380px;width:280px;height:300px;background:{PAPER};transform:rotate(-4deg);font:40px/1.1 Caveat;padding:18px;color:#1f2a6e">Whoever keeps<br>labelling my mug<br>"4470" -<br>it's not funny.</div>
+<div style="position:absolute;left:890px;top:400px;width:240px;height:260px;background:#cfe9e3;transform:rotate(3deg);font:600 24px/1.3 Poppins;padding:18px;color:{INK}">CLEAN THE<br>MICROWAVE<br><span style="font-weight:400">It remembers.</span></div>
+""" + "".join(f'<div style="position:absolute;left:{x}px;top:{y}px;width:22px;height:22px;border-radius:50%;background:#c62828;box-shadow:0 2px 2px rgba(0,0,0,.4)"></div>' for x, y in ((200, 64), (580, 56), (960, 76), (280, 366), (690, 388), (1000, 404)))),
+    "T_ScriptNotes": (700, 960, """
+<div style="position:absolute;inset:0;background:#fbfbf7"></div>
+<div style="position:absolute;left:70px;right:60px;top:60px;font:24px/1.45 'Courier New',monospace;color:#1b1b1b;white-space:pre-wrap">INT. HALCYON LOBBY - MORNING
+
+The RECEPTIONIST looks up. Warm. Too warm.
+
+          RECEPTIONIST
+    Welcome back.
+          (beat)
+    Oh -- first day. Of course.
+    First day.
+
+EMPLOYEE 4471 hesitates.
+
+          RECEPTIONIST
+    Your badge is on the desk.
+    It's always on the desk.</div>
+<div style="position:absolute;left:300px;top:700px;width:340px;font:52px/1.05 Caveat;color:#b02a2a;transform:rotate(-6deg)">smile with<br>the eyes.<br>AGAIN. - C</div>
+<div style="position:absolute;left:40px;top:40px;font:600 18px Poppins;color:#999">p. 1 of 1 (take 4471)</div>"""),
+    "T_Brochure": (600, 860, f"""
+<div style="position:absolute;inset:0;background:{PAPER}"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:330px;background:linear-gradient(135deg,{MINT},#4fa596)"></div>
+<div style="position:absolute;left:40px;top:40px">{LOGO.format(w=140, h=84)}</div>
+<div style="position:absolute;left:40px;top:150px;font:800 54px/1.05 Poppins;color:#fff">Welcome to<br>HALCYON</div>
+<div style="position:absolute;left:40px;top:360px;right:40px;font:600 30px/1.3 Poppins;color:{INK}">A guide for new employees<br><span style="font-weight:400;color:#5a6c72">(and returning ones)</span></div>
+<div style="position:absolute;left:40px;top:500px;right:40px;font:400 24px/1.5 Poppins;color:{INK}">&bull; You are exactly where you need to be.<br>&bull; Lunch is served at 12:00.<br>&bull; The clocks are correct.<br>&bull; There is no Corridor B.</div>
+<div style="position:absolute;left:0;right:0;bottom:30px;font:500 18px Poppins;color:#9fb2b8;text-align:center">HALCYON &middot; Your energy. Our future.</div>"""),
+})
+
 if __name__ == "__main__":
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=os.environ.get("CHROME", "/usr/bin/google-chrome"))

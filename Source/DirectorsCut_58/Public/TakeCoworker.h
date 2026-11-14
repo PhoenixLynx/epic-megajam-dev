@@ -41,7 +41,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WorkMax = 25.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechSeconds = 3.5f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float SpeechCooldown = 4.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WatchFear = 0.75f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float WatchFear = 0.6f;
 	/** Above this Fear they vanish the moment you look away (and come back when it passes). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Coworker") float VanishFear = 0.9f;
 	/** Part of a quest / story beat: shows a "!" and is the only kind you talk to with E. */
@@ -141,4 +141,6 @@ private:
 	float FrownHold = 0.f;
 	float FaceFearHold = 0.f;
 	void SetFace(bool bFear);
+	FString TaskHint(const class UTakeGameInstance* GI) const;
+	FString LastHint;
 };

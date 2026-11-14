@@ -166,6 +166,8 @@ for i, (a, tags) in enumerate(npcs):
         role, wanders = "Custodian", False                              # custodians keep to their posts
     elif role_tag == "Receptionist":
         role, wanders = "Receptionist", False
+    elif role_tag == "Chef":
+        role, wanders = "Chef", False                                   # the lunch attendant stays at the island
     else:
         role, wanders = "Coworker", True
     comp = a.static_mesh_component
@@ -179,7 +181,7 @@ for i, (a, tags) in enumerate(npcs):
     cw.set_editor_property("is_agent", role == "Coworker" and i in agents)
     # Story NPCs: the only ones you talk to with E (they show a "!"); everyone else talks as you pass
     cw.set_editor_property("story_npc", role_tag in STORY_NPCS)
-    cw.set_editor_property("tags", [unreal.Name("NPC"), unreal.Name(role_tag)])
+    cw.set_editor_property("tags", [unreal.Name("NPC"), unreal.Name(role_tag)] + ([unreal.Name("Act2Reveal")] if "Act2Reveal" in tags else []))
     if hasattr(cw, "rerun_construction_scripts"):
         cw.rerun_construction_scripts()
     # hide the dressed original (kept so this script can be re-run)

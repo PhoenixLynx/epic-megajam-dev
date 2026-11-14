@@ -74,6 +74,7 @@ void UTakeGrabComponent::BeginPlay()
 	}
 	BindStoryEvents();
 	if (bPlayColdOpen) { StartSlate(false); }
+	else if (Prompt) { Prompt->SetSlate(0.f, FString(), 0.f); }
 }
 
 void UTakeGrabComponent::EndPlay(const EEndPlayReason::Type Reason)
@@ -113,7 +114,8 @@ void UTakeGrabComponent::BindKeys()
 	IC->BindKey(EKeys::F, IE_Pressed, this, &UTakeGrabComponent::Sip);
 	IC->BindKey(EKeys::P, IE_Pressed, this, &UTakeGrabComponent::TogglePause);
 	IC->BindKey(EKeys::Escape, IE_Pressed, this, &UTakeGrabComponent::TogglePause);
-	IC->BindKey(EKeys::N, IE_Pressed, this, &UTakeGrabComponent::OpenNotes);   // playtest note, any time   // in the editor Esc stops Play: use P
+	IC->BindKey(EKeys::N, IE_Pressed, this, &UTakeGrabComponent::OpenNotes);   // playtest note, any time
+	IC->BindKey(EKeys::F9, IE_Pressed, this, &UTakeGrabComponent::TakeScreenshot);   // -> Saved/Screenshots   // in the editor Esc stops Play: use P
 	if (bDebugFearKeys)
 	{
 		IC->BindKey(EKeys::Zero, IE_Pressed, this, &UTakeGrabComponent::Fear0);
@@ -159,7 +161,7 @@ ATakeCoworker* UTakeGrabComponent::CoworkerInView() const
 	float BestDot = 0.9f;
 	for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
 	{
-		if (!It->bStoryNPC) { continue; }   // office extras talk on their own as you pass
+		if (!It->bStoryNPC || !It->HasNewConversation() || It->IsHidden()) { continue; }   // E only when they have a "!" (something new to say)
 		const FVector To = It->GetActorLocation() + FVector(0.f, 0.f, 40.f) - Loc;
 		if (To.Size() > UseRange) { continue; }
 		FCollisionQueryParams Sight(SCENE_QUERY_STAT(TakeTalkSight), false, GetOwner());
@@ -208,7 +210,7 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 	{
 		if (const ATakeCoworker* C = Cast<ATakeCoworker>(A))
 		{
-			return C->bStoryNPC ? ETakeLookKind::Coworker : ETakeLookKind::None;   // extras talk on their own
+			return (C->bStoryNPC && C->HasNewConversation()) ? ETakeLookKind::Coworker : ETakeLookKind::None;   // extras talk on their own
 		}
 		if (A->ActorHasTag(TEXT("Terminal"))) { return ETakeLookKind::Terminal; }
 		if (A->ActorHasTag(TEXT("Openable"))) { return ETakeLookKind::Openable; }
@@ -810,6 +812,7 @@ void UTakeGrabComponent::AnswerPhone(AActor* Phone)
 	StopRinging();
 	const FVector Where = Phone ? Phone->GetActorLocation() : GetOwner()->GetActorLocation();
 	PlaySfx(TEXT("sfx_phone_pickup"), Where, 0.8f);
+	if (UTakeGameInstance* PhoneGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { PhoneGI->AddEnergy(-5.f); }   // calls are draining
 	PlaySfx(TEXT("sfx_phone_static"), Where, 0.5f);   // the line crackles under the voices (voices coming later)
 	TArray<FString> Lines;
 	if (bMine && ReminderRinging > 0)
@@ -913,6 +916,8 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		{ TEXT("Polaroid_4470"), TEXT("DESK 4471 - DAY 1"), TEXT("Your desk. Someone sitting at it, in a mint suit.\nThe face has been scribbled out. Hard. The pen went through the photo."), 0 },
 		{ TEXT("Sticky_4470"), TEXT("A NOTE"), TEXT("\"if you're reading this it's not your first day. LOOK CLOSER. - 4470\"\nThe handwriting looks a lot like yours."), 0 },
 		{ TEXT("Nameplate_4471"), TEXT("YOUR NAMEPLATE"), TEXT("4471, on a sticker. It doesn't quite cover the number underneath.\nPeel back the corner and it says 4470."), 0 },
+		{ TEXT("KitchenBoard"), TEXT("KITCHEN NOTICES"), TEXT("Lost: red stapler. Cake in the fridge for 4471's birthday (again).\nSomeone keeps labelling a mug \"4470\". Morale is mandatory. Fun is at 2:14."), 0 },
+		{ TEXT("ScriptNotes"), TEXT("THE RECEPTIONIST'S SCRIPT"), TEXT("INT. HALCYON LOBBY - MORNING. \"Welcome back. (beat) Oh -- first day. Of course.\"\nIn red pen, from C: smile with the eyes. AGAIN."), 0 },
 		{ TEXT("SignInSheet"), TEXT("VISITOR SIGN-IN"), TEXT("4471, 9:00. 4471, 9:00. 4471, 9:00. Every line, the same handwriting.\nOne line says 4470, OUT: wrapped. The last line is waiting for you."), 0 },
 		{ TEXT("Magazine"), TEXT("HALCYON QUARTERLY"), TEXT("Employee of the Take: 4471. The photo is you, at your desk.\nIssue date: tomorrow."), 0 },
 		{ TEXT("LunchSpecials"), TEXT("TODAY'S SPECIALS"), TEXT("Pizza, delivered 12:00. Turkey, because you asked for turkey.\nSoup of the day: yesterday's."), 0 },

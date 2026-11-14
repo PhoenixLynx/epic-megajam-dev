@@ -887,3 +887,24 @@ A running record of every AI tool used and what it did.
   - Later: the title screen with Sol's placeholder background (with Act 3), the training movie (nice to have).
 - **New:** SM_SecurityCam; 10 textures (lunch board, sign-in sheet, CCTV, promo, magazine, rug, elevator panel, 3 signs). ![textures](screenshots/2026-11-14_lobby_textures.png)
 - **AI tools used:** Claude (HTML/SVG textures via headless Chrome, Blender camera, C++, level dressing). Sol / ChatGPT (faces, title background in progress).
+
+### Session 55: Sat Nov 14, 2026, 15:05 MST: First in-game playtest notes
+
+- **The in-game notes work:** 17 notes, typed while playing (N), each with real time, game clock, act and position, in `Saved/PlaytestNotes.txt`. Claude read them straight from my PC. F8 skip works great.
+- Several notes were things already fixed but **not yet imported/dressed** (objects by the desk, blank elevator, lunch on the small table, neutral faces). Running `import_jam_assets.py` + `dress_campus.py` brings them in.
+- **New from the notes:**
+  - **Intro bleed:** the HUD's black now starts *visible*, before any story code runs.
+  - **F9 = screenshot** to `Saved/Screenshots`.
+  - **Energy drains** from phone calls (-5), meetings (-10) and Fear (3x faster); the water cooler gives +5.
+  - **E to talk only when there's a "!"**: the "!" is the to-do marker, so it tells you who still has something for you.
+  - **Janitor closet:** the custodian now waits outside by the door, and the clutter moved to the walls, so you can walk in and find 4470's things.
+  - The lobby poster that covered the kitchen doorway moved.
+  - **Coworkers nudge you toward what's next** (30% of their small talk), e.g. *"Twelve thirty, conference room. The Chairman's calling in. Camera off, as usual."*
+  - **Fear:** coworkers now react at Fear 0.6 (was 0.75), so seated ones stop working and stare sooner. A new **Fear stinger** (reversed swell into a low boom and a shatter) plays the moment the office turns.
+  - **Lobby:** throwable brochures (*"Welcome to HALCYON: a guide for new employees (and returning ones)"*) and magazines, another plant.
+  - **Reception:** a monitor with the CCTV feeds, and the receptionist's **script notes** on the desk (*"INT. HALCYON LOBBY - MORNING... Welcome back. (beat) Oh -- first day."*, with *"smile with the eyes. AGAIN. - C"* in red pen).
+  - **Lunch attendant** (Act 2 only): a white-coated mannequin with a **chef's hat** behind the island (*"Today's special is the special."*, *"Careful. The hat is load-bearing."*).
+  - **Kitchen:** a bulletin board (lost red stapler, fire drill *"Date: you'll know"*, cake for 4471's birthday *"(again)"*, *"Morale is mandatory. Fun has been scheduled for 2:14."*) and two morale posters.
+  - **Water coolers:** E pours a cup; someone by the cooler gossips (*"...did you hear about 4470? No? ...Nobody did."*).
+  ![board, script, brochure](screenshots/2026-11-14_kitchen_board_script_brochure.png)
+- **AI tools used:** Claude (reading my playtest notes, C++, Blender chef variant + brochure, HTML textures, sound synthesis).

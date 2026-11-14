@@ -132,7 +132,7 @@ TSharedRef<SWidget> UTakePromptWidget::RebuildWidget()
 		UCanvasPanelSlot* BlackSlot = Root->AddChildToCanvas(SlateBlack);
 		BlackSlot->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
 		BlackSlot->SetOffsets(FMargin(0.f));
-		SlateBlack->SetVisibility(ESlateVisibility::Collapsed);
+		SlateBlack->SetVisibility(ESlateVisibility::HitTestInvisible);   // black until the story says otherwise (no desk before the cold open)
 		SlateText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SlateText"));
 		FSlateFontInfo SlateFont = SlateText->GetFont();
 		SlateFont.Size = 64;

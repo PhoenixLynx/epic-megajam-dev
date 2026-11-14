@@ -228,3 +228,11 @@ for k, at in enumerate((0.0, 0.22, 0.44)):
     s0 = int(SR * at)
     knock[s0:s0 + len(rap)] += rap * (1.0 - 0.1 * k)
 write("sfx_knock", knock, peak=0.6)
+
+# Fear hits: a low boom, a reversed swell into it, and a shatter of high noise (the room changes)
+x = t(3.0)
+swell = bandpass_noise(3.0, 200, 4000) * np.clip((x - 0.0) / 0.6, 0, 1) ** 3 * (x < 0.6)
+boom = pad(tone(42, 2.4, 0.9, ((1, 1.0), (1.5, 0.4), (2.02, 0.25))), 3.0)
+boom = np.roll(boom, int(SR * 0.6))
+shatter = bandpass_noise(3.0, 2500, 11000) * np.exp(-np.maximum(x - 0.6, 0) / 0.25) * (x >= 0.6)
+write("sfx_fear_hit", swell * 0.5 + boom * 1.0 + shatter * 0.55, peak=0.8)

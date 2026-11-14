@@ -119,6 +119,11 @@ class Prop:
             for loop in f.loops:
                 co = loop.vert.co
                 loop[uv].uv = (co.y, co.z) if ax == 0 else ((co.x, co.z) if ax == 1 else (co.x, co.y))
+            if fit_uv and ax == 2 and f.material_index < len(self.slots) and ("top:" + self.slots[f.material_index]) in fit_uv:
+                x0, x1, y0, y1 = fit_uv["top:" + self.slots[f.material_index]]
+                for loop in f.loops:
+                    co = loop.vert.co
+                    loop[uv].uv = ((co.x - x0) / (x1 - x0), (co.y - y0) / (y1 - y0))
             if fit_uv and ax == 1 and f.material_index < len(self.slots) and self.slots[f.material_index] in fit_uv:
                 x0, x1, z0, z1 = fit_uv[self.slots[f.material_index]]
                 for loop in f.loops:
@@ -939,6 +944,14 @@ def security_cam():
     return p.finish(0.004)
 
 
+def brochure():
+    """Flat printed booklet; the top face shows SlotMI=M_SignFace:<MI> (brochure / magazine)."""
+    p = Prop("SM_Brochure")
+    p.box((0.21, 0.3, 0.006), (0, 0, 0.003), "M_Paper")
+    p.box((0.205, 0.295, 0.001), (0, 0, 0.0065), "M_SignFace")
+    return p.finish(0.0, fit_uv={"top:M_SignFace": (-0.1025, 0.1025, 0.1475, -0.1475)})
+
+
 def fruit_bowl():
     p = Prop("SM_FruitBowl")
     p.cyl(0.14, 0.07, (0, 0, 0.035), "M_Ceramic", segs=24, radius2=0.1)
@@ -966,7 +979,7 @@ BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabine
             reception_desk, fridge_body, fridge_door, door, door_frame, utility_shelf,
             coffee_bag, tea_box, cup_stack, snack_bag, snack_box, soda_can, water_bottle, milk_carton,
             lunch_box, fruit_bowl, sandwich, pizza_slice, salad_bowl, donut,
-            toilet, sink, mirror, hand_dryer, stall_door, shoes, sign_plaque, security_cam]
+            toilet, sink, mirror, hand_dryer, stall_door, shoes, sign_plaque, security_cam, brochure]
 
 
 def export_fbx(obj):
