@@ -214,6 +214,7 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 		if (A->ActorHasTag(TEXT("Vending"))) { return ETakeLookKind::Vending; }
 		if (A->ActorHasTag(TEXT("CallScreen")) && CanJoinCall()) { return ETakeLookKind::Call; }
 		if (A->ActorHasTag(TEXT("KeyLockPanel"))) { return ETakeLookKind::LockPanel; }
+		if (!UseKey(A).IsEmpty()) { return ETakeLookKind::Use; }
 		if (RingingPhone.IsValid() && A == RingingPhone.Get()) { return ETakeLookKind::Phone; }
 		if (A->ActorHasTag(TEXT("Inspectable"))) { return ETakeLookKind::Inspect; }
 		if (const ATakeWisp* W = Cast<ATakeWisp>(A)) { return W->IsAvailable() ? ETakeLookKind::Wisp : ETakeLookKind::None; }
@@ -231,7 +232,7 @@ void UTakeGrabComponent::Interact()
 	FHitResult Hit;
 	if (IsHolding())
 	{
-		if (IsHoldingMug() && Look(Hit) == ETakeLookKind::Coffee) { PourCoffee(); return; }   // refill the mug you're holding
+		if (Look(Hit) == ETakeLookKind::Coffee) { PourCoffee(); return; }   // refill the mug you're holding (or... whatever that is)
 		Drop();
 		return;
 	}
@@ -246,6 +247,7 @@ void UTakeGrabComponent::Interact()
 	case ETakeLookKind::Call:      JoinCall(); break;
 	case ETakeLookKind::Vending:   Vend(Hit.GetActor()); break;
 	case ETakeLookKind::LockPanel: OpenLockPanel(2); break;
+	case ETakeLookKind::Use:       UseThing(Hit.GetActor()); break;
 	case ETakeLookKind::Wisp:      CollectWisp(Cast<ATakeWisp>(Hit.GetActor())); break;
 	case ETakeLookKind::Prop:      TryGrabOrDrop(); break;
 	default: break;
@@ -314,6 +316,21 @@ void UTakeGrabComponent::ToggleOpen(AActor* Openable)
 	if (IsLockedForMe(Openable))
 	{
 		S->JiggleLeft = 0.45f;
+		if (Openable->ActorHasTag(TEXT("Occupied")))   // the restroom stall: always occupied
+		{
+			PlaySfx(TEXT("sfx_knock"), Where, 0.8f);
+			float StallFear = 0.f;
+			for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { StallFear = It->Fear; break; }
+			static const TCHAR* Calm[] = {
+				TEXT("(from inside)  Occupied."), TEXT("(from inside)  Still occupied."), TEXT("(from inside)  ...Occupied, 4471."),
+				TEXT("(from inside)  It's been occupied since this morning. It'll be occupied tomorrow."),
+				TEXT("(from inside)  Have you tried the one on the other floor? ...There isn't one."),
+			};
+			if (StallFear >= 0.5f) { ShowSubtitle(TEXT(""), TEXT("(from inside, very close to the door)  Occupied. Occupied. Occupied."), 3.f); }
+			else { ShowSubtitle(TEXT(""), Calm[FMath::Min(Knocks, int32(UE_ARRAY_COUNT(Calm)) - 1)], 3.f); }
+			++Knocks;
+			return;
+		}
 		PlaySfx(TEXT("sfx_door_locked"), Where);
 		const int32 Need = PassNeeded(Openable);
 		ShowSubtitle(TEXT(""), Need > 0 ? FString::Printf(TEXT("Locked. Access pass %d required."), Need) : FString(TEXT("Locked.")), 2.5f);
@@ -892,6 +909,7 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		{ TEXT("Polaroid_4470"), TEXT("DESK 4471 - DAY 1"), TEXT("Your desk. Someone sitting at it, in a mint suit.\nThe face has been scribbled out. Hard. The pen went through the photo."), 0 },
 		{ TEXT("Sticky_4470"), TEXT("A NOTE"), TEXT("\"if you're reading this it's not your first day. LOOK CLOSER. - 4470\"\nThe handwriting looks a lot like yours."), 0 },
 		{ TEXT("Nameplate_4471"), TEXT("YOUR NAMEPLATE"), TEXT("4471, on a sticker. It doesn't quite cover the number underneath.\nPeel back the corner and it says 4470."), 0 },
+		{ TEXT("Mirror"), TEXT("THE MIRROR"), TEXT("You, in a mint suit. Your reflection blinks a moment after you do.\nThere are fingerprints on the glass. On the inside."), 0 },
 		{ TEXT("Chairman"), TEXT("THE CHAIRMAN"), TEXT("Founder. Visionary. Always just out of frame.\nThe plaque says he's proud of you. It doesn't say for what."), 0 },
 		{ TEXT("CallSheet"), TEXT("CALL SHEET"), TEXT("Today's date. A shooting schedule for an office.\nOne line is highlighted: EMPLOYEE 4471. You."), 0 },
 		{ TEXT("FridgeNote_Yogurt"), TEXT("KITCHEN"), TEXT("Someone has strong feelings about yogurt."), 0 },
@@ -1109,7 +1127,11 @@ void UTakeGrabComponent::UpdatePrompt()
 	if (IsHolding())
 	{
 		FHitResult MugHit;
-		if (IsHoldingMug() && Look(MugHit) == ETakeLookKind::Coffee) { Prompt->SetPrompt(TEXT("E  Refill        F  Sip        Click  Throw")); return; }
+		if (Look(MugHit) == ETakeLookKind::Coffee)
+		{
+			Prompt->SetPrompt(IsHoldingMug() ? TEXT("E  Refill        F  Sip        Click  Throw") : TEXT("E  Fill it anyway        Click  Throw"));
+			return;
+		}
 		Prompt->SetPrompt(IsHoldingMug() ? TEXT("F  Sip        E  Drop        Click  Throw")
 			: IsHoldingSnack() ? TEXT("F  Eat        E  Drop        Click  Throw") : TEXT("E  Drop        Click  Throw"));
 		return;
@@ -1128,7 +1150,8 @@ void UTakeGrabComponent::UpdatePrompt()
 	{
 		const FSwing* S = Swings.Find(Hit.GetActor());
 		const bool bDrawer = Hit.GetActor()->ActorHasTag(TEXT("FileDrawer"));
-		Prompt->SetPrompt(IsLockedForMe(Hit.GetActor()) ? TEXT("E  Try the door")
+		Prompt->SetPrompt(Hit.GetActor()->ActorHasTag(TEXT("Occupied")) ? TEXT("E  Knock")
+			: IsLockedForMe(Hit.GetActor()) ? TEXT("E  Try the door")
 			: ((S && S->bOpen) ? (bDrawer ? TEXT("E  Close the drawer") : TEXT("E  Close")) : (bDrawer ? TEXT("E  Open the drawer") : TEXT("E  Open"))));
 		break;
 	}
@@ -1143,6 +1166,13 @@ void UTakeGrabComponent::UpdatePrompt()
 	}
 	case ETakeLookKind::Vending:  Prompt->SetPrompt(TEXT("E  Buy a snack")); break;
 	case ETakeLookKind::LockPanel: Prompt->SetPrompt(TEXT("E  Log in")); break;
+	case ETakeLookKind::Use:
+	{
+		const FString K = UseKey(Hit.GetActor());
+		Prompt->SetPrompt(K == TEXT("Sink") ? TEXT("E  Wash your hands") : K == TEXT("Dryer") ? TEXT("E  Dry your hands")
+			: K == TEXT("Toilet") ? TEXT("E  Flush") : TEXT("E  Use"));
+		break;
+	}
 	case ETakeLookKind::Wisp:     Prompt->SetPrompt(TEXT("E  Reach for the light")); break;
 	case ETakeLookKind::Prop:     Prompt->SetPrompt(TEXT("E  Pick up")); break;
 	case ETakeLookKind::TooHeavy: Prompt->SetPrompt(TEXT("Too heavy")); break;
@@ -1166,6 +1196,7 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickCall(DeltaTime);
 	TickFun(DeltaTime);
 	TickMail(DeltaTime);
+	TickFearReveals();
 	UpdatePrompt();
 	UpdateTasks();
 	if (SubtitleLeft > 0.f)

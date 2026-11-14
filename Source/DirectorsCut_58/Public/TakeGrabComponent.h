@@ -23,7 +23,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeGrabEvent, UPrimitiveComponent*
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeActorEvent, AActor*, Actor);
 
 UENUM()
-enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Inspect, Prop, TooHeavy, Wisp, Call, Vending, LockPanel };
+enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Inspect, Prop, TooHeavy, Wisp, Call, Vending, LockPanel, Use };
 
 UCLASS(ClassGroup = (Take), meta = (BlueprintSpawnableComponent, DisplayName = "Take Grab"))
 class DIRECTORSCUT_58_API UTakeGrabComponent : public UActorComponent
@@ -242,6 +242,14 @@ private:
 	struct FFood { TWeakObjectPtr<AActor> Actor; FTransform Home; float Back = -1.f; };
 	TArray<FFood> Foods;
 	int32 Vended = 0;
+	// Restroom and other small "Use=<Key>" things (sink, hand dryer, toilet); Fear-only props (shoes under the stall)
+	void UseThing(AActor* Thing);
+	static FString UseKey(const AActor* Thing);
+	TMap<FString, int32> UseCounts;
+	int32 Knocks = 0;
+	TArray<TWeakObjectPtr<AActor>> FearReveals;
+	bool bFearRevealShown = true;
+	void TickFearReveals();
 	// Act2Reveal: things that only exist from lunch on (the lunch spread, the director's chair)
 	struct FReveal { TWeakObjectPtr<AActor> Actor; bool bPhysics = false; };
 	TArray<FReveal> Act2Things;

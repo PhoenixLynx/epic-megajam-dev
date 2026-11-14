@@ -816,3 +816,21 @@ A running record of every AI tool used and what it did.
   6. **Lunch:** a catering table and lunch on the cafe tables appear at 12:00. New: sandwich, pizza slice, salad, donut, each with its own line when you eat it (*"Every leaf is the same size. Every leaf."*). The director's chair by your desk (tagged for Act 2 since Thursday but never revealed) now shows up at lunch too.
   7. **Fear:** once coworkers start staring, Fear has to drop clearly and stay down for 2.5 s before they go back to work. Fear hovering around the threshold was flipping them between staring and walking.
 - **AI tools used:** Claude (recording review via contact sheet, C++, Blender lunch props).
+
+### Session 51: Sat Nov 14, 2026, 13:25 MST: Signs, a restroom, and machine easter eggs
+
+- **My asks:** (1) caution logos on the wet floor signs and other signs; (2) add a restroom; (3) more easter eggs for the coffee and vending machines. Sol is generating the coworker faces.
+- **Signs:** wet floor signs now print **CAUTION / slipping figure / WET FLOOR / (always)** on both faces; exit signs say **EXIT** with a running figure. Both are original HTML/SVG drawings. A per-slot material system in `dress_campus.py` (`SLOT_MI`, plus `SlotMI=` tags) lets any prop carry a printed face. ![signs](screenshots/2026-11-14_signs.png)
+- **Restroom** (north-east corner of the open office, door in its west wall, sign by the door: *"RESTROOM · please wash your hands · twice"*):
+  - **Sink:** *"exactly the right temperature"*. **Hand dryer:** it *"starts before your hands are under it"*. **Toilet:** flushes; the third time, the PA quietly says *"Thank you."*
+  - **The stall is always occupied:** E = knock. *"Occupied." → "Still occupied." → "...Occupied, 4471."* In Fear: *"Occupied. Occupied. Occupied."*, very close to the door. **And only in Fear, there are shoes under the stall door.**
+  - **The mirror** (look closer): you in a mint suit, a reflection that blinks late, fingerprints *on the inside* of the glass.
+  - The printer moved out of that corner.
+- **Coffee machine eggs:**
+  - cup 10: *"YOU HAVE EXCEEDED TODAY'S JOY ALLOWANCE. ...JOY GRANTED ANYWAY."*
+  - cup 15: *"HELLO 4470. ...SORRY. HELLO 4471. THE USUAL?"*
+  - after 2:14 the coffee stops in mid-air
+  - hold anything that isn't a mug under it and it fills it anyway
+- **Vending machine eggs:** the keypad only has 4, 7 and 1; *"YOUR USUAL"*; in Fear it's empty but something drops anyway; after 2:14 *"OUT OF TIME… Best before 2:14."*
+- **New:** 7 meshes (toilet, sink, mirror, hand dryer, stall door, shoes, sign plaque), 4 textures, 4 sounds (tap, dryer, flush, knock).
+- **AI tools used:** Claude (Blender props, HTML/SVG sign art via headless Chrome, numpy sound synthesis, C++, level dressing).

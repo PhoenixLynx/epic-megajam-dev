@@ -41,6 +41,8 @@ REPLACE = ["GB_ReceptionDesk", "GB_Desk_4471", "GB_Monitor_4471", "GB_FileCabine
            "GB_CoffeePot", "GB_WetFloorSign", "GB_FireExtinguisher", "GB_MopBucket", "GB_SupplyShelf"]
 REPLACE_PREFIXES = ["GB_Cubicle_", "GB_HospBed_"]
 
+SLOT_MI = {"SM_WetFloorSign": {"M_SignWet": "MI_WetFloor", "M_SignWetBack": "MI_WetFloor"},
+           "SM_ExitSign": {"M_ExitFace": "MI_ExitSign"}}
 P = []  # placements: (mesh, x, y, z, yaw, extra tags)
 
 
@@ -80,7 +82,7 @@ for i in range(5):                                          # a pile of crumpled
 put("SM_DirectorsChair", 1480, 2470, 0, 210, ["Act2Reveal"])  # hidden in game until Act 2
 cabinet(1700, 3500, 0, 4, {3: ["InspectTex=MI_File_4470"]})   # top drawer: 4470's personnel file
 cabinet(1760, 3500, 0, 2)
-put("SM_Printer", 3300, 1870, 0, -90)
+put("SM_Printer", 3300, 2300, 0, -90)              # (moved out of the restroom corner)
 put("SM_PlantTall", 860, 1780)
 put("SM_PlantTall", 3330, 3620)
 put("SM_WallClock", 1100, 1712, 240, 180)
@@ -108,6 +110,22 @@ for row in range(3):
 # coworkers standing a little too still
 for i, (cx, cy) in enumerate([(1800, 2100), (2500, 2100), (2150, 2550), (2850, 3000), (1800, 3000)]):
     put("SM_Mannequin", cx + 70, cy + 70, 0, rnd.uniform(140, 220), ["NPC", f"Coworker_{i}"])
+
+# --- Restroom: NE corner of the open office (x 3050-3400, y 1700-2120), door in its west wall ----------
+#     The north and east walls are the office's own; west/south walls, lintel and stall are engine cubes (BOXES below).
+put("SM_DoorFrame", 3050, 1995, 0, -90)
+put("SM_Door", 3050, 1950, 0, -90, ["Openable", "OpenYaw=-90"])                      # swings into the restroom
+put("SM_SignPlaque", 3038, 2075, 150, -90, ["SlotMI=M_SignFace:MI_RestroomSign"])   # on the office side, by the door
+put("SM_Toilet", 3320, 1765, 0, 180, ["Use=Toilet"])
+put("SM_StallDoor", 3290, 1880, 0, 180, ["Openable", "Locked", "Occupied"])         # hinge at x 3290, always occupied
+put("SM_Shoes", 3320, 1845, 0, 180, ["FearReveal"])                                  # under the stall door, only in Fear
+put("SM_Sink", 3365, 2010, 0, -90, ["Use=Sink"])
+put("SM_Mirror", 3394, 2010, 120, -90, ["Inspectable", "InspectTex=MI_Mirror"])
+put("SM_HandDryer", 3200, 2108, 110, 0, ["Use=Dryer"])
+put("SM_TrashBin", 3120, 2085)
+put("SM_PaperBall", 3150, 2060, 0)
+put("SM_WetFloorSign", 3210, 1965, 0, 40)
+put("SM_PlantDesk", 3375, 2085, 85)
 
 # --- Lobby: bright, calm, too clean --------------------------------------------
 put("SM_HalcyonSign", 2788, 1300, 220, -90)
@@ -243,6 +261,13 @@ for r in range(3):
 # --- Janitor closet: SW corner of the open office, door in its east wall --------------
 #     walls/lintel are engine cubes (BOXES), the door is SM_Door on its hinge (Openable)
 BOXES = []   # (label, x, y, z_centre, sx, sy, sz, material path, tags)
+BOXES += [("RestroomWall_W1", 3050, 1825, 150, 20, 250, 300, "/Game/Fear/MI_Greybox_Walls", []),
+          ("RestroomWall_W2", 3050, 2080, 150, 20, 80, 300, "/Game/Fear/MI_Greybox_Walls", []),
+          ("RestroomLintel", 3050, 1995, 255, 20, 90, 90, "/Game/Fear/MI_Greybox_Walls", []),
+          ("RestroomWall_S", 3225, 2120, 150, 370, 20, 300, "/Game/Fear/MI_Greybox_Walls", []),
+          ("StallWall_W", 3240, 1790, 100, 4, 180, 180, "/Game/Fear/MI_Greybox_Walls", []),
+          ("StallFront_L", 3265, 1880, 100, 50, 4, 180, "/Game/Fear/MI_Greybox_Walls", []),
+          ("StallFront_R", 3371, 1880, 100, 38, 4, 180, "/Game/Fear/MI_Greybox_Walls", [])]
 WALL_MAT = "/Game/Fear/MI_Greybox_Walls"
 BOXES += [("JanitorWall_N", 950, 3350, 150, 320, 20, 300, WALL_MAT, []),
           ("JanitorWall_E1", 1100, 3415, 150, 20, 130, 300, WALL_MAT, []),
@@ -336,7 +361,18 @@ def main():
         a.set_actor_label(f"{PREFIX}{mesh[3:]}_{n:03d}")
         room = "Hospital" if z <= -1000 else "Campus"
         a.set_folder_path(f"Dressing/{room}/{'NPC' if 'NPC' in tags else 'Props'}")
-        all_tags = list(tags)
+        all_tags = [t for t in tags if not t.startswith("SlotMI=")]
+        # Printed faces: per-mesh defaults, plus SlotMI=<slot>:<MI> tags for one-off signs
+        slot_mis = dict(SLOT_MI.get(mesh, {}))
+        for t in tags:
+            if t.startswith("SlotMI="):
+                slot, mi = t[7:].split(":")
+                slot_mis[slot] = mi
+        for slot, mi in slot_mis.items():
+            idx = comp.get_material_index(slot)
+            path = f"/Game/Props/Materials/{mi}"
+            if idx >= 0 and asset_lib.does_asset_exist(path):
+                comp.set_material(idx, asset_lib.load_asset(path))
         if "DeskFixed" in tags:   # your desk stays tidy (Fear can still throw it around; it puts itself back)
             comp.set_mobility(unreal.ComponentMobility.MOVABLE)
         elif mesh in THROWABLE and "Terminal" not in tags and "CoffeeMachine" not in tags:

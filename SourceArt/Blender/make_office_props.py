@@ -39,6 +39,8 @@ PALETTE = {  # slot name -> viewport colour (RGBA)
     "M_Cardboard": (0.55, 0.40, 0.25, 1),
     "M_Bread": (0.86, 0.68, 0.42, 1), "M_Crust": (0.62, 0.38, 0.18, 1), "M_Cheese": (0.98, 0.80, 0.30, 1),
     "M_Tomato": (0.80, 0.16, 0.10, 1), "M_Frosting": (0.96, 0.58, 0.72, 1),
+    "M_SignWet": (0.95, 0.78, 0.10, 1), "M_SignWetBack": (0.95, 0.78, 0.10, 1), "M_ExitFace": (0.10, 0.75, 0.35, 1),
+    "M_SignFace": (0.92, 0.94, 0.95, 1), "M_Mirror": (0.70, 0.78, 0.82, 1),
 }
 
 
@@ -274,8 +276,11 @@ def wet_floor_sign():
     p = Prop("SM_WetFloorSign")
     for y, tilt in ((-0.12, 0.2), (0.12, -0.2)):
         p.box((0.3, 0.015, 0.62), (0, y, 0.3), "M_Yellow", rot_x=tilt)
+    # printed faces (CAUTION / WET FLOOR): thin labels just outside each panel; the back one has its UVs mirrored
+    p.box((0.28, 0.002, 0.56), (0, -0.129, 0.3), "M_SignWet", rot_x=0.2)
+    p.box((0.28, 0.002, 0.56), (0, 0.129, 0.3), "M_SignWetBack", rot_x=-0.2)
     p.box((0.06, 0.06, 0.03), (0, 0, 0.62), "M_Yellow")
-    return p.finish(0.006)
+    return p.finish(0.006, fit_uv={"M_SignWet": (-0.14, 0.14, 0.02, 0.58), "M_SignWetBack": (0.14, -0.14, 0.02, 0.58)})
 
 
 def cubicle_panel():
@@ -449,8 +454,8 @@ def pass_reader():
 def exit_sign():
     p = Prop("SM_ExitSign")
     p.box((0.4, 0.06, 0.18), (0, 0, 0), "M_PlasticWhite")
-    p.box((0.34, 0.004, 0.12), (0, -0.032, 0), "M_ExitGreen")
-    return p.finish(0.003)
+    p.box((0.34, 0.004, 0.12), (0, -0.032, 0), "M_ExitFace")
+    return p.finish(0.003, fit_uv={"M_ExitFace": (-0.17, 0.17, -0.06, 0.06)})
 
 
 # --------------------------------------------------------------------------
@@ -865,6 +870,64 @@ def donut():
     return p.finish(0.0)
 
 
+# --- restroom (Saturday) ----------------------------------------------------
+def toilet():
+    p = Prop("SM_Toilet")             # faces -Y (front = the bowl)
+    p.box((0.4, 0.18, 0.4), (0, 0.2, 0.6), "M_Ceramic")                         # tank
+    p.cyl(0.19, 0.38, (0, -0.06, 0.19), "M_Ceramic", segs=20, radius2=0.16)      # bowl
+    p.cyl(0.2, 0.03, (0, -0.06, 0.395), "M_PlasticWhite", segs=20)              # seat
+    p.box((0.06, 0.02, 0.02), (0.14, 0.11, 0.78), "M_MetalLight")                # flush handle
+    return p.finish(0.004)
+
+
+def sink():
+    p = Prop("SM_Sink")               # counter + basin; faces -Y
+    p.box((0.6, 0.45, 0.06), (0, 0, 0.82), "M_Counter")
+    p.box((0.6, 0.45, 0.76), (0, 0.0, 0.38), "M_PlasticWhite")
+    p.cyl(0.17, 0.05, (0, -0.02, 0.86), "M_Ceramic", segs=20)
+    p.cyl(0.015, 0.16, (0, 0.17, 0.92), "M_Steel", segs=10)                      # tap
+    p.box((0.03, 0.12, 0.025), (0, 0.11, 0.99), "M_Steel")
+    return p.finish(0.004)
+
+
+def mirror():
+    p = Prop("SM_Mirror")             # 0.55 x 0.75, hangs on a wall; pivot at the bottom centre of the back
+    p.box((0.59, 0.02, 0.79), (0, 0, 0.395), "M_Steel")
+    p.box((0.55, 0.004, 0.75), (0, -0.012, 0.395), "M_Mirror")
+    return p.finish(0.002)
+
+
+def hand_dryer():
+    p = Prop("SM_HandDryer")
+    p.box((0.28, 0.16, 0.3), (0, 0, 0.15), "M_PlasticWhite")
+    p.box((0.16, 0.08, 0.04), (0, -0.04, 0.0), "M_Steel")                       # nozzle
+    p.box((0.08, 0.002, 0.03), (0, -0.081, 0.22), "M_ExitGreen")                 # little light
+    return p.finish(0.006)
+
+
+def stall_door():
+    p = Prop("SM_StallDoor")          # 0.62 x 1.5 m, raised 0.25 m (feet show underneath); PIVOT ON THE HINGE along +X
+    p.box((0.62, 0.03, 1.5), (0.31, 0, 1.0), "M_FabricMint")
+    p.box((0.04, 0.04, 0.04), (0.55, -0.03, 1.05), "M_Steel")
+    p.box((0.05, 0.002, 0.02), (0.55, -0.051, 1.12), "M_RedPaint")              # OCCUPIED
+    return p.finish(0.003)
+
+
+def shoes():
+    p = Prop("SM_Shoes")              # a pair of black office shoes, toes toward -Y
+    for x in (-0.07, 0.07):
+        p.box((0.09, 0.26, 0.07), (x, 0, 0.035), "M_PlasticBlack")
+        p.box((0.07, 0.06, 0.2), (x, 0.09, 0.13), "M_Fabric")                   # ankles
+    return p.finish(0.01)
+
+
+def sign_plaque():
+    p = Prop("SM_SignPlaque")         # 0.3 x 0.3 wall plaque; face -Y gets a texture (SlotMI=M_SignFace:...)
+    p.box((0.3, 0.015, 0.3), (0, 0, 0.15), "M_PlasticWhite")
+    p.box((0.28, 0.002, 0.28), (0, -0.009, 0.15), "M_SignFace")
+    return p.finish(0.003, fit_uv={"M_SignFace": (-0.14, 0.14, 0.01, 0.29)})
+
+
 def fruit_bowl():
     p = Prop("SM_FruitBowl")
     p.cyl(0.14, 0.07, (0, 0, 0.035), "M_Ceramic", segs=24, radius2=0.1)
@@ -891,7 +954,8 @@ BUILDERS = [desk, office_chair, lambda: filing_cabinet(4), lambda: filing_cabine
             # wishlist batch
             reception_desk, fridge_body, fridge_door, door, door_frame, utility_shelf,
             coffee_bag, tea_box, cup_stack, snack_bag, snack_box, soda_can, water_bottle, milk_carton,
-            lunch_box, fruit_bowl, sandwich, pizza_slice, salad_bowl, donut]
+            lunch_box, fruit_bowl, sandwich, pizza_slice, salad_bowl, donut,
+            toilet, sink, mirror, hand_dryer, stall_door, shoes, sign_plaque]
 
 
 def export_fbx(obj):

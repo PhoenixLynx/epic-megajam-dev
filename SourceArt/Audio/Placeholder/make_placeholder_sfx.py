@@ -203,3 +203,28 @@ for k, at in enumerate((0.0, 0.28, 0.55)):
     crunch[s0:s0 + len(bite)] += bite[: len(crunch) - s0]
 crinkle = bandpass_noise(0.9, 3000, 9000) * (rng.random(int(SR * 0.9)) > 0.985) * 0.6
 write("sfx_eat_crunch", crunch + crinkle, peak=0.55)
+
+# --- Restroom (Saturday) ---------------------------------------------------
+# Tap: steady water (band noise with a slow flutter), soft start and stop
+x = t(3.0)
+water = bandpass_noise(3.0, 400, 6000) * (0.8 + 0.2 * np.sin(2 * np.pi * 7 * x)) + bandpass_noise(3.0, 150, 700) * 0.4
+write("sfx_tap_water", water * np.clip(x / 0.12, 0, 1) * np.clip((3.0 - x) / 0.4, 0, 1), peak=0.4)
+# Hand dryer: loud fan roar with a motor whine that spins up
+x = t(4.0)
+whine = np.sin(2 * np.pi * np.cumsum(220 + 180 * np.clip(x / 0.6, 0, 1)) / SR) * 0.15
+roar = bandpass_noise(4.0, 300, 5000) + bandpass_noise(4.0, 80, 300) * 0.6
+write("sfx_hand_dryer", (roar + whine) * np.clip(x / 0.5, 0, 1) * np.clip((4.0 - x) / 0.6, 0, 1), peak=0.6)
+# Flush: a clunk, a rising rush that swirls down, then refill trickle
+x = t(4.5)
+rush = bandpass_noise(4.5, 200, 3000) * np.exp(-np.maximum(x - 0.3, 0) / 1.2) * np.clip((x - 0.1) / 0.2, 0, 1)
+swirl = 0.6 + 0.4 * np.sin(2 * np.pi * (3 + 2 * x) * x)
+trickle = bandpass_noise(4.5, 1500, 6000) * 0.15 * np.clip((x - 2.0) / 0.5, 0, 1) * np.clip((4.5 - x) / 0.5, 0, 1)
+clunk = pad(tone(140, 0.12, 0.03, ((1, 1), (2.7, 0.4))), 4.5) * 0.8
+write("sfx_flush", rush * swirl + trickle + clunk, peak=0.55)
+# Knock: three knuckle raps on a thin stall door
+knock = np.zeros(int(SR * 0.9))
+for k, at in enumerate((0.0, 0.22, 0.44)):
+    rap = tone(180, 0.15, 0.025, ((1, 1), (2.3, 0.5), (4.1, 0.25))) + bandpass_noise(0.15, 800, 3000) * env(0.15, 0.001, 0.01) * 0.5
+    s0 = int(SR * at)
+    knock[s0:s0 + len(rap)] += rap * (1.0 - 0.1 * k)
+write("sfx_knock", knock, peak=0.6)

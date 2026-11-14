@@ -173,9 +173,27 @@ void UTakeGrabComponent::PourCoffee()
 	const float Fear = FindFearDirector() ? FindFearDirector()->Fear : 0.f;
 	const int32 Cup = GI ? GI->CoffeesPoured : 0;
 	FString Line;
+	const bool bFrozen = GI && GI->bClocksFrozen;
+	UPrimitiveComponent* Held = IsHolding() ? Handle->GetGrabbedComponent() : nullptr;
 	if (Fear >= 0.5f)
 	{
 		Line = TEXT("It pours black. Then blacker. It doesn't stop until you look away.");
+	}
+	else if (bFrozen && Cup % 2 == 0)
+	{
+		Line = TEXT("The coffee comes out and stops in mid-air. It's 2:14 for the coffee too.");
+	}
+	else if (Cup == 9)
+	{
+		Line = TEXT("The screen: CUP 10. YOU HAVE EXCEEDED TODAY'S JOY ALLOWANCE. ...JOY GRANTED ANYWAY.");
+	}
+	else if (Cup == 14)
+	{
+		Line = TEXT("The screen: HELLO 4470. ...SORRY. HELLO 4471. THE USUAL?");
+	}
+	else if (Held && !IsHoldingMug())
+	{
+		Line = TEXT("You hold it under the spout. The machine fills it anyway. You don't ask how.");
 	}
 	else if (IsHoldingMug())
 	{
@@ -230,8 +248,14 @@ void UTakeGrabComponent::Vend(AActor* Machine)
 		TEXT("The little screen says: THANK YOU, 4471. You never told it your name."),
 		TEXT("Exact change: none. It didn't ask for any."),
 		TEXT("Something is stuck behind the glass. It's a badge. 4470."),
+		TEXT("You try to type 4470. The keypad only has the numbers 4, 7 and 1."),
+		TEXT("The screen: YOUR USUAL. You've never been here before. ...Have you?"),
 	};
-	ShowSubtitle(TEXT(""), Lines[Vended % int32(UE_ARRAY_COUNT(Lines))], 3.5f);
+	const UTakeGameInstance* VGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	const float VFear = FindFearDirector() ? FindFearDirector()->Fear : 0.f;
+	if (VFear >= 0.5f) { ShowSubtitle(TEXT(""), TEXT("The machine is empty. Something drops anyway. It's still B4."), 3.5f); }
+	else if (VGI && VGI->bClocksFrozen) { ShowSubtitle(TEXT(""), TEXT("The screen: OUT OF TIME. It drops a snack anyway. Best before 2:14."), 3.5f); }
+	else { ShowSubtitle(TEXT(""), Lines[Vended % int32(UE_ARRAY_COUNT(Lines))], 3.5f); }
 	++Vended;
 }
 
@@ -256,6 +280,7 @@ void UTakeGrabComponent::CollectFunProps()
 				SM->SetSimulatePhysics(false);
 			}
 		}
+		if (It->ActorHasTag(TEXT("FearReveal"))) { FearReveals.Add(*It); }
 		if (N.Contains(TEXT("TrashBin"))) { Bins.Add(*It); }
 		else if (IsFoodMesh(N) && It->ActorHasTag(TEXT("Throwable")))
 		{
@@ -422,4 +447,62 @@ void UTakeGrabComponent::TickMail(float DeltaTime)
 		QueueSubtitle(TEXT(""), FString::Printf(TEXT("(New email. %d unread on your terminal.)"), Unread));
 	}
 	MailSeen = Total;
+}
+
+// ------------------------------------------------------------------ restroom and other "Use=<Key>" things
+FString UTakeGrabComponent::UseKey(const AActor* Thing)
+{
+	if (!Thing) { return FString(); }
+	for (const FName& Tag : Thing->Tags)
+	{
+		const FString T = Tag.ToString();
+		if (T.StartsWith(TEXT("Use="))) { return T.Mid(4); }
+	}
+	return FString();
+}
+
+void UTakeGrabComponent::UseThing(AActor* Thing)
+{
+	const FString Key = UseKey(Thing);
+	if (Key.IsEmpty()) { return; }
+	const int32 N = UseCounts.FindOrAdd(Key)++;
+	const FVector Where = Thing->GetActorLocation() + FVector(0.f, 0.f, 80.f);
+	const float Fear = FindFearDirector() ? FindFearDirector()->Fear : 0.f;
+	auto Pick = [N](std::initializer_list<const TCHAR*> L) { return FString(*(L.begin() + FMath::Min<int32>(N, int32(L.size()) - 1))); };
+	if (Key == TEXT("Sink"))
+	{
+		PlaySfx(TEXT("sfx_tap_water"), Where, 0.7f);
+		ShowSubtitle(TEXT(""), Fear >= 0.5f ? FString(TEXT("The water runs grey. Then clear. Then it was always clear."))
+			: Pick({ TEXT("The water is exactly the right temperature. Of course it is."), TEXT("You wash your hands. The sign said twice."),
+			         TEXT("Your hands are clean. They've been clean all day.") }), 3.5f);
+	}
+	else if (Key == TEXT("Dryer"))
+	{
+		PlaySfx(TEXT("sfx_hand_dryer"), Where, 0.8f);
+		ShowSubtitle(TEXT(""), Pick({ TEXT("It starts before your hands are under it."), TEXT("It roars. Somewhere, a coworker says \"Bless you.\""),
+		                              TEXT("It stops the moment you look at it. It waits for you to look away.") }), 3.5f);
+	}
+	else if (Key == TEXT("Toilet"))
+	{
+		PlaySfx(TEXT("sfx_flush"), Where, 0.8f);
+		ShowSubtitle(TEXT(""), Pick({ TEXT("*flush*"), TEXT("*flush*  ...and, from the next stall, an identical flush."),
+		                              TEXT("*flush*  The PA, very quietly: \"Thank you.\"") }), 3.f);
+	}
+}
+
+void UTakeGrabComponent::TickFearReveals()
+{
+	if (FearReveals.Num() == 0) { return; }
+	const float Fear = FindFearDirector() ? FindFearDirector()->Fear : 0.f;
+	const bool bShow = Fear >= 0.5f;
+	if (bShow == bFearRevealShown) { return; }
+	bFearRevealShown = bShow;
+	for (const TWeakObjectPtr<AActor>& A : FearReveals)
+	{
+		if (AActor* Act = A.Get())
+		{
+			Act->SetActorHiddenInGame(!bShow);   // the shoes under the stall: there only when you're afraid
+			Act->SetActorEnableCollision(false);
+		}
+	}
 }
