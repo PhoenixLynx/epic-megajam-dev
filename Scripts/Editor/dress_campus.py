@@ -54,7 +54,7 @@ put("SM_Monitor", 1300, 2272, DESK_TOP, 180, ["Terminal", "Monitor4471"])   # E 
 # Desk top is x 1220-1380, y 2260-2340: everything stays inside it
 put("SM_Keyboard", 1300, 2318, DESK_TOP, 180)
 put("SM_Mug", 1242, 2320, DESK_TOP, 0, ["ChangeOnRewind"])
-put("SM_DeskPhone", 1355, 2312, DESK_TOP, 160)
+put("SM_DeskPhone", 1355, 2312, DESK_TOP, 160, ["Phone4471"])   # your phone: it rings
 put("SM_PenCup", 1238, 2290, DESK_TOP)
 put("SM_DeskLamp", 1360, 2275, DESK_TOP, 200)
 put("SM_PlantDesk", 1250, 2270, DESK_TOP)

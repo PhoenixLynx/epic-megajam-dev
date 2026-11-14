@@ -160,14 +160,26 @@ pour = bandpass_noise(1.6, 500, 3000) * flutter * np.clip(x / 0.1, 0, 1) * np.cl
 write("sfx_coffee_pour", pour, peak=0.45)
 
 # --- Game feel: footsteps (4 variations), pick up, throw, impacts ---
-for i in range(4):
-    body = bandpass_noise(0.16, 120 + 15 * i, 900 + 80 * i) * env(0.16, 0.002, 0.035 + 0.004 * i)
-    heel = pad(tone(85 + 7 * i, 0.08, 0.025), 0.16) * 0.5
-    scuff = np.roll(pad(bandpass_noise(0.05, 2500, 7000) * env(0.05, 0.002, 0.012), 0.16), int(SR * 0.03)) * 0.15
-    write(f"sfx_step_{i + 1}", body + heel + scuff, peak=0.5)
+for i in range(4):   # soft, clicky office shoes (less thump)
+    click = bandpass_noise(0.09, 1800 + 200 * i, 6500) * env(0.09, 0.0004, 0.006 + 0.001 * i)
+    pad_ = bandpass_noise(0.09, 300, 1400) * env(0.09, 0.001, 0.014) * 0.35
+    heel = np.roll(pad(bandpass_noise(0.03, 2500, 7000) * env(0.03, 0.0003, 0.004), 0.09), int(SR * 0.018)) * 0.5
+    write(f"sfx_step_{i + 1}", pad(click + pad_ + heel, 0.12), peak=0.35)
 write("sfx_pickup", pad(bandpass_noise(0.08, 900, 5000) * env(0.08, 0.001, 0.02) + 0.4 * tone(520, 0.08, 0.02), 0.2), peak=0.45)
 x = t(0.35)
 whoosh = bandpass_noise(0.35, 300, 2500) * np.sin(np.pi * np.clip(x / 0.35, 0, 1)) ** 1.5
 write("sfx_throw", whoosh, peak=0.45)
 write("sfx_impact_light", pad(bandpass_noise(0.12, 400, 4000) * env(0.12, 0.0005, 0.025) + 0.5 * tone(330, 0.12, 0.03, ((1, 1), (2.3, 0.5))), 0.3), peak=0.55)
 write("sfx_impact_heavy", pad(tone(70, 0.35, 0.09) + bandpass_noise(0.35, 60, 1200) * env(0.35, 0.001, 0.07), 0.5), peak=0.7)
+
+# Desk phone: classic double trill (two 0.4 s bursts of 20 Hz-gated 1.2+1.5 kHz), 3 s cycle; pick-up click; dial tone
+x = t(0.4)
+trill = (np.sin(2 * np.pi * 1200 * x) + 0.8 * np.sin(2 * np.pi * 1500 * x)) * (np.sin(2 * np.pi * 20 * x) > 0)
+trill *= np.clip(x / 0.01, 0, 1) * np.clip((0.4 - x) / 0.01, 0, 1)
+ring = np.zeros(int(SR * 3.0))
+ring[: len(trill)] += trill
+ring[int(SR * 0.6): int(SR * 0.6) + len(trill)] += trill
+write("sfx_phone_ring", ring, peak=0.45)
+write("sfx_phone_pickup", pad(bandpass_noise(0.05, 800, 5000) * env(0.05, 0.0005, 0.01), 0.3) + 0.6 * pad(tone(180, 0.08, 0.02), 0.3), peak=0.5)
+x = t(2.0)
+write("sfx_phone_dialtone", (np.sin(2 * np.pi * 350 * x) + np.sin(2 * np.pi * 440 * x)) * np.clip((2.0 - x) / 0.05, 0, 1), peak=0.25)

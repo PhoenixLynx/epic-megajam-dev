@@ -21,7 +21,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeGrabEvent, UPrimitiveComponent*
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeActorEvent, AActor*, Actor);
 
 UENUM()
-enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Prop, TooHeavy };
+enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Prop, TooHeavy };
 
 UCLASS(ClassGroup = (Take), meta = (BlueprintSpawnableComponent, DisplayName = "Take Grab"))
 class DIRECTORSCUT_58_API UTakeGrabComponent : public UActorComponent
@@ -68,6 +68,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Grab") void TogglePause();
 	/** Show "Who: line" at the bottom of the screen for a few seconds. */
 	UFUNCTION(BlueprintCallable, Category = "Grab") void ShowSubtitle(const FString& Who, const FString& Line, float Seconds = 4.f);
+	/** Several lines one after another (phone calls, PA announcements). */
+	void ShowSubtitleSequence(const FString& Who, const TArray<FString>& Lines);
+	/** Make a desk phone ring now (nullptr = your phone at #4471). */
+	UFUNCTION(BlueprintCallable, Category = "Grab") void RingPhone(AActor* Phone = nullptr);
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
@@ -100,6 +104,21 @@ private:
 	double PlayStartTime = 0.0;
 	TMap<TWeakObjectPtr<UPrimitiveComponent>, double> LastImpact;
 	void TickFootsteps(float DeltaTime);
+	// Desk phones
+	TArray<TWeakObjectPtr<AActor>> Phones;
+	TWeakObjectPtr<AActor> MyPhone;
+	TWeakObjectPtr<AActor> RingingPhone;
+	UPROPERTY() TObjectPtr<class UAudioComponent> RingAudio;
+	float RingLeft = 0.f;
+	float RingCycle = 0.f;
+	float NextRingIn = 45.f;
+	int32 MyCalls = 0;
+	void TickPhones(float DeltaTime);
+	void AnswerPhone(AActor* Phone);
+	void StopRinging();
+	// Queued subtitles
+	TArray<FString> SubQueue;
+	FString SubWho;
 	void BindPropImpacts();
 	UFUNCTION() void OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	int32 TasksShown = -1;          // bitmask of finished tasks last time we drew the list

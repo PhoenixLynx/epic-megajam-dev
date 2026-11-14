@@ -25,6 +25,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
+#include "Engine/StaticMeshActor.h"
 
 UTakeGrabComponent::UTakeGrabComponent()
 {
@@ -73,6 +75,7 @@ void UTakeGrabComponent::EndPlay(const EEndPlayReason::Type Reason)
 	if (Prompt) { Prompt->RemoveFromParent(); Prompt = nullptr; }
 	if (Terminal) { Terminal->RemoveFromParent(); Terminal = nullptr; }
 	if (PauseMenu) { PauseMenu->RemoveFromParent(); PauseMenu = nullptr; }
+	StopRinging();
 	Super::EndPlay(Reason);
 }
 
@@ -179,6 +182,7 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 		if (A->ActorHasTag(TEXT("Terminal"))) { return ETakeLookKind::Terminal; }
 		if (A->ActorHasTag(TEXT("Openable"))) { return ETakeLookKind::Openable; }
 		if (A->ActorHasTag(TEXT("CoffeeMachine"))) { return ETakeLookKind::Coffee; }
+		if (RingingPhone.IsValid() && A == RingingPhone.Get()) { return ETakeLookKind::Phone; }
 	}
 	if (Comp && Comp->IsSimulatingPhysics() && Hit.Distance <= CurrentRange())
 	{
@@ -198,6 +202,7 @@ void UTakeGrabComponent::Interact()
 	case ETakeLookKind::Terminal:  SitAndLogIn(Hit.GetActor()); break;
 	case ETakeLookKind::Openable:  ToggleOpen(Hit.GetActor()); break;
 	case ETakeLookKind::Coffee:    PourCoffee(); break;
+	case ETakeLookKind::Phone:     AnswerPhone(Hit.GetActor()); break;
 	case ETakeLookKind::Prop:      TryGrabOrDrop(); break;
 	default: break;
 	}
@@ -521,6 +526,16 @@ void UTakeGrabComponent::BindPropImpacts()
 		}
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Impact sounds on %d prop(s)"), N);
+	for (TActorIterator<AStaticMeshActor> It(GetWorld()); It; ++It)
+	{
+		const UStaticMeshComponent* SM = It->GetStaticMeshComponent();
+		if (SM && SM->GetStaticMesh() && SM->GetStaticMesh()->GetName().Contains(TEXT("DeskPhone")))
+		{
+			Phones.Add(*It);
+			if (It->ActorHasTag(TEXT("Phone4471"))) { MyPhone = *It; }
+		}
+	}
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %d desk phone(s), yours %s"), Phones.Num(), MyPhone.IsValid() ? TEXT("found") : TEXT("missing"));
 }
 
 void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -536,6 +551,109 @@ void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 	const bool bHeavy = HitComp->GetMass() > 8.f;
 	const float Vol = FMath::GetMappedRangeValueClamped(FVector2D(160.f, 900.f), FVector2D(0.2f, 0.9f), Speed);
 	PlaySfx(bHeavy ? TEXT("sfx_impact_heavy") : TEXT("sfx_impact_light"), Hit.ImpactPoint, Vol);
+}
+
+void UTakeGrabComponent::ShowSubtitleSequence(const FString& Who, const TArray<FString>& Lines)
+{
+	SubWho = Who;
+	SubQueue = Lines;
+	SubtitleLeft = 0.f;   // start now
+}
+
+void UTakeGrabComponent::RingPhone(AActor* Phone)
+{
+	AActor* Target = Phone ? Phone : MyPhone.Get();
+	if (!Target && Phones.Num() > 0) { Target = Phones[0].Get(); }
+	if (!Target || RingingPhone.IsValid()) { return; }
+	RingingPhone = Target;
+	RingLeft = 12.f;    // four rings, then they give up
+	RingCycle = 0.f;
+}
+
+void UTakeGrabComponent::StopRinging()
+{
+	if (RingAudio) { RingAudio->Stop(); RingAudio = nullptr; }
+	RingingPhone = nullptr;
+	RingLeft = 0.f;
+}
+
+void UTakeGrabComponent::TickPhones(float DeltaTime)
+{
+	if (Phones.Num() == 0) { return; }
+	if (AActor* P = RingingPhone.Get())
+	{
+		RingLeft -= DeltaTime;
+		RingCycle -= DeltaTime;
+		if (RingLeft <= 0.f) { StopRinging(); NextRingIn = FMath::FRandRange(60.f, 120.f); return; }
+		if (RingCycle <= 0.f)
+		{
+			RingCycle = 3.f;
+			if (USoundBase* Ring = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/Placeholder/sfx_phone_ring.sfx_phone_ring")))
+			{
+				RingAudio = UGameplayStatics::SpawnSoundAtLocation(this, Ring, P->GetActorLocation() + FVector(0.f, 0.f, 10.f), FRotator::ZeroRotator, 0.7f);
+			}
+		}
+		return;
+	}
+	if (bSeated || PauseMenu) { return; }
+	NextRingIn -= DeltaTime;
+	if (NextRingIn > 0.f) { return; }
+	NextRingIn = FMath::FRandRange(60.f, 120.f);
+	// Your phone the first time, then mostly other people's (yours now and then)
+	const bool bMine = MyPhone.IsValid() && (MyCalls == 0 || (MyCalls < 5 && FMath::FRand() < 0.35f));
+	RingPhone(bMine ? MyPhone.Get() : Phones[FMath::RandRange(0, Phones.Num() - 1)].Get());
+}
+
+void UTakeGrabComponent::AnswerPhone(AActor* Phone)
+{
+	const bool bMine = Phone && Phone == MyPhone.Get();
+	StopRinging();
+	const FVector Where = Phone ? Phone->GetActorLocation() : GetOwner()->GetActorLocation();
+	PlaySfx(TEXT("sfx_phone_pickup"), Where, 0.8f);
+	TArray<FString> Lines;
+	if (bMine)
+	{
+		switch (MyCalls++)
+		{
+		case 0:
+			Lines = { TEXT("HALCYON automated wellness check. Please hold."), TEXT("(soft hold music, the same four notes)"),
+			          TEXT("Thank you for holding, 4471. You are exactly where you need to be.") };
+			break;
+		case 1:
+			Lines = { TEXT("(static) ...is this take four?"), TEXT("No. Four-four-seven-one. Sorry. Wrong take."), TEXT("*click*") };
+			break;
+		case 2:
+			Lines = { TEXT("(breathing)"), TEXT("...Places.") };
+			break;
+		case 3:
+			Lines = { TEXT("Hi. It's you. From later."), TEXT("Don't trust the fragments. Look closer."), TEXT("*click*") };
+			for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { It->StartCreep(FMath::Max(It->Fear, 0.2f), 3.f); break; }
+			break;
+		default:
+			Lines = { TEXT("(dial tone)") };
+			PlaySfx(TEXT("sfx_phone_dialtone"), Where, 0.6f);
+			break;
+		}
+		ShowSubtitleSequence(MyCalls == 1 ? TEXT("HALCYON") : TEXT("Phone"), Lines);
+	}
+	else
+	{
+		static const TCHAR* Others[] = {
+			TEXT("Wrong desk. *click*"),
+			TEXT("...Hello? ...Oh. You're not supposed to be there yet. *click*"),
+			TEXT("Is Dana there? ...Dana's never been there. Sorry. *click*"),
+			TEXT("(someone laughing, very far away) *click*"),
+		};
+		if (FMath::FRand() < 0.25f)
+		{
+			PlaySfx(TEXT("sfx_phone_dialtone"), Where, 0.6f);
+			ShowSubtitle(TEXT("Phone"), TEXT("(dial tone)"), 2.f);
+		}
+		else
+		{
+			ShowSubtitle(TEXT("Phone"), Others[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Others)) - 1)], 4.f);
+		}
+	}
 }
 
 void UTakeGrabComponent::TickClock(float DeltaTime)
@@ -602,6 +720,7 @@ void UTakeGrabComponent::UpdatePrompt()
 		break;
 	}
 	case ETakeLookKind::Coffee:   Prompt->SetPrompt(TEXT("E  Pour a coffee")); break;
+	case ETakeLookKind::Phone:    Prompt->SetPrompt(TEXT("E  Answer the phone")); break;
 	case ETakeLookKind::Prop:     Prompt->SetPrompt(TEXT("E  Pick up")); break;
 	case ETakeLookKind::TooHeavy: Prompt->SetPrompt(TEXT("Too heavy")); break;
 	default:                      Prompt->SetPrompt(TEXT("")); break;
@@ -615,12 +734,19 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	SipLeft = FMath::Max(0.f, SipLeft - DeltaTime);
 	TickClock(DeltaTime);
 	TickFootsteps(DeltaTime);
+	TickPhones(DeltaTime);
 	UpdatePrompt();
 	UpdateTasks();
 	if (SubtitleLeft > 0.f)
 	{
 		SubtitleLeft -= DeltaTime;
 		if (SubtitleLeft <= 0.f && Prompt) { Prompt->SetSubtitle(TEXT("")); }
+	}
+	if (SubtitleLeft <= 0.f && SubQueue.Num() > 0)
+	{
+		const FString Next = SubQueue[0];
+		SubQueue.RemoveAt(0);
+		ShowSubtitle(SubWho, Next, FMath::Max(2.5f, Next.Len() / 14.f));
 	}
 	if (!IsHolding()) { return; }
 	FVector Loc; FRotator Rot;

@@ -625,3 +625,13 @@ A running record of every AI tool used and what it did.
 - **Checked:** session 38 compiled cleanly; the log shows "Seated 4 coworker(s)" and 3/3 DataTables.
 - **Done:** footsteps (4 variations, never the same one twice in a row, slight pitch change each step; quieter when crouched/seated), a pick-up tick, a throw whoosh, and **impact clunks** when a thrown or knocked prop hits something (light / heavy by mass, louder the faster it was going, quiet for the first 2 s while props settle). New placeholder sounds: `sfx_step_1–4`, `sfx_pickup`, `sfx_throw`, `sfx_impact_light`, `sfx_impact_heavy`.
 - **AI tools used:** Claude (sound synthesis, C++).
+
+### Session 40: Fri Nov 13, 2026, 23:00 MST: Softer steps, phones that ring
+
+- **My feedback:** I preferred soft clicking steps over the knocking ones, but that can wait. I love the throwing sounds! Keep the subtle phone sound from before. Maybe the telephone can ring and you can pick it up?
+- **Done:**
+  - **Softer footsteps:** short soft clicks (office shoes on vinyl) instead of thuds, and quieter. Easy to swap for real recordings later.
+  - The distant phone trill is still in the office room tone (it never went away). The ambience had stopped looping, which is why it seemed to disappear.
+  - **Phones ring and you can answer them.** About 45 s in, **your desk phone rings** (classic double trill, four rings, then it gives up). **E: "Answer the phone."** Your calls go in order: a HALCYON automated wellness check ("…You are exactly where you need to be."); "…is this take four? No. Four-four-seven-one. Sorry. Wrong take."; heavy breathing, "…Places."; and "Hi. It's you. From later. Don't trust the fragments. Look closer." (Fear creeps up a little). Every 1–2 minutes a phone rings somewhere on the floor: other people's phones give wrong numbers, hang-ups or a dial tone. Lines play as a subtitle sequence.
+  - New sounds: `sfx_phone_ring`, `sfx_phone_pickup`, `sfx_phone_dialtone`; softer `sfx_step_1–4`.
+- **AI tools used:** Claude (sound synthesis, C++, phone call writing).
