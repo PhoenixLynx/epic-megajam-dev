@@ -526,3 +526,11 @@ A running record of every AI tool used and what it did.
   3. Throw is now **left click** as well as right click while you're holding something (the prompt says "Click  Throw").
   4. Coworkers are Pawns, and Unreal's Pawn collision ignores the "what am I looking at" trace, so E never saw them. E now picks the coworker you're facing within 2.5 m. Their lines also appear as a **subtitle** at the bottom of the screen ("Coworker:  Printer's jammed…"), and the floating text is bigger and lower.
 - **AI tools used:** Claude (diagnosis, C++ and script fixes).
+
+### Session 32: Fri Nov 13, 2026, 20:45 MST: Why batch 2 didn't show up
+
+- **My feedback:** the kitchen is fixed, and the fluorescent buzz in the hallway is great. But only right click throws (not left), and coworkers don't talk or show subtitles.
+- **Cause:** the batch 2 C++ never compiled. The editor log still shows the old key message, `place_cpp_actors.py` stopped with *"unreal.TakeCoworker not found"*, and the module DLL was dated 18:22. Unreal only offers to rebuild when the module is missing or built for another engine version, not when the source changes. So reopening the project kept loading the old build.
+- **Fix:** moved the old `UnrealEditor-DirectorsCut_58.dll` into `_to_delete/old_binaries`, so the next launch asks to rebuild. The collision fix worked: no more ComplexAsSimple warnings.
+- **Lesson for the runbook:** after any C++ change, either remove the old DLL or build from Visual Studio / Live Coding. Reopening the project isn't enough.
+- **AI tools used:** Claude (log reading).
