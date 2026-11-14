@@ -133,4 +133,10 @@ private:
 	bool PlayerCanSee(const APawn* Player) const;
 	void Animate(float DeltaSeconds, bool bMoving);
 	float WatchReleaseLeft = 0.f;   // seconds Fear must stay low before staring coworkers go back to work
+	// Faces: calm normally, the Fear face while staring or just after being hit in Fear
+	UPROPERTY() TObjectPtr<class UMaterialInterface> FaceCalm;
+	UPROPERTY() TObjectPtr<class UMaterialInterface> FaceFear;
+	bool bFaceIsFear = false;
+	float FaceFearHold = 0.f;
+	void SetFace(bool bFear);
 };

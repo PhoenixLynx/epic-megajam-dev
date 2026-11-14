@@ -105,9 +105,49 @@ def _limb(name, bone, a, b, radius, mat):
     return _part(name, bone, "cyl", (radius, d.length), tuple((a + b) / 2), mat, rot=tuple(rot))
 
 
+def _face_card(centre=(0, 0, 1.66), radius=0.1135, half_angle=50.0, n=12):
+    """A thin curved patch hugging the front (-Y) of the head, UVs 0..1, material slot M_Face.
+    Unreal swaps that slot between the calm face and the Fear face (Sol's ART-001 textures)."""
+    import bmesh
+    bm = bmesh.new()
+    a = math.radians(half_angle)
+    grid = []
+    for j in range(n + 1):
+        el = -a + 2 * a * j / n
+        row = []
+        for i in range(n + 1):
+            ph = -a + 2 * a * i / n
+            co = Vector(centre) + radius * Vector((math.sin(ph) * math.cos(el), -math.cos(ph) * math.cos(el), math.sin(el)))
+            row.append((bm.verts.new(co), (i / n, j / n)))
+        grid.append(row)
+    uv = bm.loops.layers.uv.new("UVMap")
+    for j in range(n):
+        for i in range(n):
+            quad = [grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]]
+            f = bm.faces.new([q[0] for q in quad])
+            for loop, (_, uvco) in zip(f.loops, quad):
+                loop[uv].uv = uvco
+    bm.normal_update()
+    for f in bm.faces:   # face outward (away from the head centre)
+        if f.normal.dot(f.calc_center_median() - Vector(centre)) < 0:
+            f.normal_flip()
+    mesh = bpy.data.meshes.new("face")
+    bm.to_mesh(mesh)
+    bm.free()
+    o = bpy.data.objects.new("face", mesh)
+    bpy.context.scene.collection.objects.link(o)
+    o.data.materials.append(material("M_Face"))
+    vg = o.vertex_groups.new(name="head")
+    vg.add(list(range(len(o.data.vertices))), 1.0, "REPLACE")
+    for poly in o.data.polygons:
+        poly.use_smooth = True
+    return o
+
+
 def build_body(name, suit, extras=()):
     parts = [
         _part("head", "head", "sphere", 0.11, (0, 0, 1.66), "M_Skin"),
+        _face_card(),
         _limb("neck", "neck", (0, 0, 1.47), (0, 0, 1.57), 0.05, "M_Skin"),
         _part("chest", "chest", "box", (0.42, 0.22, 0.26), (0, 0, 1.33), suit),
         _part("belly", "spine", "box", (0.39, 0.21, 0.22), (0, 0, 1.11), suit),

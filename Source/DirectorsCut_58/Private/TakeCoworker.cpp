@@ -15,6 +15,7 @@
 #include "Engine/DataTable.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
+#include "Materials/MaterialInterface.h"
 #include "Animation/AnimSequence.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/TargetPoint.h"
@@ -114,7 +115,21 @@ void ATakeCoworker::SetupSkeletal()
 	M->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	M->SetHiddenInGame(false);
 	Body->SetHiddenInGame(true);   // still there for E / line-of-sight traces
+	// Faces (Sol's ART-001): the head's "M_Face" card shows the calm face; the Fear face when they stare
+	FaceCalm = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Calm.MI_Face_Calm"));
+	FaceFear = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Fear.MI_Face_Fear"));
+	bFaceIsFear = true;
+	SetFace(false);
 	PlayAnim(bSitsAtDesk && AnimSit ? AnimSit.Get() : AnimIdle.Get());
+}
+
+void ATakeCoworker::SetFace(bool bFear)
+{
+	if (!bSkeletal || bFear == bFaceIsFear) { return; }
+	UMaterialInterface* Mat = bFear ? FaceFear.Get() : FaceCalm.Get();
+	if (!Mat) { return; }
+	bFaceIsFear = bFear;
+	GetMesh()->SetMaterialByName(FName(TEXT("M_Face")), Mat);
 }
 
 void ATakeCoworker::SetMeshYaw(float Yaw)
@@ -207,7 +222,8 @@ void ATakeCoworker::HitByProp(float Speed)
 	}
 	if (State == ETakeCoworkerState::Watching)
 	{
-		// Fear: no words. They just turn, and the room gets a little worse. (Faces come later.)
+		// Fear: no words. They just turn, the face goes wrong, and the room gets a little worse.
+		FaceFearHold = 4.f;
 		if (FearDirector.IsValid()) { FearDirector->StartCreep(FMath::Min(1.f, FearDirector->Fear + 0.05f), 0.5f); }
 		return;
 	}
@@ -218,6 +234,7 @@ void ATakeCoworker::HitByProp(float Speed)
 		if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { ++GI->GuardComplaints; }
 	}
 	CooldownLeft = 0.f;   // they always answer this
+	if (GetFear() >= 0.4f) { FaceFearHold = 2.5f; }   // uneasy already: for a moment, the other face
 	if (HitLines.Num() > 0) { SayLine(HitLines[FMath::RandRange(0, HitLines.Num() - 1)]); return; }
 	if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { SayLine(TEXT("That's going in my report.")); }
 	else if (NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase)) { SayLine(TEXT("I'll be cleaning that up, then.")); }
@@ -509,6 +526,9 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 			if (Speak(TEXT("Near"))) { NearCooldownLeft = FMath::FRandRange(NearCooldownMin, NearCooldownMax); }
 		}
 	}
+
+	FaceFearHold = FMath::Max(0.f, FaceFearHold - DeltaSeconds);
+	SetFace(State == ETakeCoworkerState::Watching || FaceFearHold > 0.f);
 
 	AAIController* AI = Cast<AAIController>(GetController());
 	const float Fear = GetFear();

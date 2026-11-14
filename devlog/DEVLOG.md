@@ -834,3 +834,10 @@ A running record of every AI tool used and what it did.
 - **Vending machine eggs:** the keypad only has 4, 7 and 1; *"YOUR USUAL"*; in Fear it's empty but something drops anyway; after 2:14 *"OUT OF TIME… Best before 2:14."*
 - **New:** 7 meshes (toilet, sink, mirror, hand dryer, stall door, shoes, sign plaque), 4 textures, 4 sounds (tap, dryer, flush, knock).
 - **AI tools used:** Claude (Blender props, HTML/SVG sign art via headless Chrome, numpy sound synthesis, C++, level dressing).
+
+### Session 52: Sat Nov 14, 2026, 13:50 MST: Faces
+
+- **Sol (ChatGPT image generation, directed and approved by me)** made the coworker face pair, ART-001: a calm HALCYON face with star catchlights, and a Fear face with dark under-eye circles, lowered brows and a too-wide smile. I approved v02 and asked for 1.5x thicker lines so they read from a distance. v03 final exports are 1024x1024 with a transparent background; provenance is in Sol's repo.
+- **In the game:** every rigged mannequin now has a thin curved **face card** on the front of its head (part of the skeletal mesh, skinned to the head bone, so it turns and stares with them). It shows the **calm face** normally and switches to the **Fear face** while they stare at you, for 4 s after you hit one during Fear, and briefly if you hit one while things are already uneasy. A masked material (`M_FaceTexture`) uses the texture's alpha, with a low cutoff so the soft under-eye circles survive.
+  ![face](screenshots/2026-11-14_face_on_head.png)
+- **AI tools used:** Sol / ChatGPT (face images), Claude (rig face card, material, C++ face swap, Blender preview render).

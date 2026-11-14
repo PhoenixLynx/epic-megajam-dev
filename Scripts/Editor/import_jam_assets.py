@@ -101,6 +101,21 @@ mel.connect_material_property(s_rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
 mel.recompile_material(screen_base)
 unreal.EditorAssetLibrary.save_loaded_asset(screen_base)
 
+# Coworker faces (Sol's ART-001): masked by the texture's alpha, painted onto the face card in the head
+face_base = get_or_create("M_FaceTexture", MAT_DIR, unreal.Material, unreal.MaterialFactoryNew())
+mel.delete_all_material_expressions(face_base)
+face_base.set_editor_property("blend_mode", unreal.BlendMode.BLEND_MASKED)
+face_base.set_editor_property("opacity_mask_clip_value", 0.12)   # keeps the soft under-eye circles of the Fear face
+f_tex = mel.create_material_expression(face_base, unreal.MaterialExpressionTextureSampleParameter2D, -400, 0)
+f_tex.set_editor_property("parameter_name", "Tex")
+mel.connect_material_property(f_tex, "RGB", unreal.MaterialProperty.MP_BASE_COLOR)
+mel.connect_material_property(f_tex, "A", unreal.MaterialProperty.MP_OPACITY_MASK)
+f_rough = mel.create_material_expression(face_base, unreal.MaterialExpressionConstant, -400, 250)
+f_rough.set_editor_property("r", 0.6)
+mel.connect_material_property(f_rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+mel.recompile_material(face_base)
+unreal.EditorAssetLibrary.save_loaded_asset(face_base)
+
 made = 0
 for path in unreal.EditorAssetLibrary.list_assets("/Game/Props/Textures", recursive=False):
     tex = unreal.EditorAssetLibrary.load_asset(path)
@@ -109,7 +124,7 @@ for path in unreal.EditorAssetLibrary.list_assets("/Game/Props/Textures", recurs
     name = tex.get_name()                       # T_Poster_Energy_Changed
     mi_name = "MI_" + name[2:] if name.startswith("T_") else "MI_" + name
     mi = get_or_create(mi_name, MAT_DIR, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
-    mel.set_material_instance_parent(mi, screen_base if name.startswith("T_Screen_") else base)
+    mel.set_material_instance_parent(mi, screen_base if name.startswith("T_Screen_") else face_base if name.startswith("T_Face_") else base)
     mel.set_material_instance_texture_parameter_value(mi, "Tex", tex)
     unreal.EditorAssetLibrary.save_loaded_asset(mi)
     made += 1
