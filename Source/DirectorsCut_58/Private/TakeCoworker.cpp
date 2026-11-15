@@ -457,7 +457,7 @@ bool ATakeCoworker::CurrentStorySet(FString& OutSet) const
 
 bool ATakeCoworker::HasNewConversation() const
 {
-	if (bAtParty) { return false; }   // no "!" at the party
+	if (bAtParty) { return ActorHasTag(TEXT("Collector")) ? bPartyReady : true; }   // at the party anyone will talk; the Collector's "!" waits
 	if (StorySets.Num() == 0) { return true; }   // DataTable not re-imported yet: keep the old always-on "!"
 	FString Set;
 	return CurrentStorySet(Set) && (bInConversation || !FinishedSets.Contains(Set));
@@ -466,7 +466,15 @@ bool ATakeCoworker::HasNewConversation() const
 bool ATakeCoworker::Talk()
 {
 	FString Set;
-	if (bAtParty) { SayLine(NextLine()); return true; }   // party small talk only
+	if (bAtParty)   // party small talk only (and the Collector has his own business)
+	{
+		UTakeGrabComponent* Hands = nullptr;
+		if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0)) { Hands = P->FindComponentByClass<UTakeGrabComponent>(); }
+		if (ActorHasTag(TEXT("Collector"))) { if (Hands) { Hands->OnCollectorTalk(this); } return true; }
+		SayLine(NextLine());
+		if (!bPartyChatted) { bPartyChatted = true; if (Hands) { Hands->OnPartyChat(); } }
+		return true;
+	}
 	if (!bStoryNPC || !CurrentStorySet(Set)) { return Speak(TEXT("Talk")); }
 	const TArray<FString>* Convo = StorySets.Find(Set);
 	if (!Convo || Convo->Num() == 0) { return Speak(TEXT("Talk")); }
@@ -565,7 +573,7 @@ bool ATakeCoworker::PickSpot(FVector& Out)
 	if (UNavigationSystemV1* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
 	{
 		FNavLocation P;
-		if (Nav->GetRandomReachablePointInRadius(Home, 900.f, P)) { Out = P.Location; return true; }
+		if (Nav->GetRandomReachablePointInRadius(Home, bAtParty ? 450.f : 900.f, P)) { Out = P.Location; return true; }   // at the party: stay close
 	}
 	return false;
 }
@@ -821,6 +829,19 @@ void ATakeCoworker::ReactToTheft()
 		TEXT("I had seventeen tabs open on that."), TEXT("Is this a team-building exercise? Nobody told me."),
 	};
 	SayLine(Snark[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Snark)) - 1)]);
+}
+
+void ATakeCoworker::StartMingling()
+{
+	// Walk around the party: to the cake, the kitchen, each other (random spots near where they stood)
+	UCharacterMovementComponent* Move = GetCharacterMovement();
+	Move->SetMovementMode(MOVE_Walking);
+	Move->GravityScale = 1.f;
+	Move->MaxWalkSpeed = WalkSpeed * 0.8f;
+	Spots.Reset();
+	bWanders = true;
+	State = ETakeCoworkerState::Working;
+	StateTimer = FMath::FRandRange(1.f, 8.f);
 }
 
 void ATakeCoworker::JoinParty(const FVector& Where, const FVector& LookAt)

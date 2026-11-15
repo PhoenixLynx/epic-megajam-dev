@@ -371,6 +371,19 @@ private:
 	void EndForeshadow(bool bCaught);     // threw too much at people today: the wrap party notices
 	bool bPartyLeashSaid = false;
 	bool bPartyLiftSaid = false;
+	// Mingling at the party: talk to people, have cake; then the Collector (the man in the hat) wants a word
+	TWeakObjectPtr<class ATakeCoworker> Collector;
+	float MingleT = 0.f;
+	float YesT = 0.f;
+	int32 PartyChats = 0;
+	bool bAteCake = false;
+	bool bCollectorReady = false;
+	void SpawnCollector();
+	void StartMingle();
+public:
+	void OnPartyChat();                       // a coworker you hadn't talked to yet at the party
+	void OnCollectorTalk(class ATakeCoworker* Who);
+private:
 	float MonitorSwapIn = 0.f;   // the director's floor: the dailies change
 	int32 EndStep = 0;
 	float EndCardT = -1.f;

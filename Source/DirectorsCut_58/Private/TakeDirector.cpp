@@ -108,7 +108,10 @@ void UTakeGrabComponent::BuildLobbyParty()
 	const FVector Table(2620.f, 1000.f, 0.f);
 	SpawnSetPiece(Cube, Table + FVector(0.f, 0.f, 37.f), FRotator::ZeroRotator, FVector(1.8f, 0.9f, 0.74f), White, true);
 	SpawnSetPiece(Cube, Table + FVector(0.f, 0.f, 75.f), FRotator::ZeroRotator, FVector(1.86f, 0.96f, 0.02f), Mint, false);   // tablecloth
-	SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 10.f), FRotator::ZeroRotator, FVector(0.55f, 0.55f, 0.2f), Frosting, false);     // the cake, whole (for now)
+	if (AStaticMeshActor* Cake = SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 10.f), FRotator::ZeroRotator, FVector(0.55f, 0.55f, 0.2f), Frosting, true))   // the cake, whole (for now)
+	{
+		Cake->Tags.Add(TEXT("Use=Cake"));
+	}
 	SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 28.f), FRotator::ZeroRotator, FVector(0.36f, 0.36f, 0.16f), FabricMint, false);
 	SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 41.f), FRotator::ZeroRotator, FVector(0.02f, 0.02f, 0.1f), White, false);       // one candle
 	SpawnLabel(World, TEXT("THAT'S A WRAP, 4471"), Table + FVector(0.f, -29.f, 76.f + 12.f), FRotator(0.f, -90.f, 0.f), 4.5f, FColor(40, 140, 115));
@@ -172,7 +175,96 @@ void UTakeGrabComponent::BuildLobbyParty()
 		Lamp->PointLightComponent->SetAttenuationRadius(500.f);
 		Lamp->PointLightComponent->SetLightColor(FLinearColor(1.f, 0.85f, 0.65f));
 	}
+	SpawnCollector();
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] The wrap party is dressed (lobby)"));
+}
+
+// ------------------------------------------------------------------ the Collector: a man in a top hat and a red tie
+void UTakeGrabComponent::SpawnCollector()
+{
+	if (Collector.IsValid()) { return; }
+	const FVector Where(2420.f, 740.f, 92.f);   // by the elevator, a little apart from everyone
+	const FTransform T(FRotator(0.f, 120.f, 0.f), Where);
+	ATakeCoworker* Col = GetWorld()->SpawnActorDeferred<ATakeCoworker>(ATakeCoworker::StaticClass(), T, nullptr, nullptr,
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+	if (!Col) { return; }
+	Col->NPCRole = TEXT("Collector");
+	Col->bWanders = false;
+	Col->bStoryNPC = true;
+	Col->bTalksWhenNear = false;
+	Col->Tags = { FName(TEXT("NPC")), FName(TEXT("Collector")) };
+	if (UStaticMesh* Body = Prop(TEXT("SM_Mannequin"))) { Col->BodyMesh = Body; }
+	Col->FinishSpawning(T);
+	Col->JoinParty(Where, FVector(2100.f, 1050.f, 92.f));
+	// A black suit (everything but the face), a top hat, a red tie
+	UMaterialInterface* Black = Mat(TEXT("/Game/Props/Meshes/M_MetalDark.M_MetalDark"));
+	UMaterialInterface* Red = Mat(TEXT("/Game/Props/Meshes/M_RedPaint.M_RedPaint"));
+	TArray<UMeshComponent*> Meshes;
+	Col->GetComponents<UMeshComponent>(Meshes);
+	for (UMeshComponent* MC : Meshes)
+	{
+		for (int32 S = 0; S < MC->GetNumMaterials(); ++S)
+		{
+			const FName SlotName = MC->GetMaterialSlotNames().IsValidIndex(S) ? MC->GetMaterialSlotNames()[S] : NAME_None;
+			if (SlotName.ToString().Contains(TEXT("Face"))) { continue; }
+			if (Black) { MC->SetMaterial(S, Black); }
+		}
+	}
+	UStaticMesh* Cyl = Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+	UStaticMesh* Cube = Mesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
+	auto Wear = [&](UStaticMesh* M, const FVector& Rel, const FVector& Scale, UMaterialInterface* Mtl)
+	{
+		UStaticMeshComponent* Piece = NewObject<UStaticMeshComponent>(Col);
+		Piece->SetStaticMesh(M);
+		Piece->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Piece->SetupAttachment(Col->GetRootComponent());
+		Piece->SetRelativeLocation(Rel);
+		Piece->SetRelativeScale3D(Scale);
+		if (Mtl) { Piece->SetMaterial(0, Mtl); }
+		Piece->RegisterComponent();
+	};
+	Wear(Cyl, FVector(0.f, 0.f, 99.f), FVector(0.36f, 0.36f, 0.015f), Black);    // the brim
+	Wear(Cyl, FVector(0.f, 0.f, 112.f), FVector(0.24f, 0.24f, 0.26f), Black);    // the crown
+	Wear(Cyl, FVector(0.f, 0.f, 103.f), FVector(0.245f, 0.245f, 0.03f), Red);    // the band
+	Wear(Cube, FVector(15.f, 0.f, 42.f), FVector(0.015f, 0.07f, 0.34f), Red);    // the tie (on his front: the way he faces)
+	Collector = Col;
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] The Collector is at the party (top hat, red tie)"));
+}
+
+void UTakeGrabComponent::StartMingle()
+{
+	EndStep = 30;
+	MingleT = 0.f;
+	PlaySfx2D(TEXT("sfx_pa_chime"), 0.6f);
+	ShowSubtitle(TEXT("PA"), TEXT("Cake is served. Mingle. You've all earned it."), 4.f);
+	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { GI->SetObjective(TEXT("Mingle. (Cake's by the kitchen.)")); }
+	for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
+	{
+		if (It->bAtParty && !It->ActorHasTag(TEXT("Collector"))) { It->StartMingling(); }
+	}
+}
+
+void UTakeGrabComponent::OnPartyChat()
+{
+	++PartyChats;
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Party: talked to %d coworker(s)"), PartyChats);
+}
+
+void UTakeGrabComponent::OnCollectorTalk(ATakeCoworker* Who)
+{
+	if (!Who) { return; }
+	if (EndStep != 30 || !bCollectorReady)
+	{
+		static const TCHAR* NotYet[] = {
+			TEXT("Not yet, {EMP}. Have some cake. Talk to people. They've been looking forward to this."),
+			TEXT("Enjoy it. Parties are the only scenes nobody rehearses."),
+			TEXT("I'll find you. I always find you."),
+		};
+		Who->SayLine(NotYet[FMath::RandRange(0, int32(UE_ARRAY_COUNT(NotYet)) - 1)]);
+		return;
+	}
+	Who->SayLine(TEXT("Lovely party. You've earned it. Now, about your keys."));
+	EndStep = 31;   // TickAct3 opens the question
 }
 
 // ------------------------------------------------------------------ the director's floor
@@ -413,6 +505,19 @@ void UTakeGrabComponent::StartRefusal()
 	}
 	PlaySfx2D(TEXT("sfx_fear_hit"), 1.f);
 	ShowSubtitle(TEXT(""), TEXT("(The applause stops. Mid-clap. Every face turns to you.)"), 4.f);
+	// And in the corner by the reception desk, where the light doesn't reach: it's back. It doesn't come closer. It doesn't have to.
+	for (TActorIterator<ATakeStalker> It(GetWorld()); It; ++It)
+	{
+		FVector Lurk(1620.f, 1400.f, 100.f);
+		GetWorld()->FindTeleportSpot(*It, Lurk, It->GetActorRotation());
+		It->SetActorLocation(Lurk, false, nullptr, ETeleportType::TeleportPhysics);
+		const FVector Me = GetOwner()->GetActorLocation();
+		It->SetActorRotation(FRotator(0.f, (Me - Lurk).Rotation().Yaw, 0.f));
+		It->SetActorHiddenInGame(false);
+		It->SetActorEnableCollision(false);
+		break;
+	}
+	QueueSubtitle(TEXT(""), TEXT("(By the reception desk, in the dark: something tall. Watching. It doesn't come closer.)"));
 	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
 	{
 		GI->LastEnding = 2;
@@ -472,12 +577,23 @@ void UTakeGrabComponent::LiftTheSet()
 		if (!Stage.IsInside(O)) { continue; }
 		const bool bWall = E.Z >= 100.f && FMath::Min(E.X, E.Y) <= 30.f;   // tall and thin
 		const bool bCeiling = O.Z >= 250.f && FMath::Max(E.X, E.Y) >= 100.f && E.Z <= 30.f;
-		if (!bWall && !bCeiling) { continue; }
+		const bool bDecor = O.Z >= 100.f && FMath::Min(E.X, E.Y) <= 8.f && FMath::Max(E.X, E.Y) >= 12.f && E.Z >= 12.f;   // posters, signs, boards on the walls
+		if (!bWall && !bCeiling && !bDecor) { continue; }
 		SM->SetMobility(EComponentMobility::Movable);
 		FLifted L;
 		L.Actor = *It;
 		L.From = It->GetActorLocation();
 		L.Delay = bCeiling ? 0.f : FMath::FRandRange(0.3f, 1.8f);
+		Lifted.Add(L);
+	}
+	for (TActorIterator<ATextRenderActor> It(GetWorld()); It; ++It)   // the clock, the banner: up with the wall they're on
+	{
+		const FVector O = It->GetActorLocation();
+		if (!Stage.IsInside(O) || O.Z < 150.f) { continue; }
+		FLifted L;
+		L.Actor = *It;
+		L.From = O;
+		L.Delay = FMath::FRandRange(0.3f, 1.8f);
 		Lifted.Add(L);
 	}
 	// What was above them all along: lighting rigs

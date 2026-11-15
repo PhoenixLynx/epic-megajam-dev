@@ -227,7 +227,7 @@ void UTakePauseMenu::RefreshTasks()
 	T += TEXT("\n\nNOTES  (glyph signatures you've found)\n");
 	if (GI->GlyphNotes.Num() == 0) { T += TEXT("Nothing yet. Some things here have squares on them. Look closer."); }
 	for (const FString& N : GI->GlyphNotes) { T += N + TEXT("\n"); }
-	if (GI->HRModuleDue()) { T += TEXT("\nHR: Respectful Workplace training is due (your terminal, Training tab)."); }
+	if (GI->HRModuleDue()) { T += GI->HotBevModuleDue() ? TEXT("\nHR: Hot Beverage Safety training is due (your terminal, Training tab).") : TEXT("\nHR: Respectful Workplace training is due (your terminal, Training tab)."); }
 	TasksText->SetText(FText::FromString(T));
 }
 

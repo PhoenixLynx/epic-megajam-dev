@@ -640,7 +640,15 @@ void UTakeTerminalWidget::LoadTraining()
 	const UTakeGameInstance* TGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	// HR: after Module 1, every 3 hits on a coworker assigns a Respectful Workplace module (it replaces the finished one)
 	bHRMode = TGI && TGI->bTrainingComplete && TGI->HRModuleDue();
-	if (bHRMode && TGI->HRModulesDone == 0)
+	bHotBevMode = bHRMode && TGI->HotBevModuleDue();
+	if (bHotBevMode)
+	{
+		Slides.Add({ TEXT("Hot Beverage Safety"), TEXT("Hi 4471!\n\nA colleague reported coffee. On them. From you.\n\nThis module covers the HALCYON mug: what it is for, and what it is not for."), TEXT("Slide"), {} });
+		Slides.Add({ TEXT("The mug"), TEXT("A mug has three positions:\n\n  1. On the desk\n  2. In your hand\n  3. Near your mouth\n\nThere is no fourth position. \"Airborne\" is not a position."), TEXT("Slide"), {} });
+		Slides.Add({ TEXT("Check your understanding"), TEXT("Your coffee is exactly the right temperature. You:"), TEXT("Quiz"), { TEXT("Drink it"), TEXT("Share it (verbally)"), TEXT("Return it to a coworker at speed") } });
+		Slides.Add({ TEXT("Your lid"), TEXT("A lid has been assigned to you.\nIt is in the kitchen. It has always been in the kitchen.\n\nThank you for keeping HALCYON warm, but not like that."), TEXT("Slide"), {} });
+	}
+	else if (bHRMode && TGI->HRModulesDone == 0)
 	{
 		Slides.Add({ TEXT("Respectful Workplace"), TEXT("Hi 4471!\n\nA colleague reported being hit by an object today. That's okay! Everyone learns differently.\n\nThis module takes about a minute. It has always taken about a minute."), TEXT("Slide"), {} });
 		Slides.Add({ TEXT("Words, not objects"), TEXT("At HALCYON we communicate with words.\nWords are free. Staplers are company property.\n\nIf you feel the urge to throw something, try saying the thing instead.\nFor example: \"I would like to throw this.\""), TEXT("Slide"), {} });
@@ -732,6 +740,7 @@ void UTakeTerminalWidget::RebuildSlide()
 	const int32 Index = FMath::Clamp(GetSlide(), 0, Slides.Num() - 1);
 	const FSlide& S = Slides[Index];
 	const FString Module = !bHRMode ? FString(TEXT("DATA INTEGRITY MODULE 1"))
+		: bHotBevMode ? FString(TEXT("HOT BEVERAGE SAFETY"))
 		: FString::Printf(TEXT("RESPECTFUL WORKPLACE MODULE %d"), GI ? GI->HRModulesDone + 2 : 2);
 	Add(MakeText(FString::Printf(TEXT("HALCYON LEARNING  \u00B7  %s  \u00B7  %d / %d"), *Module, Index + 1, Slides.Num()), 13, bHRMode ? Warn : Mint, true));
 	Add(MakeText(S.Title, (bHRMode && S.Body.IsEmpty()) ? 64 : 30, Ink, true), 6.f);
@@ -850,13 +859,15 @@ void UTakeTerminalWidget::FinishTraining()
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (bHRMode && GI)
 	{
-		GI->HRModulesDone = FMath::Min(GI->HRModulesDone + 1, 2);
+		if (bHotBevMode) { GI->bHotBevModuleDone = true; }
+		else { GI->HRModulesDone = FMath::Min(GI->HRModulesDone + 1, 2); }
 		GI->HRSlide = 0;
 		if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
 		{
 			if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>())
 			{
-				Hands->ShowSubtitle(TEXT("PA"), TEXT("Thank you for completing Respectful Workplace. Your coworkers feel safer already."), 4.5f);
+				Hands->ShowSubtitle(TEXT("PA"), bHotBevMode ? TEXT("Thank you for completing Hot Beverage Safety. Your lid is in the kitchen.")
+					: TEXT("Thank you for completing Respectful Workplace. Your coworkers feel safer already."), 4.5f);
 			}
 		}
 		LoadTraining();   // back to the finished Module 1 page (or the next HR module, if you've earned it)

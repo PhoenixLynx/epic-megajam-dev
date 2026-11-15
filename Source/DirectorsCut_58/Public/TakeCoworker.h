@@ -81,6 +81,9 @@ public:
 	/** The wrap party: stand here, look at the guest of honour, smile. */
 	void JoinParty(const FVector& Where, const FVector& LookAt);
 	bool bAtParty = false;
+	bool bPartyChatted = false;   // you've talked to them at the party
+	bool bPartyReady = false;     // the Collector: ready for his question
+	void StartMingling();         // after the speeches: walk around the party
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;

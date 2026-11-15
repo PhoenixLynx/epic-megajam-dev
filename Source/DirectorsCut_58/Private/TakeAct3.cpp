@@ -438,7 +438,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			else if (bBadEmployee && EndT > 12.f && PartyFear->TargetFear < 0.3f)
 			{
 				PartyFear->StartCreep(0.45f, 8.f);
-				QueueSubtitle(TEXT(""), TEXT("(They're still clapping. Nobody is smiling at you. They're smiling at the mug in your hand.)"));
+				ShowSubtitle(TEXT(""), TEXT("(They remember every stapler. Every mug. They're still clapping, but nobody is smiling at you.)"), 5.f);
 			}
 		}
 	}
@@ -449,7 +449,10 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		{
 			// The lobby and the kitchen (refreshments); the office, the conference room and the corridors are closed
 			const FVector P = Pawn->GetActorLocation();
-			const FVector Leash(FMath::Clamp(P.X, 1550.f, 3650.f), FMath::Clamp(P.Y, EndStep == 11 ? 0.f : 560.f, 1450.f), P.Z);
+			// The lobby + kitchen box, and (to the west) the conference room; clamp to whichever is nearer
+			const FVector InLobby(FMath::Clamp(P.X, 1550.f, 3650.f), FMath::Clamp(P.Y, EndStep == 11 ? 0.f : 560.f, 1450.f), P.Z);
+			const FVector InConf(FMath::Clamp(P.X, 500.f, 1600.f), FMath::Clamp(P.Y, 800.f, 1400.f), P.Z);
+			const FVector Leash = FVector::DistSquared2D(InLobby, P) <= FVector::DistSquared2D(InConf, P) ? InLobby : InConf;
 			if (!Leash.Equals(P, 1.f))
 			{
 				Pawn->SetActorLocation(Leash, false, nullptr, ETeleportType::None);
@@ -481,16 +484,18 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 				bBadEmployee = PartyGI->CoworkersHit >= 6 || PartyGI->HotBeverageIncidents >= 2;   // they remember
 			}
 			int32 N = 0;
-			for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It) { ++N; }
+			for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It) { if (!It->ActorHasTag(TEXT("Collector"))) { ++N; } }
 			int32 I = 0;
-			for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It, ++I)
+			for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
 			{
+				if (It->ActorHasTag(TEXT("Collector"))) { continue; }   // he has his own spot, by the elevator
 				// a half ring in front of you, two rows deep, on the far side from the elevator (so the way to it stays clear)
 				const float A = FMath::DegreesToRadians(15.f + 150.f * (N > 1 ? float(I) / float(N - 1) : 0.5f));
 				const float R = (I % 2 == 0) ? 300.f : 420.f;
 				FVector P = LobbyParty + FVector(FMath::Cos(A) * R, FMath::Sin(A) * R * 0.42f, -8.f);   // y stays under ~1230 (the reception desk starts ~1300)
 				GetWorld()->FindTeleportSpot(*It, P, It->GetActorRotation());   // never inside furniture
 				It->JoinParty(P, LobbyParty);
+				++I;
 			}
 		}
 		break;
@@ -519,8 +524,30 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			QueueSubtitle(TEXT("The Collector"), TEXT("You just have to hand over your keys."));
 		}
 		break;
-	case 2:   // when the speeches are over: the choice
+	case 2:   // when the speeches are over: mingle (the question comes later, from the man in the hat)
 		if ((SubQueue.Num() == 0 && SubtitleLeft <= 0.f && EndT > 4.f) || EndT > 45.f)   // (never wait forever on a stray line)
+		{
+			StartMingle();
+		}
+		break;
+	case 30:   // mingling: talk to people, have cake; when you've been sociable enough, the Collector wants a word
+		MingleT += DeltaTime;
+		if (!bCollectorReady && (PartyChats >= 3 || (bAteCake && PartyChats >= 1) || MingleT > 150.f))
+		{
+			bCollectorReady = true;
+			if (ATakeCoworker* Col = Collector.Get())
+			{
+				Col->bPartyReady = true;
+				Col->SayLine(TEXT("{EMP}. A word? Over here, by the elevator."));
+			}
+			if (UTakeGameInstance* ColGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { ColGI->SetObjective(TEXT("The man in the hat wants a word.")); }
+		}
+		break;
+	case 3:
+		break;
+	}
+	if (EndStep == 31)   // you talked to him: the question
+	{
 		{
 			EndStep = 3;
 			APawn* Pawn = Cast<APawn>(GetOwner());
@@ -537,9 +564,12 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 				PC->SetShowMouseCursor(true);
 			}
 		}
-		break;
-	case 10:   // YES: when the lines are done, the elevator dings (then you walk to it: UseThing -> GoToPenthouse)
-		if (SubQueue.Num() == 0 && SubtitleLeft <= 0.f)
+	}
+	switch (EndStep)
+	{
+	case 10:   // YES: when the lines are done (or a few seconds), the elevator dings (then you walk to it: UseThing -> GoToPenthouse)
+		YesT += DeltaTime;
+		if ((SubQueue.Num() == 0 && SubtitleLeft <= 0.f) || YesT > 6.f)
 		{
 			EndStep = 11;
 			PlaySfx(TEXT("sfx_badge_ok"), FVector(2100.f, 500.f, 150.f), 1.f);
@@ -633,6 +663,10 @@ void UTakeGrabComponent::OnCreditsDone(int32 Choice)
 	{
 		if (Choice == 0) { GI->ResetRun(); GI->bTitleDone = true; }
 		else { GI->bTitleDone = false; }
+	}
+	if (APawn* Pawn = Cast<APawn>(GetOwner()))
+	{
+		if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController())) { PC->SetInputMode(FInputModeGameOnly()); PC->SetShowMouseCursor(false); }
 	}
 	UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this, true)));
 }

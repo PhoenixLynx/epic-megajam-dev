@@ -777,7 +777,7 @@ void UTakeGrabComponent::TickMail(float DeltaTime)
 	MailCheckIn = 2.f;
 	int32 Total = 0;
 	const int32 Unread = UTakeTerminalWidget::CountUnread(this, &Total);
-	if (MailSeen >= 0 && Total > MailSeen && !bSeated)
+	if (MailSeen >= 0 && Total > MailSeen && !bSeated && EndT < 0.f)   // (nobody checks mail at the wrap party)
 	{
 		PlaySfx2D(TEXT("sfx_badge_ok"), 0.25f);
 		QueueSubtitle(TEXT(""), FString::Printf(TEXT("(New email. %d unread on your terminal.)"), Unread));
@@ -812,6 +812,19 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 	auto Pick = [N](std::initializer_list<const TCHAR*> L) { return FString(*(L.begin() + FMath::Min<int32>(N, int32(L.size()) - 1))); };
 	if (Key == TEXT("Elevator") && EndStep == 11) { GoToPenthouse(); return; }   // YES: up to C
 	if (Key == TEXT("DirectorsChair")) { if (EndStep == 12) { SitDirector(); } return; }
+	if (Key == TEXT("Cake"))
+	{
+		PlaySfx(TEXT("sfx_eat_crunch"), Where, 0.7f);
+		if (UTakeGameInstance* CakeGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { CakeGI->AddEnergy(25.f); }
+		static const TCHAR* Slices[] = {
+			TEXT("You cut a slice. Mint frosting. It tastes like the first day of something."),
+			TEXT("Another slice. ...It's the same slice. The cake isn't any smaller."),
+			TEXT("You've had three slices of a cake that hasn't been cut."),
+		};
+		ShowSubtitle(TEXT(""), Slices[FMath::Min(N, int32(UE_ARRAY_COUNT(Slices)) - 1)], 3.5f);
+		bAteCake = true;
+		return;
+	}
 	if (Key == TEXT("Elevator"))
 	{
 		if (const UTakeGameInstance* EGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))

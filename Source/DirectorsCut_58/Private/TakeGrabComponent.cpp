@@ -76,6 +76,10 @@ void UTakeGrabComponent::BeginPlay()
 	const UTakeGameInstance* TitleGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (bPlayColdOpen && TitleGI && !TitleGI->bTitleDone) { ShowTitle(); return; }   // the title screen first, once per launch
 	if (UTakeGameInstance* ShowGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { ShowGI->HideWorldUntilTitle(false); }   // no title: draw the world
+	if (APawn* InPawn = Cast<APawn>(GetOwner()))   // (PLAY AGAIN came from the credits' UI-only input: give the controls back)
+	{
+		if (APlayerController* InPC = Cast<APlayerController>(InPawn->GetController())) { InPC->SetInputMode(FInputModeGameOnly()); InPC->SetShowMouseCursor(false); }
+	}
 	if (bPlayColdOpen) { StartSlate(false); }
 	else
 	{
@@ -169,7 +173,7 @@ ATakeCoworker* UTakeGrabComponent::CoworkerInView() const
 	float BestDot = 0.9f;
 	for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
 	{
-		if (!It->bStoryNPC || !It->HasNewConversation() || It->IsHidden()) { continue; }   // E only when they have a "!" (something new to say)
+		if ((!It->bStoryNPC && !It->bAtParty) || !It->HasNewConversation() || It->IsHidden()) { continue; }   // E only when they have a "!" (something new to say), or anyone at the party
 		const FVector To = It->GetActorLocation() + FVector(0.f, 0.f, 40.f) - Loc;
 		if (To.Size() > UseRange) { continue; }
 		FCollisionQueryParams Sight(SCENE_QUERY_STAT(TakeTalkSight), false, GetOwner());
@@ -218,7 +222,7 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 	{
 		if (const ATakeCoworker* C = Cast<ATakeCoworker>(A))
 		{
-			return (C->bStoryNPC && C->HasNewConversation()) ? ETakeLookKind::Coworker : ETakeLookKind::None;   // extras talk on their own
+			return ((C->bStoryNPC || C->bAtParty) && C->HasNewConversation()) ? ETakeLookKind::Coworker : ETakeLookKind::None;   // extras talk on their own (at the party, anyone)
 		}
 		if (A->ActorHasTag(TEXT("Terminal"))) { return ETakeLookKind::Terminal; }
 		if (A->ActorHasTag(TEXT("Openable"))) { return ETakeLookKind::Openable; }
@@ -1070,6 +1074,12 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		if (Name.Contains(C.Key)) { Title = C.Title; Caption = C.Text; GlyphKey = C.Glyphs; break; }
 	}
 	const UTakeGameInstance* CapGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (Name.Contains(TEXT("Chairman")) && CapGI)   // he changes through the day
+	{
+		if (EndT >= 0.f) { Caption = TEXT("The frame is empty. A sticky note on the glass: BACK IN 5. - C"); }
+		else if (CapGI->CurrentAct() >= 3) { Caption = TEXT("He's a little closer to the frame than he was this morning.\nThe plaque says: THAT'S NEARLY A WRAP."); }
+		else if (CapGI->CurrentAct() == 2) { Caption = TEXT("His eyes follow you. That's normal for paintings.\nThe plaque now says: SEE YOU AT 12:30. (Camera off.)"); }
+	}
 	if (Name.Contains(TEXT("SignInSheet")) && CapGI && CapGI->LastEnding > 0)   // the next take remembers
 	{
 		Caption += CapGI->LastEnding == 1 ? TEXT("\nA new line at the bottom, in your handwriting: 4471, OUT: promoted.")
@@ -1333,7 +1343,7 @@ void UTakeGrabComponent::UpdatePrompt()
 			: K == TEXT("Toilet") ? TEXT("E  Flush") : K == TEXT("Printer") ? TEXT("E  Print") : K == TEXT("Cooler") ? TEXT("E  Get some water")
 			: K == TEXT("Elevator") ? TEXT("E  Press a button") : K == TEXT("TrustFall") ? TEXT("E  Fall backward")
 			: K == TEXT("ServiceElevator") ? TEXT("E  Call the service elevator")
-			: K == TEXT("DirectorsChair") ? TEXT("E  Sit in the director's chair") : TEXT("E  Use"));
+			: K == TEXT("DirectorsChair") ? TEXT("E  Sit in the director's chair") : K == TEXT("Cake") ? TEXT("E  Have a slice") : TEXT("E  Use"));
 		break;
 	}
 	case ETakeLookKind::Wisp:     Prompt->SetPrompt(TEXT("E  Reach for the light")); break;

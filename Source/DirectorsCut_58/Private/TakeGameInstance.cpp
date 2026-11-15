@@ -280,7 +280,7 @@ void UTakeGameInstance::ResetRun()
 	TrainingSlide = HRSlide = HRModulesDone = 0;
 	bTrainingComplete = bReadEmail = bGotCoffee = bMetReceptionist = bGotWisp = false;
 	bJoinedCall = bAttendedMeeting = bRepliedChairman = bClocksFrozen = bRepliedPhish = false;
-	bTrustFell = bEndingSeen = bDevLunchNow = bDevAct3Now = false;
+	bTrustFell = bEndingSeen = bDevLunchNow = bDevAct3Now = bHotBevModuleDone = false;
 	CoworkersCheckedIn = CoworkersHit = HotBeverageIncidents = GuardComplaints = CoffeesPoured = Baskets = BestTossStreak = 0;
 	WorkdayMinutes = 540.f;
 	Energy = 100.f;

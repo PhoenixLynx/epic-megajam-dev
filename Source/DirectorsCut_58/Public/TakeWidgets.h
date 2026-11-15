@@ -108,6 +108,7 @@ private:
 	void LoadMail();
 	int32 OpenMail = -1;
 	bool bHRMode = false;
+	bool bHotBevMode = false;   // the HR module is Hot Beverage Safety
 	UPROPERTY() TArray<TObjectPtr<UTextBlock>> SubjectTexts;
 	UPROPERTY() TArray<TObjectPtr<UTextBlock>> SenderTexts;
 	UPROPERTY() TObjectPtr<UVerticalBox> ReplyBox;

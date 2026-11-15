@@ -115,7 +115,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Take|HR") int32 HRModulesDone = 0;
 	UPROPERTY(BlueprintReadWrite, Category = "Take|HR") int32 HRSlide = 0;
 	UFUNCTION(BlueprintPure, Category = "Take|HR") int32 HRModulesDue() const { return FMath::Min(CoworkersHit / 3, 2); }
-	UFUNCTION(BlueprintPure, Category = "Take|HR") bool HRModuleDue() const { return HRModulesDone < HRModulesDue(); }
+	UFUNCTION(BlueprintPure, Category = "Take|HR") bool HRModuleDue() const { return HRModulesDone < HRModulesDue() || HotBevModuleDue(); }
+	/** One splash of coffee on a coworker assigns Hot Beverage Safety (once). */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|HR") bool bHotBevModuleDone = false;
+	UFUNCTION(BlueprintPure, Category = "Take|HR") bool HotBevModuleDue() const { return HotBeverageIncidents >= 1 && !bHotBevModuleDone; }
 	/** Fun: cups poured, vending snacks, paper toss baskets (best streak). */
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Fun") int32 CoffeesPoured = 0;
 	/** Energy (0..100): drains slowly; coffee and food bring it back; low = a little slower. Never a fail state. */
