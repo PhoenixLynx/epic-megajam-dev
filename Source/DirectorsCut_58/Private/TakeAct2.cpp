@@ -9,6 +9,7 @@
 //   Key Lock 2         : the "Employee 4471" login panel in the supply closet (signature hidden: use your notes)
 //   new mail           : a chime and a line when something new arrives (unread count)
 #include "TakeGrabComponent.h"
+#include "TakeCake.h"
 #include "TakeCoworker.h"
 #include "DirectorsCut_58.h"
 #include "TakeGameInstance.h"
@@ -1105,6 +1106,22 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			if (M->GetTextureParameterValue(FHashedMaterialParameterInfo(FName(TEXT("Tex"))), T)) { PeekTex = Cast<UTexture2D>(T); }
 		}
 		ShowScreenPeek(PeekTex, Pk.Title, TakeText::Fill(this, Pk.Caption));
+		return;
+	}
+	if (Key == TEXT("Cake") && Cast<ATakeCake>(Thing)) { UseCake(Cast<ATakeCake>(Thing), N); return; }   // a real cut (TakeCake)
+	if (Key == TEXT("CakeSlice")) { EatSlice(Thing); return; }
+	if (Key == TEXT("CakeLater"))   // overtime: the kitchen cake is for later
+	{
+		static const TCHAR* Later[] = {
+			TEXT("A sticky note on the cake: FOR LATER. DON'T TOUCH. - Craft Services"),
+			TEXT("It's still for later. Later hasn't happened yet."),
+			TEXT("The frosting says THAT'S A WRAP. It isn't. Not yet."),
+			TEXT("Someone has drawn a little clock on the note. The hands say 2:14."),
+			TEXT("The cake isn't for you. It's for the version of you who finishes."),
+			TEXT("You could just... no. The cake knows. The cake is watching."),
+		};
+		ShowSubtitle(TEXT(""), Later[FMath::Min(CakeLaterTries++, int32(UE_ARRAY_COUNT(Later)) - 1)], 3.5f);
+		PlaySfx(TEXT("sfx_badge_denied"), Where, 0.25f);
 		return;
 	}
 	if (Key == TEXT("Cake"))

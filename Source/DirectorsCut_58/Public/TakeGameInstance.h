@@ -159,5 +159,6 @@ public:
 	UFUNCTION(Exec) void TakeNPCYaw(float Yaw);          // turn every rigged NPC's body (facing test)
 	UFUNCTION(Exec) void TakeBeat(int32 NewBeat = -1);   // jump to a story beat: 0 morning, 1 meeting, 2 corridor, 3 return to desk, 4 lunch (Act 2), 5 overtime (Act 3), 6 the ward, 7 wrap party; no number = the list
 	UFUNCTION(Exec) void TakeTime(int32 HHMM);
+	UFUNCTION(Exec) void TakeEnding(int32 Choice = 1);    // playtest: straight to an ending: 1 = YES (the director's floor), 0 = NO (the set comes down). Keys: F5 / F6
 	UFUNCTION(Exec) void TakeSkip();                     // playtest: finish the tasks on the current list (morning -> lunch -> 2:14)           // set the clock, e.g. TakeTime 1410 (four minutes before the clocks freeze)
 };

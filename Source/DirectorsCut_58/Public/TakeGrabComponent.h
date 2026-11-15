@@ -3,7 +3,8 @@
 //                a door / fridge (tag Openable) = open or close, a loose prop = pick up / drop
 //   Right Mouse  throw what you're holding
 //   F            sip (while holding a mug)
-//   1-4 / 0      debug: Fear 0.25 / 0.5 / 0.75 / 0.95 / calm   (bDebugFearKeys)
+//   Ctrl+1-4 / 0 debug: Fear 0.25 / 0.5 / 0.75 / 0.95 / calm   (bDebugFearKeys)
+//   F5 / F6      playtest: the YES / NO ending, now
 // Reach becomes telekinesis with 1+ soul bits. Added to the player automatically by the Fear Director.
 #pragma once
 
@@ -411,4 +412,23 @@ private:
 	void Fear2() { SetFearDebug(0.5f); }
 	void Fear3() { SetFearDebug(0.75f); }
 	void Fear4() { SetFearDebug(0.95f); }
+	// ---- The cake you can cut (TakeCake) ----
+	class ATakeCake* SpawnCake(const FVector& Base, float Yaw, float Radius, float Height, int32 Missing, const TCHAR* UseTag);
+	void UseCake(class ATakeCake* Cake, int32 N);
+	void EatSlice(AActor* Slice);
+	TWeakObjectPtr<class ATakeCake> OvertimeCake;   // in the kitchen, "for later" (Act 3)
+	bool bOvertimeCakeDone = false;
+	int32 CakeLaterTries = 0;
+	int32 SlicesEaten = 0;
+	bool bPartyCakeCut = false;
+	bool bMusicLoop = false;         // the party and the director's floor: the happy cue keeps playing
+	float MusicDuration = 0.f;
+public:
+	// ---- Playtest: the two endings, now (F5 = YES, F6 = NO, or the console: TakeEnding 1 / TakeEnding 0) ----
+	void DevEnding(int32 Choice);
+private:
+	int32 DevEndingChoice = -1;      // waiting for the party to be ready
+	bool bDevEndingFast = false;     // YES: straight up to the director's floor
+	void DevEndingYes() { DevEnding(1); }
+	void DevEndingNo() { DevEnding(0); }
 };

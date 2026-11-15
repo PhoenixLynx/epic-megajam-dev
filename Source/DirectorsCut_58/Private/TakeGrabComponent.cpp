@@ -146,15 +146,18 @@ void UTakeGrabComponent::BindKeys()
 	IC->BindKey(EKeys::F9, IE_Pressed, this, &UTakeGrabComponent::TakeScreenshot);   // -> Saved/Screenshots   // in the editor Esc stops Play: use P
 	if (bDebugFearKeys)
 	{
-		IC->BindKey(EKeys::Zero, IE_Pressed, this, &UTakeGrabComponent::Fear0);
-		IC->BindKey(EKeys::One, IE_Pressed, this, &UTakeGrabComponent::Fear1);
-		IC->BindKey(EKeys::Two, IE_Pressed, this, &UTakeGrabComponent::Fear2);
-		IC->BindKey(EKeys::Three, IE_Pressed, this, &UTakeGrabComponent::Fear3);
-		IC->BindKey(EKeys::Four, IE_Pressed, this, &UTakeGrabComponent::Fear4);
+		// Ctrl + number only: a bare "2" (typed by accident, or meant for something else) set Fear to 0.5 on the first morning
+		IC->BindKey(FInputChord(EKeys::Zero, false, true, false, false), IE_Pressed, this, &UTakeGrabComponent::Fear0);
+		IC->BindKey(FInputChord(EKeys::One, false, true, false, false), IE_Pressed, this, &UTakeGrabComponent::Fear1);
+		IC->BindKey(FInputChord(EKeys::Two, false, true, false, false), IE_Pressed, this, &UTakeGrabComponent::Fear2);
+		IC->BindKey(FInputChord(EKeys::Three, false, true, false, false), IE_Pressed, this, &UTakeGrabComponent::Fear3);
+		IC->BindKey(FInputChord(EKeys::Four, false, true, false, false), IE_Pressed, this, &UTakeGrabComponent::Fear4);
+		IC->BindKey(EKeys::F5, IE_Pressed, this, &UTakeGrabComponent::DevEndingYes);   // playtest: the YES ending, now
+		IC->BindKey(EKeys::F6, IE_Pressed, this, &UTakeGrabComponent::DevEndingNo);    // playtest: the NO ending, now
 		IC->BindKey(EKeys::F8, IE_Pressed, this, &UTakeGrabComponent::SkipTasks);   // playtest: finish the current task list
 		IC->BindKey(EKeys::F7, IE_Pressed, this, &UTakeGrabComponent::TestStalker);  // playtest: the stalker, now
 	}
-	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Keys bound: E = use / pick up, Right Mouse = throw, 1-4/0 = Fear"));
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Keys bound: E = use / pick up, Right Mouse = throw, Ctrl+1-4/0 = Fear, F5/F6 = endings"));
 }
 
 bool UTakeGrabComponent::GetView(FVector& OutLoc, FRotator& OutRot) const
@@ -601,7 +604,9 @@ void UTakeGrabComponent::SetFearDebug(float Value)
 {
 	for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It)
 	{
+		It->bGateOverride = true;
 		It->StartCreep(Value, 1.5f);
+		It->bGateOverride = false;
 		if (GEngine) { GEngine->AddOnScreenDebugMessage(4471, 2.f, FColor::Cyan, FString::Printf(TEXT("Fear -> %.2f"), Value)); }
 		return;
 	}
@@ -1501,7 +1506,8 @@ void UTakeGrabComponent::UpdatePrompt()
 			: K == TEXT("Toilet") ? TEXT("E  Flush") : K == TEXT("Printer") ? TEXT("E  Print") : K == TEXT("Cooler") ? TEXT("E  Get some water")
 			: K == TEXT("Elevator") ? TEXT("E  Press a button") : K == TEXT("TrustFall") ? TEXT("E  Fall backward")
 			: K == TEXT("ServiceElevator") ? TEXT("E  Call the service elevator")
-			: K == TEXT("DirectorsChair") ? TEXT("E  Sit in the director's chair") : K == TEXT("Cake") ? TEXT("E  Have a slice")
+			: K == TEXT("DirectorsChair") ? TEXT("E  Sit in the director's chair") : K == TEXT("Cake") ? TEXT("E  Cut a slice") : K == TEXT("CakeSlice") ? TEXT("E  Eat the slice")
+			: K == TEXT("CakeLater") ? TEXT("E  Have a slice?")
 			: K == TEXT("Screen") ? TEXT("E  Look at their screen")
 			: K == TEXT("Microwave") ? TEXT("E  Look in the microwave") : K == TEXT("KeyboardNote") ? TEXT("E  Read the sticky note") : TEXT("E  Use"));
 		break;

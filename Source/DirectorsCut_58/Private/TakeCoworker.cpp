@@ -276,14 +276,15 @@ void ATakeCoworker::HitByProp(float Speed)
 	if (Now - LastHitTime < 1.0 || bVanished) { return; }
 	LastHitTime = Now;
 	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (Player)
+	if (Player && State != ETakeCoworkerState::Watching)
 	{
 		const FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
 		SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));   // they turn to see who did it
+		if (AAIController* HitAI = Cast<AAIController>(GetController())) { HitAI->StopMovement(); }   // and stop where they are
 	}
 	if (State == ETakeCoworkerState::Watching)
 	{
-		// Fear: no words. They just turn, the face goes wrong, and the room gets a little worse.
+		// Fear: no words, and they don't move. The face goes wrong, and the room gets a little worse.
 		FaceFearHold = 4.f;
 		if (FearDirector.IsValid()) { FearDirector->StartCreep(FMath::Min(1.f, FearDirector->Fear + 0.05f), 0.5f); }
 		return;
@@ -761,11 +762,20 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 			SpokenLine.Reset();
 			SpeechLeft = 0.f;
 			Speech->SetText(FText::GetEmpty());
+			StareSpot = GetActorLocation();
 		}
 		// Everyone stops, rises where they are and stares at you. They don't walk any more.
+		// (Playtest: "in fear mode, if you throw things at your coworkers they follow you around": a hit, a push or
+		// a leftover path could still slide them along. Now they're pinned where the staring began.)
 		if (AI) { AI->StopMovement(); }
+		GetCharacterMovement()->StopMovementImmediately();
+		if (FVector::DistSquared2D(GetActorLocation(), StareSpot) > 4.f)
+		{
+			SetActorLocation(FVector(StareSpot.X, StareSpot.Y, GetActorLocation().Z), false, nullptr, ETeleportType::TeleportPhysics);
+		}
 		const FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
-		SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));   // it was always looking at you
+		// They turn to keep you in view, but slowly, the head first (a snap every frame read as "following")
+		SetActorRotation(FMath::RInterpConstantTo(GetActorRotation(), FRotator(0.f, Face.Yaw, 0.f), DeltaSeconds, 60.f));   // it was always looking at you
 		// Even more Fear: look away and they're gone. Look back: still gone.
 		if (Fear >= VanishFear && !bVanished && !PlayerCanSee(Player))
 		{

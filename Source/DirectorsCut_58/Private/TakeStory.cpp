@@ -348,10 +348,12 @@ void UTakeGrabComponent::PlayMusicCue(const TCHAR* Why, const TCHAR* Track, bool
 		UE_LOG(LogTake, Warning, TEXT("[TAKE 4471] Music: %s not imported yet (run import_music.py)"), Track);
 		return;
 	}
+	bMusicLoop = false;   // (the party and the director's floor turn it on after they start their cue)
 	MusicAudio = UGameplayStatics::CreateSound2D(this, Music, 1.f, 1.f, 0.f, nullptr, false, false);
 	if (!MusicAudio) { return; }
 	MusicAudio->FadeIn(4.f, 0.55f);   // slow swell under the ambience
 	MusicLeft = Music->Duration > 0.f ? Music->Duration : 90.f;
+	MusicDuration = MusicLeft;
 	MusicTrack = Track;
 	if (MusicTrack.Contains(TEXT("tension")) || MusicTrack.Contains(TEXT("fear"))) { bTensionFirstDone = true; }   // (Fear Lvl 1 was being replaced a second later)
 	MusicAge = 0.f;
@@ -369,6 +371,10 @@ void UTakeGrabComponent::StopMusic(float FadeSeconds)
 void UTakeGrabComponent::TickMusic(float DeltaTime)
 {
 	if (!MusicAudio || bMusicFading) { return; }
+	if (bMusicLoop && !MusicAudio->IsPlaying() && !UGameplayStatics::IsGamePaused(this))   // (ran out a moment early)
+	{
+		MusicAudio->Play(0.f); MusicLeft = MusicDuration; MusicAge = 0.f; return;
+	}
 	if (!MusicAudio->IsPlaying()) { MusicAudio = nullptr; return; }
 	if (UGameplayStatics::IsGamePaused(this)) { return; }
 	MusicLeft -= DeltaTime;
@@ -378,6 +384,11 @@ void UTakeGrabComponent::TickMusic(float DeltaTime)
 	// The happy cue steps aside when Fear comes back; the tension cue steps aside when Fear is gone
 	const bool bFearBack = !bTension && EndT < 0.f && MusicAge > 5.f && FearDir && FearDir->TargetFear > 0.4f;   // (the sphere's own calm-down takes a few seconds)
 	const bool bCalmAgain = bTension && EndT < 0.f && MusicAge > 20.f && FearDir && FearDir->Fear < 0.1f && FearDir->TargetFear < 0.1f;
+	if (bMusicLoop && !bFearBack)   // the party / the director's floor: round again instead of fading away
+	{
+		if (MusicLeft <= 0.02f) { MusicAudio->Play(0.f); MusicLeft = MusicDuration; MusicAge = 0.f; }
+		return;
+	}
 	if (MusicLeft <= 7.f || bFearBack || bCalmAgain)
 	{
 		bMusicFading = true;

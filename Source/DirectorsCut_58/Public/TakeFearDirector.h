@@ -86,6 +86,16 @@ public:
 	/** Make the FearLight lights flicker hard for a moment, whatever the Fear level (the 10:00 meeting slip). */
 	UFUNCTION(BlueprintCallable, Category = "Fear") void FlickerBurst(float Seconds = 2.5f);
 
+	/** Playtest note: "fear should not activate until you have done the tutorial / module training at least".
+	 *  On the first morning, before Compliance Training Module 1 is done, nothing can raise Fear (the debug keys can). */
+	bool IsGated() const;
+	bool bGateOverride = false;   // the playtest Fear keys (Ctrl+1..4) and console commands go through anyway
+	/** The first time Fear rises in a run: the lights stutter, the air changes for a moment, the camera shivers. */
+	bool bIntroDone = false;
+	float IntroLeft = 0.f;
+	static constexpr float IntroSeconds = 2.4f;
+	float IntroPulse() const;   // 0..1..0 over the intro
+
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual bool ShouldTickIfViewportsOnly() const override { return true; }   // live preview in the editor
@@ -106,6 +116,8 @@ public:
 private:
 	float FlickerClock = 0.f;
 	float BurstLeft = 0.f;
+	FRotator ShakeOffset = FRotator::ZeroRotator;   // the intro's camera shiver, so it can be taken back out exactly
+	void TickIntro(float DeltaSeconds);
 	bool LoopAllowed(float& OutNeed) const;
 	void UpdateStage();
 	void AutoWire();

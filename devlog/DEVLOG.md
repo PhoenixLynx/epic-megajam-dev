@@ -1002,3 +1002,22 @@ A running record of every AI tool used and what it did.
   - **No:** the applause stops mid-clap, every face turns, the lights go red, *"CUT."* from above, and the lobby's walls rise away like set flats under lighting rigs.
   - **Play again** after the credits; the next take remembers how the last one ended.
 - **AI tools used:** Claude (log, notes and screenshot review, C++, Unreal Python, audio conversion with ffmpeg, handoff notes to Sol).
+
+### Session 62: Sun Nov 15, 2026, 02:42–03:10 MST: The grey grid, the merge that never happened, and a broad-strokes batch
+
+- **Why my notes kept repeating:** my build process was fine (the source on my PC matched `main` exactly). The overnight work had been sitting on its own branch, never merged and never copied to my PC. It's now merged into `main` and synced.
+- **Grey grid on the Black coworkers (fixed, confirmed):** their skin used the engine's `BasicShapeMaterial`, which isn't allowed on rigged (skeletal) meshes, so Unreal drew its default grid instead. That's what the log warning *"Material with missing usage flag"* meant. They now use a new `M_SkinTone` that is flagged for skeletal meshes.
+- **Decision:** from here to submission, Claude makes changes without asking first ("broad strokes"). I test and send notes, and we go back and forth.
+- **Fear came "right away":** the log showed the jump was the debug key **2** (Fear 0.5), pressed by accident. The debug Fear keys are now **Ctrl+1–4 / Ctrl+0**. Also, nothing can raise Fear on the first morning until Compliance Training Module 1 is done.
+- **Fear's first time** now gets an introduction: the lights stutter, the room's colour and fog lurch for a moment, a sting, and a small camera shiver.
+- **Coworkers "following you" in Fear:** while staring, they're now pinned exactly where they stopped and turn slowly to keep you in view. A hit no longer snap-turns them.
+- **A real cake** (`ATakeCake`, a procedural mesh: geometry built from code at runtime):
+  - It's made of 8 wedges, with Sol's ART-011 top. Its missing wedge is filled in, because the game cuts its own.
+  - **E** cuts a slice: the cake really loses the wedge, the sponge shows, the slice lands on a plate in front of you, and **E** eats it. The first cut at the party puts plates in coworkers' hands.
+  - The director's floor has the same cake with 3 slices gone, and you can cut another.
+  - In overtime the cake waits on the kitchen island, *"FOR LATER"*, with snark when you try. At the party it's moved to the table.
+- **Music:** the happy Halcyon cue plays at the wrap party and on the director's floor, and loops instead of fading. The refusal and the credits still change it.
+- **Playtest:** **F5** = straight to the YES ending, **F6** = NO (also the console command `TakeEnding 1` / `TakeEnding 0`).
+- **Sol's ending plates wired in:** the four dailies (ART-012) on the director's monitors, and the dusk skyline (ART-014) past the open side of the penthouse. The wrap banner was moved off the ELEVATOR sign it was covering.
+- **Startup ensures** (*"precision loss while converting matrix"*, *"non-invertible matrix"*): they fire at editor frame 3, before Play, inside the renderer. That's the editor's own viewport or thumbnails, not game code. Left alone.
+- **AI tools used:** Claude (log, notes and screenshot review; C++; Unreal Python; cake-top texture fill with Python/PIL). Sol / ChatGPT (ART-011 cake top, ART-012 dailies, ART-014 skyline, made earlier).

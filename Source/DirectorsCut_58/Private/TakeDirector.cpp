@@ -16,6 +16,8 @@
 #include "TakeFearDirector.h"
 #include "TakeStalker.h"
 #include "TakeTypes.h"
+#include "TakeCake.h"
+#include "Components/AudioComponent.h"
 #include "TakeWidgets.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -50,6 +52,12 @@ namespace
 	UStaticMesh* Mesh(const TCHAR* Path) { return LoadObject<UStaticMesh>(nullptr, Path); }
 	UStaticMesh* Prop(const TCHAR* Name) { return LoadObject<UStaticMesh>(nullptr, *FString::Printf(TEXT("/Game/Props/Meshes/%s.%s"), Name, Name)); }
 	UMaterialInterface* Mat(const TCHAR* Path) { return LoadObject<UMaterialInterface>(nullptr, Path); }
+	// A monitor feed: Sol's dailies (ART-012, /Game/Ending) first, then the office screens
+	UMaterialInterface* Feed(const TCHAR* Name)
+	{
+		if (UMaterialInterface* M = LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("/Game/Ending/%s.%s"), Name, Name))) { return M; }
+		return LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), Name, Name));
+	}
 
 	// Cake in hand (playtest: "employees should have cake in hands", "stalker should be allowed a slice of cake"):
 	// a small white plate with a slice on it, attached to a character's root (the capsule centre), held in front at
@@ -145,13 +153,13 @@ void UTakeGrabComponent::BuildLobbyParty()
 	const FVector Table(2620.f, 1000.f, 0.f);
 	SpawnSetPiece(Cube, Table + FVector(0.f, 0.f, 37.f), FRotator::ZeroRotator, FVector(1.8f, 0.9f, 0.74f), White, true);
 	SpawnSetPiece(Cube, Table + FVector(0.f, 0.f, 75.f), FRotator::ZeroRotator, FVector(1.86f, 0.96f, 0.02f), Mint, false);   // tablecloth
-	if (AStaticMeshActor* Cake = SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 10.f), FRotator::ZeroRotator, FVector(0.55f, 0.55f, 0.2f), Frosting, true))   // the cake, whole (for now)
+	// The cake: the same one that sat in the kitchen all overtime ("for later"). Later is now. Whole, until you cut it.
+	if (ATakeCake* OldCake = OvertimeCake.Get()) { OldCake->Destroy(); }
+	if (ATakeCake* Cake = SpawnCake(Table + FVector(0.f, 0.f, 76.f), 0.f, 27.f, 15.f, 0, TEXT("Cake")))
 	{
-		Cake->Tags.Add(TEXT("Use=Cake"));
+		Cake->Tags.Add(TEXT("PartyCake"));
 	}
-	SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 28.f), FRotator::ZeroRotator, FVector(0.36f, 0.36f, 0.16f), FabricMint, false);
-	SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 41.f), FRotator::ZeroRotator, FVector(0.02f, 0.02f, 0.1f), White, false);       // one candle
-	// (the cake's lettering comes with Sol's cake top, ART-011: no floating text meanwhile)
+	(void)Frosting; (void)FabricMint;
 	for (int32 I = 0; I < 6; ++I)   // cups and cans, a little everywhere
 	{
 		const FVector At = Table + FVector(-70.f + I * 28.f, (I % 2 == 0) ? -28.f : 30.f, 76.f);
@@ -162,7 +170,7 @@ void UTakeGrabComponent::BuildLobbyParty()
 	// The banner: over the elevator doors, on the lobby side
 	if (UMaterialInterface* BannerArt = Mat(TEXT("/Game/Ending/MI_WrapBanner.MI_WrapBanner")))   // Sol's banner (ART-010), 4:1
 	{
-		const FVector BannerAt(2100.f, 820.f, 245.f);   // across the lobby, between the elevator and the party, under the ceiling
+		const FVector BannerAt(2100.f, 905.f, 240.f);   // across the lobby, a step in front of the elevator (it covered the ELEVATOR sign)
 		SpawnSetPiece(Cube, BannerAt, FRotator::ZeroRotator, FVector(2.4f, 0.02f, 0.6f), BannerArt, false);
 		for (const float Side : { -110.f, 110.f })   // two strings up to the ceiling
 		{
@@ -281,20 +289,9 @@ void UTakeGrabComponent::SpawnCollector()
 
 void UTakeGrabComponent::CutTheCake(AActor* Cake)
 {
-	// A wedge out of the bottom tier: the sponge shows, and the slice sits on a plate beside it
+	// The first slice at the party: now that it's cut, about half the people mingling are holding a plate
+	// (every other one, so it looks the same each take)
 	if (!Cake) { return; }
-	UStaticMesh* Cube = Mesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
-	UMaterialInterface* Sponge = Mat(TEXT("/Game/Props/Meshes/M_Bread.M_Bread"));
-	UMaterialInterface* White = Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite"));
-	UMaterialInterface* Frost = Mat(TEXT("/Game/Props/Meshes/M_Frosting.M_Frosting"));
-	const FVector C = Cake->GetActorLocation();
-	SpawnSetPiece(Cube, C + FVector(-22.f, -10.f, 0.f), FRotator(0.f, 30.f, 0.f), FVector(0.14f, 0.005f, 0.2f), Sponge, false);   // the cut faces
-	SpawnSetPiece(Cube, C + FVector(-22.f, 6.f, 0.f), FRotator(0.f, -30.f, 0.f), FVector(0.14f, 0.005f, 0.2f), Sponge, false);
-	const FVector Plate = C + FVector(-50.f, -38.f, -9.f);
-	SpawnSetPiece(Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder")), Plate, FRotator::ZeroRotator, FVector(0.18f, 0.18f, 0.01f), White, false);
-	SpawnSetPiece(Cube, Plate + FVector(0.f, 0.f, 8.f), FRotator(0.f, 25.f, 0.f), FVector(0.12f, 0.06f, 0.16f), Sponge, false);   // the slice
-	SpawnSetPiece(Cube, Plate + FVector(0.f, 0.f, 16.5f), FRotator(0.f, 25.f, 0.f), FVector(0.125f, 0.065f, 0.01f), Frost, false);   // its frosting
-	// Now that it's cut, about half the people mingling are holding a plate (every other one, so it looks the same each take)
 	int32 Plates = 0, Seen = 0;
 	for (TActorIterator<ATakeCoworker> CakeIt(GetWorld()); CakeIt; ++CakeIt)
 	{
@@ -304,6 +301,86 @@ void UTakeGrabComponent::CutTheCake(AActor* Cake)
 		++Plates;
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Cake cut: %d coworker(s) holding a plate"), Plates);
+}
+
+// ------------------------------------------------------------------ the cake you can cut (TakeCake)
+ATakeCake* UTakeGrabComponent::SpawnCake(const FVector& Base, float Yaw, float Radius, float Height, int32 Missing, const TCHAR* Key)
+{
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ATakeCake* Cake = GetWorld()->SpawnActor<ATakeCake>(Base, FRotator(0.f, Yaw, 0.f), Params);
+	if (!Cake) { return nullptr; }
+	Cake->BuildCake(Radius, Height, 8, Missing);
+	if (Key) { Cake->Tags.Add(FName(*FString::Printf(TEXT("Use=%s"), Key))); }
+	Cake->Tags.Add(TEXT("DirectorsFloor"));   // (the refusal's set-lift leaves it alone)
+	return Cake;
+}
+
+void UTakeGrabComponent::UseCake(ATakeCake* Cake, int32 N)
+{
+	if (!Cake) { return; }
+	const FVector C = Cake->GetActorLocation();
+	int32 Wedge = 0;
+	FVector Dir = FVector::ForwardVector;
+	if (!Cake->CutSlice(Wedge, Dir))
+	{
+		ShowSubtitle(TEXT(""), TEXT("(Crumbs, a knife, and a smear of mint frosting that used to say 4471.)"), 3.5f);
+		return;
+	}
+	PlaySfx(TEXT("sfx_pickup"), C + FVector(0.f, 0.f, 20.f), 0.45f);
+	// The slice goes on a plate just past the cake, on the side you're standing (always on the table)
+	FVector ToMe = FVector::ForwardVector;
+	if (const AActor* Me = GetOwner()) { ToMe = (Me->GetActorLocation() - C).GetSafeNormal2D(); }
+	if (ToMe.IsNearlyZero()) { ToMe = FVector::ForwardVector; }
+	const FVector Side(-ToMe.Y, ToMe.X, 0.f);
+	const int32 Cuts = Cake->CutsSoFar() - 1;   // 0 for the first slice off this cake
+	const float Spread = (Cuts % 3 - 1) * 24.f;   // a second plate doesn't land on the first
+	const FVector PlateAt = C + ToMe * (Cake->Radius + 14.f) + Side * Spread;
+	UMaterialInterface* White = Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite"));
+	SpawnSetPiece(Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder")), PlateAt + FVector(0.f, 0.f, 0.5f), FRotator::ZeroRotator, FVector(0.2f, 0.2f, 0.01f), White, false);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	if (ATakeCake* Slice = GetWorld()->SpawnActor<ATakeCake>(PlateAt + FVector(0.f, 0.f, 1.1f), Cake->GetActorRotation(), Params))
+	{
+		Slice->BuildSlice(Cake->Radius, Cake->Height, Cake->Slices, Wedge);
+		Slice->Tags.Add(TEXT("Use=CakeSlice"));
+		Slice->Tags.Add(TEXT("DirectorsFloor"));
+	}
+	const bool bPenthouse = bPenthouseBuilt && C.Z > 2000.f;
+	if (Cake->ActorHasTag(TEXT("PartyCake")) && !bPartyCakeCut) { bPartyCakeCut = true; CutTheCake(Cake); }
+	static const TCHAR* PartyCuts[] = {
+		TEXT("You cut a slice. The knife goes straight through the 4471."),
+		TEXT("Another slice. The cake is getting smaller. Something here finally is."),
+		TEXT("Half a cake left. Nobody else has cut any. They're waiting for you to finish it."),
+		TEXT("You cut another. The frosting says THAT'S A W."),
+	};
+	static const TCHAR* PenthouseCuts[] = {
+		TEXT("The director's cake. Someone saved the director a slice. You cut another anyway."),
+		TEXT("It's still cold. It was always going to be here, waiting for whoever sat in that chair."),
+		TEXT("Another slice. Up here, nobody counts."),
+	};
+	const int32 Pick = FMath::Min(Cuts, bPenthouse ? 2 : 3);
+	(void)N;
+	ShowSubtitle(TEXT(""), bPenthouse ? PenthouseCuts[Pick] : PartyCuts[Pick], 3.5f);
+	QueueSubtitle(TEXT(""), TEXT("(E: eat it.)"));
+}
+
+void UTakeGrabComponent::EatSlice(AActor* Slice)
+{
+	if (!Slice) { return; }
+	PlaySfx(TEXT("sfx_eat_crunch"), Slice->GetActorLocation(), 0.7f);
+	if (UTakeGameInstance* CakeGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { CakeGI->AddEnergy(25.f); }
+	if (ATakeFearDirector* CakeFear = FindFearDirector()) { if (CakeFear->Fear > 0.f && !bRefused) { CakeFear->StartCreep(FMath::Max(0.f, CakeFear->TargetFear - 0.1f), 2.f); } }
+	static const TCHAR* Bites[] = {
+		TEXT("Mint frosting. It tastes like the first day of something."),
+		TEXT("Exactly as good as the first one. Exactly."),
+		TEXT("You've had a lot of cake, Employee {EMP}. HR has been notified. HR has also had cake."),
+		TEXT("It's the best cake you've ever had. It's the only cake you've ever had."),
+	};
+	ShowSubtitle(TEXT(""), TakeText::Fill(this, Bites[FMath::Min(SlicesEaten, int32(UE_ARRAY_COUNT(Bites)) - 1)]), 3.5f);
+	++SlicesEaten;
+	bAteCake = true;
+	Slice->Destroy();   // the plate stays, with crumbs
 }
 
 void UTakeGrabComponent::ShowScreenPeek(UTexture2D* Tex, const FString& Title, const FString& Caption)
@@ -389,12 +466,21 @@ void UTakeGrabComponent::BuildPenthouse()
 	Box(P + FVector(-PW * 0.5f, 0.f, 55.f), FVector(8.f, PD, 110.f), Mat(TEXT("/Game/Props/Meshes/M_Glass.M_Glass")));
 	Box(P + FVector(-PW * 0.5f, 0.f, 112.f), FVector(10.f, PD, 6.f), Steel);
 	Box(P + FVector(PW * 0.15f, 0.f, PH + 5.f), FVector(PW * 0.7f, PD, 10.f), Mat(TEXT("/Game/Fear/M_CeilingPanel.M_CeilingPanel")), false);
+	// Past the open west side: the city at dusk (Sol's ART-014), a big flat plate far enough out that it reads as distance
+	if (UMaterialInterface* Sky = Mat(TEXT("/Game/Ending/MI_PenthouseSkyline.MI_PenthouseSkyline")))
+	{
+		SpawnSetPiece(Cube, P + FVector(-PW * 0.5f - 2600.f, 0.f, 350.f), FRotator(0.f, -90.f, 0.f), FVector(64.f, 0.1f, 16.f), Sky, false);   // (its +Y face, the unmirrored one, toward you)
+	}
 	// A rug under the chair
 	Box(P + FVector(0.f, 40.f, 1.f), FVector(520.f, 380.f, 2.f), Mat(TEXT("/Game/Props/Materials/MI_Rug.MI_Rug")), false);
 
 	// The monitor wall: two rows of three, the dailies. Bottom middle is live (set up when you sit).
-	static const TCHAR* Feeds[] = { TEXT("MI_Screen_CCTV"), TEXT("MI_Screen_Call"), TEXT("MI_Screen_Chart"),
-	                                TEXT("MI_Screen_Fear"), nullptr, TEXT("MI_Screen_Promo") };
+	const bool bSolDailies = Feed(TEXT("MI_Dailies_Desk")) != nullptr && Feed(TEXT("MI_Dailies_Desk"))->GetPathName().StartsWith(TEXT("/Game/Ending"));
+	static const TCHAR* OfficeFeeds[] = { TEXT("MI_Screen_CCTV"), TEXT("MI_Screen_Call"), TEXT("MI_Screen_Chart"),
+	                                      TEXT("MI_Screen_Fear"), nullptr, TEXT("MI_Screen_Promo") };
+	static const TCHAR* SolFeeds[] = { TEXT("MI_Dailies_Desk"), TEXT("MI_Dailies_Conference"), TEXT("MI_Dailies_CorridorB"),
+	                                   TEXT("MI_Dailies_Ward"), nullptr, TEXT("MI_Screen_CCTV") };
+	const TCHAR* const* Feeds = bSolDailies ? SolFeeds : OfficeFeeds;
 	for (int32 I = 0; I < 6; ++I)
 	{
 		const int32 Col = I % 3, Row = I / 3;
@@ -406,7 +492,7 @@ void UTakeGrabComponent::BuildPenthouse()
 		if (Slot == INDEX_NONE) { continue; }
 		if (Feeds[I])
 		{
-			if (UMaterialInterface* Feed = Mat(*FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), Feeds[I], Feeds[I]))) { SM->SetMaterial(Slot, Feed); }
+			if (UMaterialInterface* FeedMat = Feed(Feeds[I])) { SM->SetMaterial(Slot, FeedMat); }
 		}
 		else { LiveMonitor = SM; LiveMonitorSlot = Slot; continue; }
 		FScreen Daily;   // the others keep cutting between takes (TickDailies)
@@ -439,12 +525,11 @@ void UTakeGrabComponent::BuildPenthouse()
 	// After the party: the cake (half gone), cups, a banner, a sofa nobody sat on
 	const FVector Table = P + FVector(430.f, 300.f, 0.f);
 	Box(Table + FVector(0.f, 0.f, 37.f), FVector(160.f, 90.f, 74.f), Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite")));
-	SpawnSetPiece(Cyl, Table + FVector(-20.f, 0.f, 74.f + 9.f), FRotator::ZeroRotator, FVector(0.5f, 0.5f, 0.18f), Frosting, false);    // bottom tier
-	SpawnSetPiece(Cyl, Table + FVector(-20.f, 0.f, 74.f + 25.f), FRotator::ZeroRotator, FVector(0.32f, 0.32f, 0.14f), Fabric, false);  // top tier (mint)
-	Box(Table + FVector(26.f, 0.f, 74.f + 9.f), FVector(10.f, 30.f, 16.f), Mat(TEXT("/Game/Props/Meshes/M_Bread.M_Bread")), false);  // the cut: you can see the sponge
-	// (the cake's lettering comes with Sol's cake top, ART-011)
-	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(55.f, -25.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
-	SpawnSetPiece(Prop(TEXT("SM_SodaCan")), Table + FVector(60.f, 25.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
+	// The director's cake: three slices already gone. You can cut another (playtest: "I should be able to cut another cake slice")
+	SpawnCake(Table + FVector(-25.f, 0.f, 74.f), 180.f, 27.f, 15.f, 3, TEXT("Cake"));
+	(void)Frosting; (void)Fabric;
+	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(-68.f, -30.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
+	SpawnSetPiece(Prop(TEXT("SM_SodaCan")), Table + FVector(-68.f, 30.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 	SpawnSetPiece(Prop(TEXT("SM_LobbySofa")), P + FVector(430.f, -250.f, 0.f), FRotator(0.f, -90.f, 0.f), FVector(1.f), nullptr, true);
 	SpawnSetPiece(Prop(TEXT("SM_PlantTall")), P + FVector(640.f, -440.f, 0.f), FRotator::ZeroRotator, FVector(1.f), nullptr, true);
 	SpawnSetPiece(Prop(TEXT("SM_PlantTall")), P + FVector(640.f, 440.f, 0.f), FRotator::ZeroRotator, FVector(1.f), nullptr, true);
@@ -515,15 +600,16 @@ void UTakeGrabComponent::BuildPenthouse()
 
 void UTakeGrabComponent::TickDailies(float DeltaTime)
 {
-	static const TCHAR* Feeds[] = { TEXT("MI_Screen_CCTV"), TEXT("MI_Screen_Call"), TEXT("MI_Screen_Chart"), TEXT("MI_Screen_Fear"),
-	                                TEXT("MI_Screen_Promo"), TEXT("MI_Screen_Glyphs"), TEXT("MI_Screen_Inbox"), TEXT("MI_Screen_Code"), TEXT("MI_Screen_Saver") };
+	static const TCHAR* Feeds[] = { TEXT("MI_Dailies_Desk"), TEXT("MI_Dailies_Conference"), TEXT("MI_Dailies_CorridorB"), TEXT("MI_Dailies_Ward"),
+	                                TEXT("MI_Dailies_Desk"), TEXT("MI_Dailies_CorridorB"),   // (Sol's takes come up most)
+	                                TEXT("MI_Screen_CCTV"), TEXT("MI_Screen_Call"), TEXT("MI_Screen_Fear"), TEXT("MI_Screen_Glyphs"), TEXT("MI_Screen_Code") };
 	for (FScreen& S : Dailies)
 	{
 		UStaticMeshComponent* SM = S.Comp.Get();
 		if (!SM || (S.Next -= DeltaTime) > 0.f) { continue; }
 		S.Next = FMath::FRandRange(1.2f, 3.5f);
 		const TCHAR* Pick = Feeds[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Feeds)) - 1)];
-		if (UMaterialInterface* Feed = Mat(*FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), Pick, Pick))) { SM->SetMaterial(S.Slot, Feed); }
+		if (UMaterialInterface* FeedMat = Feed(Pick)) { SM->SetMaterial(S.Slot, FeedMat); }
 	}
 }
 
@@ -544,6 +630,12 @@ void UTakeGrabComponent::GoToPenthouse()
 	SubQueueWho.Reset();
 	SubtitleLeft = 0.f;
 	TeleportPlayer(PenthouseArrival, -160.f);
+	// Playtest: "happy music in penthouse please" (the party's cue carries on up here, or starts if it had stopped)
+	if (!(MusicAudio && MusicAudio->IsPlaying() && !bMusicFading && MusicTrack == TEXT("mus_halcyon_positive")))
+	{
+		PlayMusicCue(TEXT("the director's floor"), TEXT("mus_halcyon_positive"), true);
+	}
+	bMusicLoop = true;
 	ShowTimeCard(TEXT("??:??"), TEXT("SCENE 7  \u00B7  C"));
 	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { GI->SetObjective(TEXT("The director's chair.")); }
 	QueueSubtitle(TEXT(""), TEXT("(The doors open on the top floor. The party happened up here too. Everyone's gone.)"));

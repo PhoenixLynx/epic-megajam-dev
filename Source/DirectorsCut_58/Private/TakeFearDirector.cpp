@@ -17,6 +17,8 @@
 #include "GameFramework/Pawn.h"
 #include "TakeGameInstance.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Sound/SoundBase.h"
+#include "GameFramework/PlayerController.h"
 
 ATakeFearDirector::ATakeFearDirector()
 {
@@ -112,8 +114,44 @@ bool ATakeFearDirector::LoopAllowed(float& OutNeed) const
 	return GI->Beat == ETakeBeat::Corridor;
 }
 
+bool ATakeFearDirector::IsGated() const
+{
+	if (bGateOverride || !GetWorld() || !GetWorld()->IsGameWorld()) { return false; }
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	return GI && GI->Beat == ETakeBeat::Morning && !GI->bTrainingComplete;
+}
+
+float ATakeFearDirector::IntroPulse() const
+{
+	if (IntroLeft <= 0.f) { return 0.f; }
+	return FMath::Sin(PI * (1.f - IntroLeft / IntroSeconds));
+}
+
+void ATakeFearDirector::TickIntro(float DeltaSeconds)
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (IntroLeft <= 0.f)
+	{
+		if (PC && !ShakeOffset.IsNearlyZero()) { PC->SetControlRotation(PC->GetControlRotation() - ShakeOffset); }
+		ShakeOffset = FRotator::ZeroRotator;
+		return;
+	}
+	IntroLeft = FMath::Max(0.f, IntroLeft - DeltaSeconds);
+	// A small shiver (well under a degree), strongest in the middle; the offset is put back exactly at the end
+	const float E = IntroPulse() * 0.55f;
+	const FRotator Want(E * (0.6f * FMath::Sin(FlickerClock * 41.f) + 0.4f * FMath::Sin(FlickerClock * 17.f + 2.f)),
+	                    E * (0.6f * FMath::Sin(FlickerClock * 33.f + 1.f) + 0.4f * FMath::Sin(FlickerClock * 13.f)), 0.f);
+	if (PC) { PC->SetControlRotation(PC->GetControlRotation() + (Want - ShakeOffset)); }
+	ShakeOffset = Want;
+}
+
 void ATakeFearDirector::StartCreep(float Target, float Seconds)
 {
+	if (Target > TargetFear + 0.01f && IsGated())
+	{
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Fear held back (%.2f): Compliance Training isn't done yet"), Target);
+		return;
+	}
 	if (Target > TargetFear + 0.01f)
 	{
 		if (const UWorld* W = GetWorld()) { LastScareTime = W->GetTimeSeconds(); }
@@ -149,6 +187,16 @@ void ATakeFearDirector::Tick(float DeltaSeconds)
 			CreepSpeed = FMath::Max(CreepSpeed, DecayPerSecond);
 		}
 		Fear = FMath::FInterpConstantTo(Fear, TargetFear, DeltaSeconds, CreepSpeed);
+		// The first time it rises this run (not inside the scripted Act 3 sequences): introduce it
+		if (!bIntroDone && Fear > 0.03f && TargetFear > Fear && !bSequence && DecayGI && DecayGI->CurrentAct() < 3)
+		{
+			bIntroDone = true;
+			IntroLeft = IntroSeconds;
+			FlickerBurst(1.8f);
+			if (USoundBase* Hit = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/Placeholder/sfx_fear_hit.sfx_fear_hit"))) { UGameplayStatics::PlaySound2D(this, Hit, 0.55f); }
+			UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Fear: the first time (flicker, the air changes, a shiver)"));
+		}
+		TickIntro(DeltaSeconds);
 		BurstLeft = FMath::Max(0.f, BurstLeft - DeltaSeconds);
 		const bool bHunting = bForceRed || (Stalker && !Stalker->IsHidden());
 		RedAlert = FMath::FInterpConstantTo(RedAlert, bHunting ? 1.f : 0.f, DeltaSeconds, bHunting ? 1.5f : 0.5f);
@@ -178,24 +226,25 @@ void ATakeFearDirector::UpdateStage()
 void ATakeFearDirector::ApplyFear()
 {
 	const float F = FMath::Clamp(Fear, 0.f, 1.f);
+	const float Look = FMath::Max(F, IntroPulse() * 0.6f);   // the intro: for a moment the room looks much worse than it is
 	LetterboxAmount = FMath::GetMappedRangeValueClamped(FVector2D(0.75f, 1.f), FVector2D(0.f, 1.f), F);
 
 	if (FearCollection && GetWorld())
 	{
-		UKismetMaterialLibrary::SetScalarParameterValue(this, FearCollection, TEXT("Fear"), F);
+		UKismetMaterialLibrary::SetScalarParameterValue(this, FearCollection, TEXT("Fear"), Look);
 	}
 	if (FearVolume)
 	{
 		FPostProcessSettings& S = FearVolume->Settings;
-		const float Sat = FMath::Lerp(1.f, MinSaturation, F);
+		const float Sat = FMath::Lerp(1.f, MinSaturation, Look);
 		S.bOverride_ColorSaturation = true;   S.ColorSaturation = FVector4(Sat, Sat, Sat, 1.f);
-		S.bOverride_VignetteIntensity = true; S.VignetteIntensity = FMath::Lerp(0.4f, MaxVignette, F);
-		S.bOverride_FilmGrainIntensity = true; S.FilmGrainIntensity = FMath::Lerp(0.f, MaxGrain, F);
-		S.bOverride_SceneColorTint = true;    S.SceneColorTint = FMath::Lerp(FLinearColor::White, FearTint, F);
+		S.bOverride_VignetteIntensity = true; S.VignetteIntensity = FMath::Lerp(0.4f, MaxVignette, Look);
+		S.bOverride_FilmGrainIntensity = true; S.FilmGrainIntensity = FMath::Lerp(0.f, MaxGrain, Look);
+		S.bOverride_SceneColorTint = true;    S.SceneColorTint = FMath::Lerp(FLinearColor::White, FearTint, Look);
 	}
 	if (Fog && Fog->GetComponent())
 	{
-		Fog->GetComponent()->SetFogDensity(FMath::Lerp(FogDensityCalm, FogDensityFear, F));
+		Fog->GetComponent()->SetFogDensity(FMath::Lerp(FogDensityCalm, FogDensityFear, Look));
 	}
 	// Lights only change during Play, so editor previews never save dimmed intensities into the level.
 	const bool bGame = GetWorld() && GetWorld()->IsGameWorld();

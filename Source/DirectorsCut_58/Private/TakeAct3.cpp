@@ -12,6 +12,8 @@
 #include "TakeFearDirector.h"
 #include "TakeStalker.h"
 #include "TakeTypes.h"
+#include "TakeCake.h"
+#include "Materials/MaterialInterface.h"
 #include "TakeCoworker.h"
 #include "TakeWidgets.h"
 #include "TakeAct3Widgets.h"
@@ -321,6 +323,30 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		}
 	}
 
+	// Overtime: the cake waits on the kitchen island, "for later" (playtest: "if it says cake is for later, then during
+	// the overtime scene, cake should be on counter with snarky comments you can't eat it yet"). At the party it moves to the table.
+	if (!bOvertimeCakeDone && GI->CurrentAct() >= 3 && GI->Beat != ETakeBeat::Wrap && !bLobbyPartyBuilt)
+	{
+		bOvertimeCakeDone = true;
+		const FVector IslandTop(3355.f, 830.f, 90.5f);   // the east end of the island (top 90 cm)
+		OvertimeCake = SpawnCake(IslandTop, 0.f, 24.f, 14.f, 0, TEXT("CakeLater"));
+		// the sticky note, stuck to the side: FOR LATER
+		SpawnSetPiece(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")), IslandTop + FVector(-24.6f, 0.f, 8.f), FRotator(0.f, 0.f, 4.f),
+			FVector(0.002f, 0.075f, 0.075f), LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Yellow.M_Yellow")), false);
+	}
+
+	// Playtest: straight to an ending (F5 / F6 / TakeEnding): once the party is there, answer for you
+	if (DevEndingChoice >= 0 && (EndStep == 2 || EndStep == 30 || EndStep == 3))
+	{
+		const int32 Choice = DevEndingChoice;
+		DevEndingChoice = -1;
+		SubQueue.Reset();
+		SubQueueWho.Reset();
+		SubtitleLeft = 0.f;
+		OnEndingChoice(Choice == 1 ? 0 : 1);   // (OnEndingChoice: 0 = YES)
+	}
+	if (bDevEndingFast && EndStep == 11) { GoToPenthouse(); }   // YES: skip the walk to the elevator
+
 	// 3.0: the afternoon is done and the clocks have stopped -> overtime (or right away for a dev jump)
 	if (GI->Beat == ETakeBeat::Lunch && GI->bClocksFrozen && GI->Act2TasksDone())
 	{
@@ -480,6 +506,8 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			EndStep = 1;
 			TeleportPlayer(LobbyParty, 90.f);   // facing the party (the elevator is behind you, the way stays clear)
 			BuildLobbyParty();
+			PlayMusicCue(TEXT("the wrap party"), TEXT("mus_halcyon_positive"), true);   // playtest: "play happy music during this scene"
+			bMusicLoop = true;
 			if (ATakeFearDirector* PartyLights = FindFearDirector()) { PartyLights->LightScale = 0.5f; }   // house lights down: a little too dim for a party
 			if (APawn* Pawn = Cast<APawn>(GetOwner()))   // you can mingle now (a few steps; see the leash below)
 			{
@@ -754,4 +782,22 @@ void UTakeGrabComponent::OnTitleChoice(int32 Choice)
 		return;
 	}
 	StartSlate(false);   // TAKE 1 / 9:00 AM / SCENE 1 - MORNING
+}
+
+// ------------------------------------------------------------------ playtest: the two endings, now
+void UTakeGrabComponent::DevEnding(int32 Choice)
+{
+	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (!GI || !GI->bTitleDone) { return; }
+	if (EndT >= 0.f && EndStep != 0 && EndStep != 1 && EndStep != 2 && EndStep != 30 && EndStep != 3)
+	{
+		ShowSubtitle(TEXT(""), TEXT("(Playtest: the ending is already under way. Play Again from the credits, then F5 / F6.)"), 3.f);
+		return;
+	}
+	DevEndingChoice = Choice == 0 ? 0 : 1;
+	bDevEndingFast = true;
+	GI->bTrainingComplete = GI->bReadEmail = GI->bGotCoffee = GI->bMetReceptionist = true;   // (nothing from the morning gets in the way)
+	if (EndT < 0.f) { StartEnding(); }
+	ShowSubtitle(TEXT(""), Choice == 0 ? TEXT("(Playtest: straight to NO. The set comes down.)") : TEXT("(Playtest: straight to YES. The director's floor.)"), 2.5f);
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Playtest: ending %s"), Choice == 0 ? TEXT("NO") : TEXT("YES"));
 }

@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "TakeGrabComponent.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 #include "TakeCoworker.h"
 #include "EngineUtils.h"
 #include "DirectorsCut_58.h"
@@ -57,7 +58,15 @@ void UTakeGameInstance::TakeFear(float Value)
 
 void UTakeGameInstance::TakeCreep(float Target, float Seconds)
 {
-	for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { It->StartCreep(Target, Seconds); }
+	for (TActorIterator<ATakeFearDirector> It(GetWorld()); It; ++It) { It->bGateOverride = true; It->StartCreep(Target, Seconds); It->bGateOverride = false; }
+}
+
+void UTakeGameInstance::TakeEnding(int32 Choice)
+{
+	if (APawn* Pawn = GetFirstLocalPlayerController() ? GetFirstLocalPlayerController()->GetPawn() : nullptr)
+	{
+		if (UTakeGrabComponent* Grab = Pawn->FindComponentByClass<UTakeGrabComponent>()) { Grab->DevEnding(Choice); }
+	}
 }
 
 void UTakeGameInstance::TakeSoulBits(int32 Value) { SetSoulBits(Value); }

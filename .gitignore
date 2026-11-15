@@ -56,3 +56,6 @@ SourceArt/Ableton/**/Backup/
 # ---- Python ----
 __pycache__/
 *.pyc
+
+# Sol's ending art: the source of truth is epicjam-creative-assets (LFS uploads from the cloud session are blocked)
+SourceArt/Textures/Ending/*.png

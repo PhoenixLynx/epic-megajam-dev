@@ -143,6 +143,7 @@ private:
 	bool PlayerCanSee(const APawn* Player) const;
 	void Animate(float DeltaSeconds, bool bMoving);
 	float WatchReleaseLeft = 0.f;   // seconds Fear must stay low before staring coworkers go back to work
+	FVector StareSpot = FVector::ZeroVector;   // where they stopped when the staring began: they stay exactly there
 	// Faces: calm normally, the Fear face while staring or just after being hit in Fear
 	UPROPERTY() TObjectPtr<class UMaterialInterface> FaceCalm;
 	UPROPERTY() TObjectPtr<class UMaterialInterface> FaceFear;
