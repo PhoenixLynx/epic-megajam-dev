@@ -149,10 +149,11 @@ put("SM_ExitSign", 2100, 1688, 270, 0)
 # A little more "inviting": two armchairs, plants, a magazine, a rug, a promo screen (BOXES below)
 put("SM_MeetingChair", 1700, 1590, 0, 0)
 put("SM_MeetingChair", 1830, 1590, 0, 0)
-put("SM_PlantDesk", 1760, 1430, 44)
-for i, (x, y, yaw) in enumerate(((1778, 1452, 15), (1742, 1408, -20), (1735, 1448, 40))):   # on the table (radius 45)
-    put("SM_Brochure", x, y, 46, yaw, [f"SlotMI=M_SignFace:{'MI_Brochure' if i < 2 else 'MI_Magazine'}"])
-put("SM_Monitor", 2235, 1285, 109, 0, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])   # reception sees everything
+put("SM_PlantDesk", 1742, 1432, 44)
+for i, (yaw, dz) in enumerate(((15, 0.0), (-8, 1.2), (28, 2.4))):   # a little stack on the table, clear of the plant (they slid off)
+    put("SM_Brochure", 1780, 1436, 46 + dz, yaw, [f"SlotMI=M_SignFace:{'MI_Brochure' if i < 2 else 'MI_Magazine'}"])
+put("SM_Monitor", 2235, 1290, 109, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])   # reception sees everything (faces the receptionist)
+put("SM_Keyboard", 2210, 1328, 109, 180, ["DeskFixed"])
 put("SM_PlantDesk", 2280, 1300, 109)
 put("SM_PlantTall", 1440, 1650)
 put("SM_WaterCooler", 2740, 1260, 0, -90, ["Use=Cooler"])
@@ -222,7 +223,7 @@ for x in (600, 800, 1000):
     put("SM_MeetingChair", x, 1240, 0, 0)
 put("SM_DirectorsChair", 1150, 1100, 0, 90)          # at the head of the table, empty
 TABLE_Z = 75
-for (x, y, yaw) in ((600, 1030, 180), (800, 1030, 180), (1000, 1170, 0)):
+for (x, y, yaw) in ((600, 1030, 0), (800, 1030, 0), (1000, 1170, 180)):   # screens toward the chairs (playtest: they faced away)
     put("SM_Laptop", x, y, TABLE_Z, yaw, ["CallScreen"])          # E = join the 12:30 call / 1:00 meeting (Act 2)
 for (x, y) in ((660, 1060), (950, 1080), (720, 1150), (1060, 1130)):
     put("SM_Mug", x, y, TABLE_Z, rnd.uniform(0, 360))
@@ -312,6 +313,10 @@ BOXES += [
     ("ScriptNotes", 2120, 1290, 109.6, 22, 30, 0.4, PM + "MI_ScriptNotes", ["Inspectable"]),
     # Kitchen: a bulletin board (west wall) and morale posters
     ("KitchenBoard", 2812, 1300, 160, 1, 150, 100, PM + "MI_KitchenBoard", ["Inspectable"]),
+    ("PartyFlier", 2813.5, 1345, 178, 1, 30, 40, "/Game/Ending/MI_PartyFlier", ["Act2Reveal", "Inspectable"]),   # pinned up after lunch
+    # the blank north wall of the open office (behind your desk's row): a corporate print, framed
+    ("OfficeArt_Frame", 1100, 1711.5, 175, 420, 3, 115, "/Game/Props/Meshes/M_MetalDark", []),
+    ("OfficeArt", 1100, 1713.5, 175, 400, 1, 100, "/Game/Ending/MI_OfficeArt", ["Inspectable"]),
     ("Poster_Smile_Kitchen", 3600, 1488, 165, 60, 1, 85, PM + "MI_Poster_Smile", ["Inspectable"]),
     ("Poster_Energy_Kitchen", 2812, 700, 165, 1, 60, 85, PM + "MI_Poster_Energy", ["Inspectable"]),
     # Lobby: rug, magazine, promo screen on the west wall

@@ -106,11 +106,14 @@ bool ATakeCoworker::IsBlackCoworker() const
 	for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
 	{
 		if (*It == this || !It->NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase)) { continue; }
+		// counted within the same kind of job (playtest: "make sure the diversity is mixed between different npc actions"):
+		// people working at desks, people walking about, people standing, each get their own 30%
+		if (It->bSitsAtDesk != bSitsAtDesk || It->bWanders != bWanders) { continue; }
 		const int32 Theirs = Key(*It);
 		if (Theirs < Mine || (Theirs == Mine && It->GetName() < GetName())) { ++Rank; }
 	}
 	// 30%: in each run of ten neighbours, three are Black, at shuffled places (never two next to each other)
-	static const bool Pattern[10] = { false, true, false, false, true, false, false, false, true, false };
+	static const bool Pattern[10] = { true, false, false, true, false, false, false, true, false, false };   // (the first of each group, so even a small group has one)
 	return Pattern[Rank % 10];
 }
 

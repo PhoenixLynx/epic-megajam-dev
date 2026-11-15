@@ -12,6 +12,7 @@ make_lobby_textures.py: TAKE 4471. Lobby, elevator, security desk, lunch (Saturd
 Usage: python make_lobby_textures.py   (playwright + Chrome; Poppins, Caveat in ~/.fonts)
 """
 import os
+import sys
 
 from playwright.sync_api import sync_playwright
 
@@ -68,12 +69,10 @@ today      <span style="color:#b02a2a">sign here &rarr;</span></div>"""),
 <div style="position:absolute;inset:0;background:repeating-linear-gradient(transparent 0 3px,rgba(0,0,0,.25) 3px 4px)"></div>"""),
     "T_Screen_Promo": (1024, 582, f"""
 <div style="position:absolute;inset:0;background:linear-gradient(135deg,#eaf6f3,#bfe7df)"></div>
-<div style="position:absolute;left:70px;top:70px">{LOGO.format(w=200, h=120)}</div>
-<div style="position:absolute;left:70px;top:210px;font:800 76px Poppins;color:{INK}">HALCYON</div>
-<div style="position:absolute;left:74px;top:310px;font:500 36px Poppins;color:{INK}">Your energy. Our future.</div>
-<div style="position:absolute;left:74px;top:380px;font:500 24px Poppins;color:#5a6c72">Now hiring: 4472.</div>
-<div style="position:absolute;right:80px;top:120px;width:300px;height:340px;border-radius:150px 150px 20px 20px;background:{MINT}"></div>
-<div style="position:absolute;right:155px;top:60px;width:150px;height:170px;border-radius:50%;background:#e6e1d8"></div>"""),
+<div style="position:absolute;left:0;right:0;top:70px;text-align:center">{LOGO.format(w=230, h=138)}</div>
+<div style="position:absolute;left:0;right:0;top:225px;font:800 96px Poppins;color:{INK};text-align:center;letter-spacing:10px">HALCYON</div>
+<div style="position:absolute;left:0;right:0;top:350px;font:500 40px Poppins;color:{INK};text-align:center">Your energy. Our future.</div>
+<div style="position:absolute;left:0;right:0;top:425px;font:500 26px Poppins;color:#5a6c72;text-align:center">Now hiring: 4472.</div>"""),   # (no figure: just the mark, the name, the line)
     "T_Magazine": (700, 900, f"""
 <div style="position:absolute;inset:0;background:{MINT}"></div>
 <div style="position:absolute;left:40px;top:30px;font:800 74px Poppins;color:#fff;letter-spacing:2px">HALCYON</div>
@@ -176,7 +175,10 @@ PAGES.update({
 if __name__ == "__main__":
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=os.environ.get("CHROME", "/usr/bin/google-chrome"))
+        only = sys.argv[1:]   # optional: just these names
         for name, (w, h, body) in PAGES.items():
+            if only and name not in only:
+                continue
             pg = b.new_page(viewport={"width": w, "height": h})
             pg.set_content(f"<html><body style='margin:0;width:{w}px;height:{h}px;position:relative;overflow:hidden'>{body}</body></html>")
             pg.wait_for_timeout(300)

@@ -310,7 +310,37 @@ def skyline():
     return (W, H, svg_page(W, H, "".join(g)))
 
 
+# ------------------------------------------------------------------ the party flier (kitchen board, after lunch)
+def flier():
+    return (600, 800, f'''<div style="position:relative;width:600px;height:800px;background:{PAPER};font-family:Poppins,Inter,sans-serif;overflow:hidden">
+      <div style="position:absolute;left:0;right:0;top:0;height:250px;background:{MINT}"></div>
+      <svg width="600" height="60" style="position:absolute;left:0;top:14px">{"".join(f'<polygon points="{20 + i * 58},0 {68 + i * 58},0 {44 + i * 58},40" fill="{["#ffffff", "#e3b65a", MINT_D][i % 3]}"/>' for i in range(10))}</svg>
+      <div style="position:absolute;left:0;right:0;top:78px;text-align:center">{mark("#ffffff", 120)}</div>
+      <div style="position:absolute;left:0;right:0;top:270px;font:800 76px/1 Poppins;color:{INK};text-align:center">WRAP<br>PARTY!</div>
+      <div style="position:absolute;left:0;right:0;top:450px;font:600 34px Poppins;color:{INK};text-align:center">Tonight &#183; The Lobby</div>
+      <div style="position:absolute;left:0;right:0;top:505px;font:600 30px Poppins;color:{MINT_D};text-align:center">Doors at 2:14</div>
+      <div style="position:absolute;left:60px;right:60px;top:575px;font:500 24px/1.45 Inter;color:#5a6c72;text-align:center">Cake. Music. Speeches.<br>Attendance is celebration.<br>Celebration is mandatory.</div>
+      <div style="position:absolute;left:0;right:0;bottom:34px;font:38px Caveat;color:#b02a2a;transform:rotate(-3deg)">(you're the guest of honour)</div></div>''')
+
+
+# ------------------------------------------------------------------ office art: a corporate print for the blank wall
+def officeart():
+    W, H = 1600, 400
+    g = [f'<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9f5f2"/><stop offset="0.7" stop-color="{PINK}"/><stop offset="1" stop-color="#f6d6c4"/></linearGradient></defs>',
+         f'<rect width="{W}" height="{H}" fill="url(#sk)"/>',
+         f'<circle cx="{W / 2}" cy="300" r="150" fill="#ffffff" opacity="0.85"/>',
+         f'<path d="M{W / 2 - 150} 300 A150 150 0 0 1 {W / 2 + 150} 300 Z" fill="{MINT}"/>']
+    for i, a in enumerate([math.pi * k / 10 for k in range(1, 10)]):
+        g.append(f'<line x1="{W / 2 + 175 * math.cos(a):.0f}" y1="{300 - 175 * math.sin(a):.0f}" x2="{W / 2 + 230 * math.cos(a):.0f}" y2="{300 - 230 * math.sin(a):.0f}" stroke="{MINT}" stroke-width="10" stroke-linecap="round"/>')
+    for k, (y, c) in enumerate([(300, MINT_D), (330, MINT), (355, "#a9e6da"), (378, "#cdeee6")]):
+        g.append(f'<rect x="0" y="{y}" width="{W}" height="{24 - k * 4}" fill="{c}"/>')
+    g.append(f'<text x="{W - 40}" y="{H - 24}" text-anchor="end" font-size="22" font-weight="600" letter-spacing="6" fill="{INK}" opacity="0.6">SUNRISE No. 4471</text>')
+    return (W, H, svg_page(W, H, "".join(g)))
+
+
 PAGES = {
+    "T_PartyFlier": flier,
+    "T_OfficeArt": officeart,
     "T_TitleKeyArt": title,
     "T_WrapBanner": banner,
     "T_CakeTop": caketop,

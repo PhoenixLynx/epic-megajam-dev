@@ -44,7 +44,7 @@ parent = lib.load_asset("/Game/Props/Materials/M_ScreenTexture")
 if not parent:
     raise RuntimeError("[TAKE 4471] /Game/Props/Materials/M_ScreenTexture is missing")
 painted = lib.load_asset("/Game/Props/Materials/M_FaceTexture")   # masked, lit, no glow (run import_jam_assets.py first)
-PAINTED = ("T_CakeTop",)   # things that are painted, not screens
+PAINTED = ("T_CakeTop", "T_PartyFlier", "T_OfficeArt")   # things that are painted or printed, not screens
 for f in files:
     name = os.path.splitext(os.path.basename(f))[0]          # T_WrapBanner
     tex = lib.load_asset(f"{DEST}/{name}")

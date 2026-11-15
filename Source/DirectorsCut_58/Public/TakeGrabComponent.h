@@ -433,6 +433,19 @@ private:
 	int32 CakeLaterTries = 0;
 	int32 SlicesEaten = 0;
 	bool bPartyCakeCut = false;
+	// Coworkers talking to each other (TakeGrabComponent.cpp): a short exchange between two standing near each other, near you
+	TWeakObjectPtr<class ATakeCoworker> ChatA, ChatB;
+	TArray<FString> ChatLines;
+	int32 ChatIdx = 0;
+	float ChatNext = 0.f;      // seconds to the next line (or, between chats, to the next look around)
+	int32 ChatsHeard = 0;
+	void TickChats(float DeltaTime);
+	// Zoom: hold Z or the middle mouse button (the FOV eases in and out)
+	bool bZooming = false;
+	float BaseFOV = -1.f;
+	void ZoomIn() { bZooming = true; }
+	void ZoomOut() { bZooming = false; }
+	void TickZoom(float DeltaTime);
 	TArray<struct FHeldCake> HeldCakes;   // slices in people's hands at the party (they take bites)
 	void TickHeldCakes(float DeltaTime);
 	bool bMusicLoop = false;         // the party and the director's floor: the happy cue keeps playing

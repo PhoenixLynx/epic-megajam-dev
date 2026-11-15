@@ -31,6 +31,7 @@
 #include "Engine/Texture2D.h"
 #include "Materials/MaterialInterface.h"
 #include "Engine/StaticMeshActor.h"
+#include "Camera/CameraComponent.h"
 
 UTakeGrabComponent::UTakeGrabComponent()
 {
@@ -143,6 +144,10 @@ void UTakeGrabComponent::BindKeys()
 	IC->BindKey(EKeys::P, IE_Pressed, this, &UTakeGrabComponent::TogglePause);
 	IC->BindKey(EKeys::Escape, IE_Pressed, this, &UTakeGrabComponent::TogglePause);
 	IC->BindKey(EKeys::N, IE_Pressed, this, &UTakeGrabComponent::OpenNotes);   // playtest note, any time
+	IC->BindKey(EKeys::Z, IE_Pressed, this, &UTakeGrabComponent::ZoomIn);       // hold Z: look closer (playtest: "add a zoom in feature")
+	IC->BindKey(EKeys::Z, IE_Released, this, &UTakeGrabComponent::ZoomOut);
+	IC->BindKey(EKeys::MiddleMouseButton, IE_Pressed, this, &UTakeGrabComponent::ZoomIn);
+	IC->BindKey(EKeys::MiddleMouseButton, IE_Released, this, &UTakeGrabComponent::ZoomOut);
 	IC->BindKey(EKeys::F9, IE_Pressed, this, &UTakeGrabComponent::TakeScreenshot);   // -> Saved/Screenshots   // in the editor Esc stops Play: use P
 	if (bDebugFearKeys)
 	{
@@ -1098,6 +1103,11 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		{ TEXT("Mirror"), TEXT("THE MIRROR"), TEXT("You, in a mint suit. Your reflection blinks a moment after you do.\nThere are fingerprints on the glass. On the inside."), 0 },
 		{ TEXT("Chairman"), TEXT("THE CHAIRMAN"), TEXT("Founder. Visionary. Always just out of frame.\nThe plaque says he's proud of you. It doesn't say for what."), 0 },
 		{ TEXT("CallSheet"), TEXT("CALL SHEET"), TEXT("Today's date. A shooting schedule for an office.\nOne line is highlighted: EMPLOYEE 4471. You."), 0 },
+		{ TEXT("Printout_1"), TEXT("FROM THE PRINTER"), TEXT("A memo you didn't send: \"Continuity is everyone's responsibility.\"\nIt's signed by you."), 0 },
+		{ TEXT("Printout_2"), TEXT("PRINT JOB 4470"), TEXT("Queued a long time ago. The page is blank except for a row of squares."), 0 },
+		{ TEXT("Printout_3"), TEXT("YOUR PERFORMANCE"), TEXT("\"YOUR PERFORMANCE: 99%. Please give the remaining 1%.\""), 0 },
+		{ TEXT("PartyFlier"), TEXT("WRAP PARTY!"), TEXT("Tonight, the lobby. Doors at 2:14. Cake. Attendance is celebration.\nSomeone has written underneath: you're the guest of honour."), 0 },
+		{ TEXT("OfficeArt"), TEXT("SUNRISE No. 4471"), TEXT("Corporate art. A sun, rising over a horizon of mint stripes.\nThere are 4470 more in the series. They all look exactly like this one."), 0 },
 		{ TEXT("FridgeNote_Yogurt"), TEXT("KITCHEN"), TEXT("Someone has strong feelings about yogurt."), 0 },
 		{ TEXT("FridgeNote_Memo"), TEXT("KITCHEN"), TEXT("A memo about the fridge. It's signed by the fridge."), 0 },
 		{ TEXT("Memorial"), TEXT("HALCYON: OUR PEOPLE"), TEXT("A still from an earlier take. Everyone in it is looking at the camera.\nThe name card under the frame has been left blank. It always is."), 0 },
@@ -1534,6 +1544,8 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickAct2(DeltaTime);
 	TickCall(DeltaTime);
 	TickAct3(DeltaTime);
+	TickZoom(DeltaTime);
+	TickChats(DeltaTime);
 	TickMusic(DeltaTime);
 	TickFun(DeltaTime);
 	TickMail(DeltaTime);
@@ -1578,6 +1590,96 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 		else
 		{
 			Handle->SetTargetLocationAndRotation(Loc + Rot.Vector() * HoldDistance, FRotator(HeldPitchRoll.Pitch, Rot.Yaw + HeldYawOffset, HeldPitchRoll.Roll));
+		}
+	}
+}
+
+// ------------------------------------------------------------------ zoom (hold Z or the middle mouse button)
+void UTakeGrabComponent::TickZoom(float DeltaTime)
+{
+	UCameraComponent* Cam = GetOwner() ? GetOwner()->FindComponentByClass<UCameraComponent>() : nullptr;
+	if (!Cam) { return; }
+	if (BaseFOV < 0.f) { BaseFOV = Cam->FieldOfView; }
+	const float Want = bZooming ? 32.f : BaseFOV;
+	if (!FMath::IsNearlyEqual(Cam->FieldOfView, Want, 0.05f)) { Cam->SetFieldOfView(FMath::FInterpTo(Cam->FieldOfView, Want, DeltaTime, 12.f)); }
+}
+
+// ------------------------------------------------------------------ coworkers talking to each other
+// Every so often, two coworkers standing near each other (and near you) have a short exchange. They turn to face each
+// other; the lines go to the subtitles under their roles. Office small talk that's slightly wrong, act by act.
+void UTakeGrabComponent::TickChats(float DeltaTime)
+{
+	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	const APawn* Me = Cast<APawn>(GetOwner());
+	if (!GI || !Me || !GI->bTitleDone || PauseMenu || EndT >= 0.f) { return; }
+	ChatNext -= DeltaTime;
+	if (ChatNext > 0.f) { return; }
+	ATakeCoworker* A = ChatA.Get();
+	ATakeCoworker* B = ChatB.Get();
+	if (ChatLines.Num() > 0 && A && B)   // mid-conversation: the next line
+	{
+		const bool bStill = !A->IsHidden() && !B->IsHidden() && A->State != ETakeCoworkerState::Watching && B->State != ETakeCoworkerState::Watching;
+		if (bStill && ChatIdx < ChatLines.Num())
+		{
+			ATakeCoworker* Speaker = (ChatIdx % 2 == 0) ? A : B;
+			ATakeCoworker* Listener = (ChatIdx % 2 == 0) ? B : A;
+			if (!Speaker->bSitsAtDesk)   // (people at desks just talk over the partition)
+			{
+				const FRotator Face = (Listener->GetActorLocation() - Speaker->GetActorLocation()).Rotation();
+				Speaker->SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));
+			}
+			Speaker->SayLine(ChatLines[ChatIdx]);
+			ChatNext = FMath::Max(2.6f, ChatLines[ChatIdx].Len() / 14.f + 1.f);
+			++ChatIdx;
+			return;
+		}
+		ChatLines.Reset();
+		ChatNext = FMath::FRandRange(25.f, 45.f);
+		return;
+	}
+	ChatLines.Reset();
+	ChatNext = 3.f;   // look again in a few seconds
+	if (SubQueue.Num() > 0 || SubtitleLeft > 0.f) { return; }   // never over the story
+	// Two coworkers (not story characters), standing still, within 2.5 m of each other and 9 m of you
+	TArray<ATakeCoworker*> Idle;
+	for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
+	{
+		if (It->IsHidden() || It->bStoryNPC || It->bAtParty || It->State == ETakeCoworkerState::Watching) { continue; }
+		if (It->GetVelocity().SizeSquared2D() > 100.f) { continue; }
+		if (FVector::DistSquared2D(It->GetActorLocation(), Me->GetActorLocation()) > 900.f * 900.f) { continue; }
+		Idle.Add(*It);
+	}
+	for (int32 I = 0; I < Idle.Num(); ++I)
+	{
+		for (int32 J = I + 1; J < Idle.Num(); ++J)
+		{
+			if (FVector::DistSquared2D(Idle[I]->GetActorLocation(), Idle[J]->GetActorLocation()) > 250.f * 250.f) { continue; }
+			static const TCHAR* Morning[][3] = {
+				{ TEXT("Morning."), TEXT("Morning. Same as yesterday?"), TEXT("Exactly the same. Isn't it wonderful?") },
+				{ TEXT("Did you do the compliance training?"), TEXT("Twice. It said I'd done it three times."), TEXT("...Do it again, to be safe.") },
+				{ TEXT("Have you seen the new one? 4471?"), TEXT("New? They've been here forever."), TEXT("That's what I said.") },
+				{ TEXT("I love this desk."), TEXT("You've never had a different desk."), TEXT("That's why I love it.") },
+				{ TEXT("Coffee's perfect today."), TEXT("It's always perfect."), TEXT("That's what worries me.") },
+			};
+			static const TCHAR* Afternoon[][3] = {
+				{ TEXT("What time is it?"), TEXT("2:14."), TEXT("...It was 2:14 an hour ago.") },
+				{ TEXT("Did you go to the 12:30?"), TEXT("Camera off. Like the Chairman."), TEXT("Smart. He sees everything anyway.") },
+				{ TEXT("Is it me, or is it getting darker?"), TEXT("It's you."), TEXT("Good. Good.") },
+				{ TEXT("Someone was in Corridor B."), TEXT("There is no Corridor B."), TEXT("Right. Sorry. Right.") },
+				{ TEXT("Are you going to the party?"), TEXT("Is anyone not going?"), TEXT("4470 didn't go.") },
+			};
+			const bool bLate = GI->CurrentAct() >= 2;
+			const int32 Pick = (ChatsHeard + FMath::RandRange(0, 4)) % 5;
+			const TCHAR* const* Exchange = bLate ? Afternoon[Pick] : Morning[Pick];
+			ChatLines.Reset();
+			for (int32 L = 0; L < 3; ++L) { ChatLines.Add(FString(Exchange[L])); }
+			ChatA = Idle[I];
+			ChatB = Idle[J];
+			ChatIdx = 0;
+			ChatNext = 0.2f;
+			++ChatsHeard;
+			UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Chat: %s and %s"), *Idle[I]->GetName(), *Idle[J]->GetName());
+			return;
 		}
 	}
 }

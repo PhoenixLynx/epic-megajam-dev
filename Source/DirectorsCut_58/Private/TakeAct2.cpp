@@ -1218,6 +1218,9 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			{
 				if (UStaticMeshComponent* SM = Cast<UStaticMeshComponent>(Page->GetRootComponent())) { SM->SetMaterialByName(FName(TEXT("M_SignFace")), M); }
 			}
+			// E reads it (playtest: "what does the paper say from the printer?")
+			Page->Tags.Add(TEXT("Inspectable"));
+			Page->Tags.Add(FName(*FString::Printf(TEXT("InspectTex=MI_Printout_%d"), Which)));
 		}
 		static const TCHAR* Prints[] = {
 			TEXT("It prints a memo you didn't send: \"Continuity is everyone's responsibility.\""),
