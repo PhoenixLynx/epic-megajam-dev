@@ -14,6 +14,8 @@
 //   frozen clocks (2.6)   : the clock reaches 2:14 and stops; PA, a shiver of Fear that never quite leaves
 #include "TakeGrabComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "Engine/StaticMeshActor.h"
 #include "Materials/MaterialInterface.h"
 #include "Components/AudioComponent.h"
 #include "Sound/SoundBase.h"
@@ -498,6 +500,11 @@ void UTakeGrabComponent::TickAct2(float DeltaTime)
 			if (R.bPhysics || bMenu) { PutAway(A); }
 		}
 		for (FFood& F : Foods) { PutAway(F.Actor.Get()); F.Back = -1.f; }
+		for (TActorIterator<AStaticMeshActor> MwIt(GetWorld()); MwIt; ++MwIt)   // Easter egg: 4470's lunch, still in the microwave
+		{
+			const UStaticMeshComponent* MwSM = MwIt->GetStaticMeshComponent();
+			if (MwSM && MwSM->GetStaticMesh() && MwSM->GetStaticMesh()->GetName() == TEXT("SM_Microwave")) { MwIt->Tags.AddUnique(TEXT("Use=Microwave")); }
+		}
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Act 3: lunch put away (%d item(s))"), Gone);
 	}
 	// Beat 2.6: after the clocks stop, Fear never quite leaves (checked about once a second)

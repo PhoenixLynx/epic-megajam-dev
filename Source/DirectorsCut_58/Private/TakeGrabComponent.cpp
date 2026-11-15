@@ -1130,6 +1130,12 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		Title = TEXT("OVERTIME MENU");
 		Caption = TEXT("Coffee. Cake (for later, don't touch).\nCraft services closes when the director says it closes.");
 	}
+	if (Name.Contains(TEXT("Mirror")) && CapGI)   // Easter egg: the mirror knows about the party
+	{
+		if (EndT >= 0.f) { Caption = TEXT("You, in a mint suit. Your reflection is wearing a paper party hat.\nYou aren't. It doesn't take it off."); }
+		else if (CapGI->LastEnding == 1) { Caption = TEXT("You, in a mint suit, with a lanyard that says DIRECTOR. You don't remember putting it on.\nYour reflection does. It's already sitting down."); }
+		else if (CapGI->LastEnding == 2) { Caption = TEXT("You, in a mint suit. Your reflection is a moment late, like before.\nIt mouths one word: AGAIN."); }
+	}
 	if (Title.IsEmpty() && Name.Contains(TEXT("Poster")))
 	{
 		Title = TEXT("HALCYON");
@@ -1496,7 +1502,8 @@ void UTakeGrabComponent::UpdatePrompt()
 			: K == TEXT("Elevator") ? TEXT("E  Press a button") : K == TEXT("TrustFall") ? TEXT("E  Fall backward")
 			: K == TEXT("ServiceElevator") ? TEXT("E  Call the service elevator")
 			: K == TEXT("DirectorsChair") ? TEXT("E  Sit in the director's chair") : K == TEXT("Cake") ? TEXT("E  Have a slice")
-			: K == TEXT("Screen") ? TEXT("E  Look at their screen") : TEXT("E  Use"));
+			: K == TEXT("Screen") ? TEXT("E  Look at their screen")
+			: K == TEXT("Microwave") ? TEXT("E  Look in the microwave") : K == TEXT("KeyboardNote") ? TEXT("E  Read the sticky note") : TEXT("E  Use"));
 		break;
 	}
 	case ETakeLookKind::Wisp:     Prompt->SetPrompt(TEXT("E  Reach for the light")); break;

@@ -219,6 +219,46 @@ namespace
 			F > 0.f ? TEXT("+Y") : TEXT("-Y"), Stocked, Retired);
 	}
 
+	// Easter egg: a sticky note poking out from under the keyboard on desk #4471 (the keyboard is DeskFixed, so it
+	// never lifts: a corner shows at the front edge, and E reads it). Placed from the keyboard itself (tag DeskItem,
+	// nearest desk 4471), so it follows the desk.
+	void StickNoteUnderKeyboard(UWorld* World)
+	{
+		if (!World) { return; }
+		AStaticMeshActor* Keyboard = nullptr;
+		float Best = 400.f;
+		const FVector Desk4471(1300.f, 2318.f, 76.f);   // dress_campus.py: put("SM_Keyboard", 1300, 2318, DESK_TOP, ...)
+		for (TActorIterator<AStaticMeshActor> It(World); It; ++It)
+		{
+			if (It->ActorHasTag(TEXT("Use=KeyboardNote"))) { return; }   // already there
+			const UStaticMeshComponent* KSM = It->GetStaticMeshComponent();
+			if (!KSM || !KSM->GetStaticMesh() || !KSM->GetStaticMesh()->GetName().Contains(TEXT("Keyboard"))) { continue; }
+			const float D = FVector::Dist(It->GetActorLocation(), Desk4471);
+			if (D < Best) { Best = D; Keyboard = *It; }
+		}
+		if (!Keyboard) { return; }
+		UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+		UMaterialInterface* Sticky = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Sticky_4470.MI_Sticky_4470"));
+		if (!Cube) { return; }
+		// The front edge is the side toward your chair (desk 4471's chair is south of it, +Y): the note's centre sits just
+		// past that edge, so about half of it (4 cm) shows; it lies on the desk top, under the keyboard's bottom face
+		const FBox KB = Keyboard->GetComponentsBoundingBox(true);
+		const FVector Corner(KB.Max.X - 8.f, KB.Max.Y + 0.5f, KB.Min.Z + 0.12f);
+		FActorSpawnParameters P;
+		P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		AStaticMeshActor* Note = World->SpawnActor<AStaticMeshActor>(Corner, FRotator(0.f, 8.f, 0.f), P);
+		if (!Note) { return; }
+		UStaticMeshComponent* NSM = Note->GetStaticMeshComponent();
+		NSM->SetMobility(EComponentMobility::Movable);
+		NSM->SetStaticMesh(Cube);
+		NSM->SetWorldScale3D(FVector(0.075f, 0.075f, 0.002f));
+		if (Sticky) { NSM->SetMaterial(0, Sticky); }
+		NSM->SetCollisionProfileName(TEXT("BlockAll"));
+		NSM->CanCharacterStepUpOn = ECB_No;
+		NSM->SetCastShadow(false);
+		Note->Tags.Add(TEXT("Use=KeyboardNote"));
+	}
+
 	// The memorial wall (playtest: "some artwork on walls with memorial shots from the game" / "let's do something with
 	// this wall"). The lobby's south wall, east of the door to the open office (x 2300-2800, inner face y 1690): blank,
 	// behind and to the side of the reception desk, across the lobby from the elevator and the Chairman's portrait.
@@ -498,7 +538,12 @@ void UTakeGrabComponent::Vend(AActor* Machine)
 	ToMe.Z = 0.f;
 	const FVector Out = Machine->GetActorLocation() + ToMe.GetSafeNormal() * 55.f + FVector(0.f, 0.f, 45.f);
 	PlaySfx(TEXT("sfx_impact_heavy"), Machine->GetActorLocation() + FVector(0.f, 0.f, 50.f), 0.5f);
-	if (AActor* Snack = SpawnProp(TEXT("SM_SnackBag"), Out, FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f)))
+	// Easter egg: the eighth time (after every line has been seen once), you finally type a code. It's the only one
+	// the keypad allows. The machine pays out something that isn't a snack: the next employee's mug.
+	const UTakeGameInstance* CodeGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	const float CodeFear = FindFearDirector() ? FindFearDirector()->Fear : 0.f;
+	const bool bVendCode = Vended == 7 && CodeFear < 0.5f && !(CodeGI && CodeGI->bClocksFrozen);
+	if (AActor* Snack = SpawnProp(bVendCode ? TEXT("SM_Mug") : TEXT("SM_SnackBag"), Out, FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f)))
 	{
 		if (UPrimitiveComponent* P = Cast<UPrimitiveComponent>(Snack->GetRootComponent()))
 		{
@@ -516,7 +561,13 @@ void UTakeGrabComponent::Vend(AActor* Machine)
 	};
 	const UTakeGameInstance* VGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	const float VFear = FindFearDirector() ? FindFearDirector()->Fear : 0.f;
-	if (VFear >= 0.5f) { ShowSubtitle(TEXT(""), TEXT("The machine is empty. Something drops anyway. It's still B4."), 3.5f); }
+	if (bVendCode)
+	{
+		ShowSubtitle(TEXT(""), TakeText::Fill(this, TEXT("You key in 4-4-7-1. The machine goes very quiet. Then something heavier drops: a mug. It says {NEXT} on it.")), 5.f);
+		QueueSubtitle(TEXT(""), TEXT("The little screen: SEE YOU TOMORROW."));
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Easter egg: the vending machine code"));
+	}
+	else if (VFear >= 0.5f) { ShowSubtitle(TEXT(""), TEXT("The machine is empty. Something drops anyway. It's still B4."), 3.5f); }
 	else if (VGI && VGI->bClocksFrozen) { ShowSubtitle(TEXT(""), TEXT("The screen: OUT OF TIME. It drops a snack anyway. Best before 2:14."), 3.5f); }
 	else { ShowSubtitle(TEXT(""), Lines[Vended % int32(UE_ARRAY_COUNT(Lines))], 3.5f); }
 	++Vended;
@@ -527,6 +578,7 @@ void UTakeGrabComponent::CollectFunProps()
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	StockTheFridge(GetWorld());   // first: it retires the old fridge food, so that isn't collected below
 	HangMemorialWall(GetWorld());
+	StickNoteUnderKeyboard(GetWorld());
 	for (TActorIterator<AStaticMeshActor> It(GetWorld()); It; ++It)
 	{
 		UStaticMeshComponent* SM = It->GetStaticMeshComponent();
@@ -1067,6 +1119,30 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 		ShowSubtitle(TEXT(""), Slices[FMath::Min(N, int32(UE_ARRAY_COUNT(Slices)) - 1)], 3.5f);
 		if (N == 0) { CutTheCake(Thing); }
 		bAteCake = true;
+		return;
+	}
+	if (Key == TEXT("Microwave"))   // Easter egg (Act 3 only: TickAct2 tags it when lunch is put away)
+	{
+		PlaySfx(TEXT("sfx_badge_ok"), Where, 0.35f);   // ding
+		static const TCHAR* Spins[] = {
+			TEXT("The microwave is running. Inside, on the plate: a lunch box with 4470 on the lid. Turning, slowly."),
+			TEXT("The display says 0:00. It has said 0:00 since 2:14. It's still going."),
+			TEXT("You open it. Warm air, and a lunch nobody came back for. You close it. It starts again by itself."),
+			TEXT("4470's lunch. Still spinning."),
+		};
+		ShowSubtitle(TEXT(""), Spins[FMath::Min(N, int32(UE_ARRAY_COUNT(Spins)) - 1)], 4.f);
+		if (N == 0) { UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Easter egg: 4470's lunch")); }
+		return;
+	}
+	if (Key == TEXT("KeyboardNote"))   // Easter egg: the sticky note under your keyboard
+	{
+		static const TCHAR* Notes[] = {
+			TEXT("A sticky note, half under your keyboard. In your handwriting: DON'T LOOK UNDER THE KEYBOARD."),
+			TEXT("Under that, in different ink: \"too late. it's fine. hit your mark.\" Signed: 4470."),
+			TEXT("On the back, in a third hand you don't recognise: {NEXT}, this one's yours next. Leave it where it is."),
+		};
+		ShowSubtitle(TEXT(""), TakeText::Fill(this, Notes[N % int32(UE_ARRAY_COUNT(Notes))]), 4.5f);
+		if (N == 0) { UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Easter egg: the note under the keyboard")); }
 		return;
 	}
 	if (Key == TEXT("Elevator"))
