@@ -13,7 +13,7 @@
 - [ ] **Zip named `TeamName_GameName`** (Epic's final-day email), e.g. `PhoenixLynx_Take4471.zip`, uploaded to my itch account, then submitted to the jam
 - [ ] **Submission form:** team name, each member's name + Epic Games account email (I type this myself, it's not kept in this repo), game name, **30–60 s gameplay video LINK** (e.g. unlisted YouTube)
 - [ ] Optional fields: devlog link (Glass Box), "Tools you used" (Hyper3D pool), NVIDIA questions (RTX award), OpenAI question
-- [ ] **Gameplay video, 30–60 s, 1920×1080 or higher** (rules sections 1 and 7(c)): shot list in [VIDEO_SHOTLIST.md](VIDEO_SHOTLIST.md)
+- [x] **Gameplay video, 30–60 s, 1920×1080 or higher**: 57 s, 1080p, https://youtu.be/Yd4DKz2yuZ8 (@PhoenixLynxDev) (rules sections 1 and 7(c)): shot list in [VIDEO_SHOTLIST.md](VIDEO_SHOTLIST.md)
 - [ ] itch.io game page set to **public**
 - [ ] Devlog linked from the itch page (GitHub repo starts **private**: switch it to **public** before linking, or post the devlog on itch instead)
 - [ ] Only the Unreal Engine logo used (no other engine/brand logos in the game or on the page)
@@ -39,6 +39,7 @@
 |------------|--------|
 | 2026-11-12 19:17 | Checklist created. Nothing ticked yet. |
 | 2026-11-12 19:40 | Added rule items found while checking the asset rules: pre-jam declaration, human submits, rating/IP, Glass Box dev log. |
+| 2026-11-15 16:32 | Video cut from my .exe captures (57 s, 1080p) and uploaded: https://youtu.be/Yd4DKz2yuZ8. Cover + YouTube thumbnail from the reception shot. itch page going public. |
 | 2026-11-15 15:12 | FinalBuild packaged OK (1.1 GB, exit 0) and tested: both endings, save/continue by act. Epic's final-day email: zip as TeamName_GameName, video as a link, devlog link optional (Glass Box). Itch art made from in-game screenshots (Builds/ItchArt). |
 | 2026-11-15 14:45 | Playtest verification done (critical: NO-ending fall, penthouse edge, YES-ending dialogue, blank inbox rows, F5 shader view): all fixed and checked. Feature freeze. Packaging. Next: .exe test, video, itch page, submit. |
 | 2026-11-15 04:20 | Moved the gameplay video into Required. Packaging review → PACKAGING.md. itch page + video shot list drafted. Plan for today: playtest pass, my title background, feature freeze ~noon, package + .exe test, video, itch page, submit by ~5 PM. |
