@@ -129,19 +129,19 @@ void ATakeCoworker::SetupSkeletal()
 		if (UMaterialInterface* Neutral = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Neutral.MI_Face_Neutral"))) { FaceCalm = Neutral; }
 	}
 	FaceFrown = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Frown.MI_Face_Frown"));
-	// Some of the office wear charcoal suits (so the Collector's black isn't the only dark suit in the building)
-	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && GetTypeHash(GetName()) % 4 == 1)
+	// About one in five of the office are Black: the whole mannequin in a deep brown skin tone (not just a dark texture)
+	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && GetTypeHash(GetName()) % 5 == 1)
 	{
 		if (UMaterialInterface* Shape = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial")))
 		{
-			UMaterialInstanceDynamic* Suit = UMaterialInstanceDynamic::Create(Shape, this);
-			Suit->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.035f, 0.037f, 0.042f));
+			UMaterialInstanceDynamic* Skin = UMaterialInstanceDynamic::Create(Shape, this);
+			Skin->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.2f, 0.105f, 0.06f));
 			const TArray<FName> Slots = M->GetMaterialSlotNames();
 			for (int32 S = 0; S < M->GetNumMaterials(); ++S)
 			{
 				const FString SlotName = Slots.IsValidIndex(S) ? Slots[S].ToString() : FString();
-				if (SlotName.Contains(TEXT("Face")) || SlotName.Contains(TEXT("Skin")) || SlotName.Contains(TEXT("Head")) || SlotName.Contains(TEXT("Hand"))) { continue; }
-				M->SetMaterial(S, Suit);
+				if (SlotName.Contains(TEXT("Face"))) { continue; }   // the face card keeps its drawn features
+				M->SetMaterial(S, Skin);
 			}
 		}
 	}
