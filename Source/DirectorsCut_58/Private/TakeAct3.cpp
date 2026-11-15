@@ -298,24 +298,25 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (!GI || PauseMenu) { return; }
 
-	// Autosave, so CONTINUE picks up where you were: whenever the story moves on, and once a minute while you play.
+	// Checkpoints, so CONTINUE picks up at the start of the act you were in (playtest: "continue should reload the
+	// latest save checkpoint, and it should be after each act for now"). One save each time the story arrives at an
+	// act start: the morning (Act 1, right after the title), lunch (Act 2), overtime (Act 3) and the ward. Nothing
+	// periodic, and nothing during the ending (Wrap isn't a checkpoint; the party and the card are never saved).
 	// (Statics instead of members so this stays Live Coding friendly; reset whenever a new play session starts.)
 	{
 		static TWeakObjectPtr<UWorld> SaveWorld;
 		static ETakeBeat SavedBeat = ETakeBeat::Count;
-		static double NextSave = 0.0;
-		const double Now = GetWorld()->GetTimeSeconds();
-		if (SaveWorld.Get() != GetWorld()) { SaveWorld = GetWorld(); SavedBeat = GI->Beat; NextSave = Now + 60.0; }
+		if (SaveWorld.Get() != GetWorld()) { SaveWorld = GetWorld(); SavedBeat = ETakeBeat::Count; }   // the first beat of a session counts too
 		const bool bPlaying = GI->bTitleDone && !GI->bEndingSeen && FallT < 0.f && ExitT < 0.f && EndStep == 0
 			&& !UGameplayStatics::IsGamePaused(this);
-		if (bPlaying && (GI->Beat != SavedBeat || Now >= NextSave))
+		if (bPlaying && GI->Beat != SavedBeat)
 		{
-			const bool bBeat = GI->Beat != SavedBeat;
 			SavedBeat = GI->Beat;
-			NextSave = Now + 60.0;
-			if (UTakePauseMenu::SaveProgress(this))
+			const bool bActStart = SavedBeat == ETakeBeat::Morning || SavedBeat == ETakeBeat::Lunch
+				|| SavedBeat == ETakeBeat::Overtime || SavedBeat == ETakeBeat::Ward;
+			if (bActStart && UTakePauseMenu::SaveProgress(this))
 			{
-				UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Autosave (%s)"), bBeat ? TEXT("story moved on") : TEXT("every minute"));
+				UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Checkpoint saved (beat %d)"), static_cast<int32>(SavedBeat));
 			}
 		}
 	}
@@ -714,6 +715,7 @@ void UTakeGrabComponent::OnTitleChoice(int32 Choice)
 		GI->bTitleDone = true;
 		GI->HideWorldUntilTitle(false);
 		if (Choice == 0 && (GI->Beat != ETakeBeat::Morning || GI->bEndingSeen)) { GI->ResetRun(); }   // a fresh take after an ending
+		if (Choice == 1 && GI->bEndingSeen) { GI->ResetRun(); }   // CONTINUE after the credits: clear the ending first (the save fills in the rest)
 	}
 	if (TitleW) { TitleW->RemoveFromParent(); TitleW = nullptr; }
 	UGameplayStatics::SetGamePaused(this, false);
@@ -724,8 +726,31 @@ void UTakeGrabComponent::OnTitleChoice(int32 Choice)
 		SetColdOpenFade(0.f);   // the screen stayed black behind the title
 		ShowSubtitle(TEXT(""), TEXT("Welcome back."), 2.f);
 		if (ATakeFearDirector* LoadFear = FindFearDirector()) { LoadFear->SetFearImmediate(GI && GI->bClocksFrozen ? 0.15f : 0.f); }   // you come back calm
-		// Saved in the ward: set it up again (weapons, the stalker on its way); you pick up at the ward entrance
-		if (GI && GI->Beat == ETakeBeat::Ward) { EnterWard(); }
+		// Each checkpoint is the start of an act: put back what that act's start sets up (the rest comes from the save)
+		const ETakeBeat LoadedBeat = GI ? GI->Beat : ETakeBeat::Morning;
+		if (LoadedBeat == ETakeBeat::Morning)
+		{
+			StartSlate(false);   // Act 1 from the top: TAKE n / 9:00 AM / SCENE 1 - MORNING, same take number as the save
+		}
+		else if (LoadedBeat == ETakeBeat::Lunch)
+		{
+			ShowTimeCard(TEXT("12:00 PM"), TEXT("SCENE 2  \u00B7  LUNCH"));
+			LunchPAPlayed = 0;
+			LunchPALeft = 1 + FMath::Max(0, LunchPAExtraRepeats);   // "Lunch is served." x3, like the first time
+			LunchPAIn = 4.2f;
+		}
+		else if (LoadedBeat == ETakeBeat::Overtime)
+		{
+			ShowTimeCard(TEXT("2:14 PM"), TEXT("SCENE 4  \u00B7  OVERTIME"));
+			if (!bForeshadowDone) { ForeshadowIn = 35.f; }   // the footsteps through the office, as in StartOvertime
+		}
+		else if (LoadedBeat == ETakeBeat::Ward)
+		{
+			// Saved in the ward: set it up again (weapons, the stalker on its way); you pick up at the ward entrance
+			ShowTimeCard(TEXT("2:14 PM"), TEXT("SCENE 5  \u00B7  THE WARD"));
+			EnterWard();
+		}
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] CONTINUE: checkpoint beat %d"), static_cast<int32>(LoadedBeat));
 		return;
 	}
 	StartSlate(false);   // TAKE 1 / 9:00 AM / SCENE 1 - MORNING
