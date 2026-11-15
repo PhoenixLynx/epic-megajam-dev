@@ -818,14 +818,10 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 		struct FPeek { const TCHAR* Mi; const TCHAR* Title; const TCHAR* Caption; };
 		static const FPeek Peeks[] = {
 			{ TEXT("MI_Screen_CCTV"), TEXT("SECURITY FEED 07"), TEXT("A camera in the ceiling. It's pointed at this desk. At you, looking at this screen.") },
-			{ TEXT("MI_Screen_Saver"), TEXT("404"), TEXT("EMPLOYEE NOT FOUND.
-The request for this person could not be completed. Please try again tomorrow.") },
-			{ TEXT("MI_Screen_Fear"), TEXT(":("), TEXT("Your workday ran into a problem and needs to restart.
-We're just collecting some error info, and then we'll restart for you. (0% complete)") },
+			{ TEXT("MI_Screen_Saver"), TEXT("404"), TEXT("EMPLOYEE NOT FOUND.\nThe request for this person could not be completed. Please try again tomorrow.") },
+			{ TEXT("MI_Screen_Fear"), TEXT(":("), TEXT("Your workday ran into a problem and needs to restart.\nWe're just collecting some error info, and then we'll restart for you. (0% complete)") },
 			{ TEXT("MI_Screen_Glyphs"), TEXT("UNTITLED.DOC"), TEXT("Rows of little squares. Some filled, some empty. The cursor is still blinking at the end.") },
-			{ TEXT("MI_Screen_Code"), TEXT("SCENE_REPLAY.LOG"), TEXT("take 4469 ... ok
-take 4470 ... ok
-take 4471 ... RUNNING") },
+			{ TEXT("MI_Screen_Code"), TEXT("SCENE_REPLAY.LOG"), TEXT("take 4469 ... ok\ntake 4470 ... ok\ntake 4471 ... RUNNING") },
 			{ TEXT("MI_Screen_Promo"), TEXT("WE'RE HIRING"), TEXT("Join the HALCYON family. Same desk. Same mug. Starting tomorrow.") },
 		};
 		const FPeek& Pk = Peeks[N % int32(UE_ARRAY_COUNT(Peeks))];
