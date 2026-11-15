@@ -134,9 +134,10 @@ FString UTakeGameInstance::ObjectiveForBeat() const
 		if (CoworkersCheckedIn < 3)  { return FString(TEXT("Check in with Reception, Security and the Custodian (look for the !)")); }
 		if (!bAttendedMeeting)       { return FString(TEXT("Attend the 1:00 meeting (Conference Room)")); }
 		if (!bRepliedChairman)       { return FString(TEXT("Reply to the Chairman (your terminal)")); }
+		if (SoulBits < 2)            { return FString(TEXT("Wait for further direction. (You'll need access pass 2: the Supply Closet login. Its squares were in the call captions.)")); }
 		return FString(TEXT("Wait for further direction."));
 	case ETakeBeat::Overtime:
-		if (SoulBits < 2) { return FString(TEXT("Team building needs access pass 2 (the Supply Closet terminal)")); }
+		if (SoulBits < 2) { return FString(TEXT("Team building needs access pass 2: the Supply Closet login (its squares were in the 12:30 call captions; Pause > Tasks)")); }
 		return FString(TEXT("Mandatory team building: Wellness Center (end of Corridor B)"));
 	case ETakeBeat::Ward:
 		if (SoulBits < 3) { return FString(TEXT("Find Key 3 in the charts. The nurses' station terminal.")); }

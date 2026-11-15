@@ -1140,7 +1140,8 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 	{
 		if (EndT >= 0.f) { Caption = TEXT("The frame is empty. A sticky note on the glass: BACK IN 5. - C"); }
 		else if (CapGI->CurrentAct() >= 3) { Caption = TEXT("He's a little closer to the frame than he was this morning.\nThe plaque says: THAT'S NEARLY A WRAP."); }
-		else if (CapGI->CurrentAct() == 2) { Caption = TEXT("His eyes follow you. That's normal for paintings.\nThe plaque now says: SEE YOU AT 12:30. (Camera off.)"); }
+		else if (CapGI->CurrentAct() == 2) { Caption = CapGI->bJoinedCall ? TEXT("His eyes follow you. That's normal for paintings.\nThe plaque now says: SEE YOU AT 1:00. (Camera off.)")
+			: TEXT("His eyes follow you. That's normal for paintings.\nThe plaque now says: SEE YOU AT 12:30. (Camera off.)"); }
 	}
 	if (Name.Contains(TEXT("SignInSheet")) && CapGI && CapGI->LastEnding > 0)   // the next take remembers
 	{
@@ -1670,7 +1671,7 @@ void UTakeGrabComponent::TickChats(float DeltaTime)
 			};
 			static const TCHAR* Afternoon[][3] = {
 				{ TEXT("What time is it?"), TEXT("2:14."), TEXT("...It was 2:14 an hour ago.") },
-				{ TEXT("Did you go to the 12:30?"), TEXT("Camera off. Like the Chairman."), TEXT("Smart. He sees everything anyway.") },
+				{ TEXT("Did you go to the call?"), TEXT("Camera off. Like the Chairman."), TEXT("Smart. He sees everything anyway.") },
 				{ TEXT("Is it me, or is it getting darker?"), TEXT("It's you."), TEXT("Good. Good.") },
 				{ TEXT("Someone was in Corridor B."), TEXT("There is no Corridor B."), TEXT("Right. Sorry. Right.") },
 				{ TEXT("Are you going to the party?"), TEXT("Is anyone not going?"), TEXT("4470 didn't go.") },

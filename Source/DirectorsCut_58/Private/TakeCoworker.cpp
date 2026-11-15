@@ -601,7 +601,17 @@ bool ATakeCoworker::Talk()
 
 void ATakeCoworker::SayLine(const FString& Line)
 {
-	const FString Filled = TakeText::Fill(this, Line);
+	FString Said = Line;
+	// (playtest: "someone talked about the 12:30 meeting after 12:30") once you've been on the call, nobody invites you to it
+	if (const UTakeGameInstance* CallGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		if (CallGI->bJoinedCall && (Said.Contains(TEXT("12:30")) || Said.Contains(TEXT("Twelve thirty"))))
+		{
+			Said = CallGI->bAttendedMeeting ? TEXT("How were the Chairman's meetings? Both of them? He says you were wonderful.")
+				: TEXT("How was the 12:30? There's a one o'clock too. Same room. Same Chairman. Camera still off.");
+		}
+	}
+	const FString Filled = TakeText::Fill(this, Said);
 	SpokenLine = Filled;
 	// Long lines stay up longer: ~14 characters a second, at least SpeechSeconds
 	SpeechLeft = FMath::Max(SpeechSeconds, Filled.Len() / 14.f);

@@ -329,10 +329,11 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 	{
 		bOvertimeCakeDone = true;
 		const FVector IslandTop(3355.f, 830.f, 90.5f);   // the east end of the island (top 90 cm)
-		OvertimeCake = SpawnCake(IslandTop, 0.f, 24.f, 14.f, 0, TEXT("CakeLater"));
-		// the sticky note, stuck to the side: FOR LATER
-		SpawnSetPiece(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")), IslandTop + FVector(-24.6f, 0.f, 8.f), FRotator(0.f, 0.f, 4.f),
-			FVector(0.002f, 0.075f, 0.075f), LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Yellow.M_Yellow")), false);
+		// the lettering reads from the kitchen side, where you stand at the island (playtest: "rotate cake to face the person")
+		OvertimeCake = SpawnCake(IslandTop, -90.f, 24.f, 14.f, 0, TEXT("CakeLater"));
+		// the sticky note, stuck to the side you see: FOR LATER
+		SpawnSetPiece(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")), IslandTop + FVector(0.f, 24.6f, 8.f), FRotator(0.f, 0.f, 0.f),
+			FVector(0.075f, 0.002f, 0.075f), LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Yellow.M_Yellow")), false);
 	}
 
 	// Playtest: straight to an ending (F5 / F6 / TakeEnding): once the party is there, answer for you
