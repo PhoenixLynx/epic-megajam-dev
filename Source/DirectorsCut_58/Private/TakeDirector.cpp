@@ -160,8 +160,9 @@ void UTakeGrabComponent::BuildLobbyParty()
 	SpawnSetPiece(Cube, Table + FVector(0.f, 0.f, 75.f), FRotator::ZeroRotator, FVector(1.86f, 0.96f, 0.02f), Mint, false);   // tablecloth
 	// The cake: the same one that sat in the kitchen all overtime ("for later"). Later is now. Whole, until you cut it.
 	if (ATakeCake* OldCake = OvertimeCake.Get()) { OldCake->Destroy(); }
-	float CakeYaw = 0.f;   // the lettering reads from where you are (playtest: "rotate cake to face the person")
-	if (const AActor* Me = GetOwner()) { CakeYaw = (Table - Me->GetActorLocation()).Rotation().Yaw; }
+	// The lettering reads from the front of the table, the side facing the party (north, -Y). Fixed: it doesn't turn
+	// (playtest: "the cake shouldn't rotate... fix it oriented to facing the front of the table")
+	const float CakeYaw = 90.f;
 	if (ATakeCake* Cake = SpawnCake(Table + FVector(0.f, 0.f, 76.f), CakeYaw, 27.f, 15.f, 0, TEXT("Cake")))
 	{
 		Cake->Tags.Add(TEXT("PartyCake"));
@@ -382,7 +383,6 @@ ATakeCake* UTakeGrabComponent::SpawnCake(const FVector& Base, float Yaw, float R
 	if (!Cake) { return nullptr; }
 	Cake->BuildCake(Radius, Height, 8, Missing);
 	if (Key) { Cake->Tags.Add(FName(*FString::Printf(TEXT("Use=%s"), Key))); }
-	if (Key && FCString::Strcmp(Key, TEXT("Cake")) == 0) { Cake->Tags.Add(TEXT("AimCake")); }   // the party and the director's floor (TickSafetyNet turns it)
 	Cake->Tags.Add(TEXT("DirectorsFloor"));   // (the refusal's set-lift leaves it alone)
 	return Cake;
 }
@@ -642,7 +642,7 @@ void UTakeGrabComponent::BuildPenthouse()
 	const FVector Table = P + FVector(430.f, 300.f, 0.f);
 	Box(Table + FVector(0.f, 0.f, 37.f), FVector(160.f, 90.f, 74.f), Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite")));
 	// The director's cake: three slices already gone. You can cut another (playtest: "I should be able to cut another cake slice")
-	SpawnCake(Table + FVector(-25.f, 0.f, 74.f), (Table + FVector(-25.f, 0.f, 0.f) - PenthouseArrival).Rotation().Yaw, 27.f, 15.f, 3, TEXT("Cake"));   // reads from the elevator
+	SpawnCake(Table + FVector(-25.f, 0.f, 74.f), 90.f, 27.f, 15.f, 3, TEXT("Cake"));   // reads from the front of the table (north side), fixed
 	(void)Frosting; (void)Fabric;
 	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(-68.f, -30.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 	SpawnSetPiece(Prop(TEXT("SM_SodaCan")), Table + FVector(-68.f, 30.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
