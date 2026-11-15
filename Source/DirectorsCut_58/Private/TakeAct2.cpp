@@ -153,7 +153,7 @@ namespace
 		{
 			SpawnFridgePart(World, Cube, Body, FVector(Mid.X, Mid.Y, Z0 + SZ), FVector(W - 10.f, D - 12.f, 1.2f), Glass);
 		}
-		SpawnFridgePart(World, Cube, Body, FVector(Mid.X, Mid.Y + F * (D * 0.5f - 6.f), Z0 + 145.f * S), FVector(W - 8.f, 1.f, 60.f * S), White);   // freezer lip
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X, Mid.Y + F * (D * 0.5f - 6.f), Z0 + 168.f * S), FVector(W - 8.f, 1.f, 14.f * S), White);   // (only the top 14 cm: the 60 cm one hid the top shelf)   // freezer lip
 
 		// Anything dress_campus.py left inside the old solid liner: retired (it was never visible)
 		int32 Retired = 0;
@@ -180,6 +180,8 @@ namespace
 			{ TEXT("SM_SodaCan"),       6.f,  4.f, 1,   0.f },
 			{ TEXT("SM_SodaCan"),      15.f, -7.f, 1,  40.f },
 			{ TEXT("SM_LunchBox"),     -4.f,  0.f, 2,  -5.f },
+			{ TEXT("SM_SodaCan"),      12.f,  2.f, 3,  15.f },   // the top shelf, now that you can reach it
+			{ TEXT("SM_MilkCarton"),  -14.f,  0.f, 3,   0.f },
 		};
 		const float Surface[] = { 4.f, 45.f * S + 0.6f, 85.f * S + 0.6f, 125.f * S + 0.6f };
 		int32 Stocked = 0;
@@ -1223,6 +1225,9 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			{
 				if (UStaticMeshComponent* SM = Cast<UStaticMeshComponent>(Page->GetRootComponent())) { SM->SetMaterialByName(FName(TEXT("M_SignFace")), M); }
 			}
+			// The brochure mesh maps its face mirrored for these pages (playtest: "memo text is mirror image reverse"): flip the
+			// sheet on X so it reads right side up (E still shows the page itself, unflipped)
+			Page->SetActorScale3D(FVector(-1.f, 1.f, 1.f));
 			// E reads it (playtest: "what does the paper say from the printer?")
 			Page->Tags.Add(TEXT("Inspectable"));
 			Page->Tags.Add(FName(*FString::Printf(TEXT("InspectTex=MI_Printout_%d"), Which)));

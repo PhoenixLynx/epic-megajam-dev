@@ -22,6 +22,7 @@
 #include "Engine/TargetPoint.h"
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/StaticMeshActor.h"
 
 double ATakeCoworker::NextAnyoneMayTalk = 0.0;
 
@@ -304,6 +305,29 @@ void ATakeCoworker::HitByProp(float Speed)
 		const FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
 		SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));   // they turn to see who did it
 		if (AAIController* HitAI = Cast<AAIController>(GetController())) { HitAI->StopMovement(); }   // and stop where they are
+	}
+	if (bSitsAtDesk && SpinLeft <= 0.f && State != ETakeCoworkerState::Watching)
+	{
+		// Seated: a full spin in the chair, and the chair spins with them, back to where they were
+		SpinChair = nullptr;
+		float BestD = 130.f;
+		for (TActorIterator<AStaticMeshActor> ChairIt(GetWorld()); ChairIt; ++ChairIt)
+		{
+			UStaticMeshComponent* SMC = ChairIt->GetStaticMeshComponent();
+			if (!SMC || !SMC->GetStaticMesh() || !SMC->GetStaticMesh()->GetName().Contains(TEXT("Chair"))) { continue; }
+			const float D = FVector::Dist2D(ChairIt->GetActorLocation(), GetActorLocation());
+			if (D < BestD) { BestD = D; SpinChair = *ChairIt; }
+		}
+		if (SpinChair.IsValid())
+		{
+			if (UStaticMeshComponent* SMC = Cast<AStaticMeshActor>(SpinChair.Get())->GetStaticMeshComponent())
+			{
+				SMC->SetMobility(EComponentMobility::Movable);
+			}
+			SpinChairFromYaw = SpinChair->GetActorRotation().Yaw;
+		}
+		SpinFromYaw = GetActorRotation().Yaw;
+		SpinLeft = 0.9f;
 	}
 	if (State == ETakeCoworkerState::Watching)
 	{
@@ -773,6 +797,17 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 	}
 	FaceFearHold = FMath::Max(0.f, FaceFearHold - DeltaSeconds);
 	FrownHold = FMath::Max(0.f, FrownHold - DeltaSeconds);
+	if (SpinLeft > 0.f)
+	{
+		SpinLeft = FMath::Max(0.f, SpinLeft - DeltaSeconds);
+		const float A = FMath::InterpEaseOut(0.f, 360.f, 1.f - SpinLeft / 0.9f, 2.f);   // fast, then slowing to a stop
+		SetActorRotation(FRotator(0.f, SpinFromYaw + A, 0.f));
+		if (SpinChair.IsValid())
+		{
+			const FRotator R = SpinChair->GetActorRotation();
+			SpinChair->SetActorRotation(FRotator(R.Pitch, SpinChairFromYaw + A, R.Roll), ETeleportType::TeleportPhysics);
+		}
+	}
 	if (TheftHold > 0.f)
 	{
 		TheftHold -= DeltaSeconds;

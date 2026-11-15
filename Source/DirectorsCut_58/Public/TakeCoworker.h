@@ -157,6 +157,11 @@ private:
 	UPROPERTY() TObjectPtr<class UMaterialInterface> FaceFrown;
 	int32 FaceMode = -1;
 	float FrownHold = 0.f;
+	// Hit while seated: a full spin in the chair, chair and all (playtest: "they should still spin in chair, chair spins too")
+	float SpinLeft = 0.f;
+	float SpinFromYaw = 0.f;
+	float SpinChairFromYaw = 0.f;
+	TWeakObjectPtr<AActor> SpinChair;
 	float TheftHold = 0.f;
 	bool bPayWarned = false;   // security: "that's coming out of your pay"   // you took their computer: they stop typing and stare, then turn back to the desk
 	float FaceFearHold = 0.f;

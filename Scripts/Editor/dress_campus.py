@@ -149,9 +149,9 @@ put("SM_ExitSign", 2100, 1688, 270, 0)
 # A little more "inviting": two armchairs, plants, a magazine, a rug, a promo screen (BOXES below)
 put("SM_MeetingChair", 1700, 1590, 0, 0)
 put("SM_MeetingChair", 1830, 1590, 0, 0)
-put("SM_PlantDesk", 1742, 1432, 44)
-for i, (yaw, dz) in enumerate(((15, 0.0), (-8, 1.2), (28, 2.4))):   # a little stack on the table, clear of the plant (they slid off)
-    put("SM_Brochure", 1780, 1436, 46 + dz, yaw, [f"SlotMI=M_SignFace:{'MI_Brochure' if i < 2 else 'MI_Magazine'}"])
+put("SM_PlantDesk", 1765, 1462, 44)   # at the back edge of the table, out of the way
+for i, (yaw, dz) in enumerate(((0, 0.0), (4, 0.7), (-3, 1.4))):   # a neat stack, flat on the tabletop (44 cm), nothing under it
+    put("SM_Brochure", 1790, 1425, 44.1 + dz, yaw, [f"SlotMI=M_SignFace:{'MI_Brochure' if i < 2 else 'MI_Magazine'}"])
 put("SM_Monitor", 2160, 1292, 109, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])   # reception sees everything (faces the receptionist, in reach, on the desk)
 put("SM_Keyboard", 2150, 1328, 109, 180, ["DeskFixed"])
 put("SM_PlantDesk", 2280, 1300, 109)
@@ -230,12 +230,11 @@ for (x, y, yaw) in ((600, 1030, 0), (800, 1030, 0), (1000, 1170, 180)):   # scre
 put("SM_DeskPhone", 850, 1100, TABLE_Z, 90, ["CallScreen", "DeskFixed"])   # bolted down
 for (x, y) in ((660, 1060), (950, 1080), (720, 1150), (1060, 1130)):
     put("SM_Mug", x, y, TABLE_Z, rnd.uniform(0, 360))
-for (x, y) in ((880, 1090), (900, 1110), (520, 1100)):
+for (x, y) in ((930, 1150), (700, 1060), (520, 1100)):   # (clear of the conference phone)
     put("SM_WaterBottle", x, y, TABLE_Z)
-put("SM_DeskPhone", 800, 1100, TABLE_Z, 180)          # conference phone in the middle
 put("SM_ReamOfPaper", 560, 1150, TABLE_Z, 10)
 put("SM_BinderRed", 1080, 1060, TABLE_Z, 80)
-put("SM_PenCup", 980, 1000, TABLE_Z)
+put("SM_PenCup", 975, 1045, TABLE_Z)   # in from the edge (playtest: "close to falling off")
 put("SM_PlantTall", 280, 580)
 put("SM_PlantTall", 1320, 1620)
 put("SM_TrashBin", 1340, 600)
@@ -344,7 +343,7 @@ BOXES += [
     ("Poster_Energy_Kitchen", 2812, 700, 165, 1, 60, 85, PM + "MI_Poster_Energy", ["Inspectable"]),
     # Lobby: rug, magazine, promo screen on the west wall
     ("Lobby_Rug", 1760, 1450, 0.6, 360, 240, 1, PM + "MI_Rug", []),
-    ("Magazine", 1720, 1415, 44.4, 21, 27, 0.6, PM + "MI_Magazine", ["Inspectable"]),
+    ("Magazine", 1733, 1425, 44.4, 21, 27, 0.6, PM + "MI_Magazine", ["Inspectable"]),
     ("Lobby_PromoScreen", 1412, 1450, 175, 3, 160, 90, PM + "MI_Screen_Promo", []),
     # Elevator: a button panel inside (E), emergency signs
     ("ElevatorPanel_In", 2385, 380, 120, 2, 24, 48, PM + "MI_ElevatorPanel", ["Use=Elevator"]),

@@ -944,7 +944,17 @@ void UTakeGrabComponent::TickPhones(float DeltaTime)
 	// Your phone the first time (and again if you missed it), then mostly other people's (yours now and then)
 	const bool bMine = MyPhone.IsValid() && (MyCalls == 0 || bCallBackMine || (MyCalls < 5 && FMath::FRand() < 0.35f));
 	bCallBackMine = false;
-	RingPhone(bMine ? MyPhone.Get() : Phones[FMath::RandRange(0, Phones.Num() - 1)].Get());
+	AActor* RingWho = bMine ? MyPhone.Get() : Phones[FMath::RandRange(0, Phones.Num() - 1)].Get();
+	if (!bMine)   // near the conference room, its phone is the likely one (otherwise it's 1 in 15 and you'd never hear it)
+	{
+		for (const TWeakObjectPtr<AActor>& Ph : Phones)
+		{
+			if (Ph.IsValid() && Ph->ActorHasTag(TEXT("CallScreen")) && FVector::Dist2D(Ph->GetActorLocation(), GetOwner()->GetActorLocation()) < 900.f
+			    && FMath::FRand() < 0.6f) { RingWho = Ph.Get(); }
+		}
+	}
+	if (RingWho && RingWho->ActorHasTag(TEXT("CallScreen")) && CanJoinCall()) { return; }   // not while it's the way into the call
+	RingPhone(RingWho);
 }
 
 bool UTakeGrabComponent::PhoneRingingNear() const
@@ -1055,7 +1065,20 @@ void UTakeGrabComponent::AnswerPhone(AActor* Phone)
 			TEXT("Is Dana there? ...Dana's never been there. Sorry. *click*"),
 			TEXT("(someone laughing, very far away) *click*"),
 		};
-		if (FMath::FRand() < 0.25f)
+		// The conference room phone: always someone looking for someone (playtest: "should still ring once in a while and ask
+		// for Dana or the Chairman")
+		static const TCHAR* Conference[] = {
+			TEXT("Is the Chairman there? ...No? He said he'd be in the room this time. *click*"),
+			TEXT("Hi, is Dana in this meeting? ...There's no meeting? There's always a meeting. *click*"),
+			TEXT("Conference room? This is the Chairman's office. He's calling in. He'll call in. Hold, please. *click*"),
+			TEXT("Can you see the Chairman on the screen? ...No one can. That's fine. *click*"),
+			TEXT("Is this the 12:30? ...Is it ever not the 12:30? *click*"),
+		};
+		if (Phone && Phone->ActorHasTag(TEXT("CallScreen")))
+		{
+			ShowSubtitle(TEXT("Phone"), Conference[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Conference)) - 1)], 4.5f);
+		}
+		else if (FMath::FRand() < 0.25f)
 		{
 			PlaySfx(TEXT("sfx_phone_dialtone"), Where, 0.6f);
 			ShowSubtitle(TEXT("Phone"), TEXT("(dial tone)"), 2.f);

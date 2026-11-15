@@ -220,8 +220,8 @@ FString UTakeGameInstance::TaskListText() const
 	if (CurrentAct() >= 2)
 	{
 		const int32 Met = FMath::Clamp(CoworkersCheckedIn, 0, 3);
-		return FString::Printf(TEXT("%s  Join 12:30 call\n%s  Attend 1:00 meeting\n%s  Check in: Reception, Security, Custodian  (%d/3)\n%s  Reply to the Chairman"),
-		                       Box(bJoinedCall), Box(bAttendedMeeting), Box(Met >= 3), Met, Box(bRepliedChairman));
+		return FString::Printf(TEXT("%s  Join 12:30 call\n%s  Check in: Reception, Security, Custodian  (%d/3)\n%s  Attend 1:00 meeting\n%s  Reply to the Chairman"),
+		                       Box(bJoinedCall), Box(Met >= 3), Met, Box(bAttendedMeeting), Box(bRepliedChairman));   // the order you do them in
 	}
 	return FString::Printf(TEXT("%s  Read your email (inbox zero)\n%s  Get coffee\n%s  Complete Compliance Training"),
 	                       Box(bReadEmail), Box(bGotCoffee), Box(bTrainingComplete));
