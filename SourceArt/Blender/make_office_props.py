@@ -858,9 +858,16 @@ def pizza_slice():
     """Lunch (Act 2): one slice on a paper plate (a triangle from a 3-sided cylinder)."""
     p = Prop("SM_PizzaSlice")
     p.cyl(0.11, 0.004, (0, 0, 0.002), "M_Paper", segs=24)
-    p.cyl(0.085, 0.012, (0, 0, 0.010), "M_Cheese", segs=3)
-    p.box((0.13, 0.03, 0.018), (0.0, 0.045, 0.012), "M_Crust")
-    for (x, y) in ((-0.01, -0.01), (0.02, 0.0), (0.0, -0.035)):
+    # A long wedge: the tip points to -X, the wide end (the crust) runs along +X. Built from a 3-sided cone, turned so
+    # one corner points to -X whatever angle Blender starts the cone at, then stretched along X.
+    # (playtest: "pizza crust not attached to the long edge of the wedge")
+    r = bmesh.ops.create_cone(p.bm, cap_ends=True, segments=3, radius1=0.085, radius2=0.085, depth=0.012)
+    top = max(r["verts"], key=lambda v: (v.co.z, -v.co.x))
+    turn = math.pi - math.atan2(top.co.y, top.co.x)
+    p._add(r["verts"], "M_Cheese", Matrix.Translation(Vector((0.02, 0.0, 0.010))) @ Matrix.Diagonal((1.5, 1.0, 1.0, 1.0))
+           @ Matrix.Rotation(turn, 4, "Z"))
+    p.box((0.024, 0.15, 0.02), (0.086, 0.0, 0.012), "M_Crust")      # along the wide end (x = 0.02 + 1.5 * 0.0425)
+    for (x, y) in ((-0.03, 0.0), (0.03, 0.025), (0.035, -0.025)):
         p.cyl(0.012, 0.004, (x, y, 0.017), "M_Tomato", segs=10)
     return p.finish(0.0)
 
