@@ -12,7 +12,7 @@ pieces (ART-010..016, title key art v04) as the content reference.
   T_Dailies_Desk / _Conference / _CorridorB / _Ward   1024x582  the director's monitor wall
   T_PenthouseSkyline    4096x1024  the city at dusk, past the director's floor
 
-Usage: python make_house_ending_art.py [outdir]   (playwright + Chrome; Poppins, Inter, Caveat installed)
+Usage: python make_house_ending_art.py [outdir] [names...]   (playwright + Chrome; Poppins, Inter, Caveat installed)
 """
 import math
 import os
@@ -22,6 +22,7 @@ from playwright.sync_api import sync_playwright
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = sys.argv[1] if len(sys.argv) > 1 else HERE
+ONLY = sys.argv[2:]   # optional: just these names
 MINT, MINT_D, INK, SLATE, PAPER, PINK, CREAM = "#7fd4c4", "#5fb9a8", "#12313a", "#2b3a40", "#f4f7f8", "#f2b8b5", "#ece6dc"
 
 
@@ -50,77 +51,129 @@ def svg_page(w, h, inner, bg="transparent"):
 
 
 # ------------------------------------------------------------------ title background
+# Between the flat house style and Sol's photographic key art: the same flat shapes, but lit. Soft gradients on every
+# surface, daylight falling through the windows onto the carpet, blurred contact shadows, a little haze toward the
+# back, bloom on the ceiling lights and a fine grain, so it reads as a place rather than a diagram.
 def title():
     W, H = 1920, 1080
     vx, vy = 1180, 470            # vanishing point
     bx0, by0, bx1, by1 = 820, 330, 1540, 610   # the back wall
-    g = []
-    g.append(f'<defs><linearGradient id="ceil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7fafa"/><stop offset="1" stop-color="#e9eff0"/></linearGradient>'
-             f'<linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6c8490"/><stop offset="1" stop-color="#4c6370"/></linearGradient>'
-             f'<radialGradient id="vig" cx="0.6" cy="0.45" r="0.85"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#0b1a1f" stop-opacity="0.35"/></radialGradient></defs>')
+    g = ["""<defs>
+      <linearGradient id="ceil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfcfc"/><stop offset="1" stop-color="#e4ebec"/></linearGradient>
+      <linearGradient id="lwall" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#dfe8ea"/><stop offset="1" stop-color="#eef3f4"/></linearGradient>
+      <linearGradient id="rwall" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#cfd9dc"/><stop offset="1" stop-color="#e6ecee"/></linearGradient>
+      <linearGradient id="back" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a98a5"/><stop offset="1" stop-color="#5f7d8b"/></linearGradient>
+      <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7890a0"/><stop offset="0.5" stop-color="#5d7684"/><stop offset="1" stop-color="#3f5560"/></linearGradient>
+      <linearGradient id="shaft" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity="0.38"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9f5f5"/><stop offset="0.45" stop-color="#cfe6e8"/><stop offset="1" stop-color="#b9d6d9"/></linearGradient>
+      <linearGradient id="body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9be0d2"/><stop offset="0.55" stop-color="#7fd4c4"/><stop offset="1" stop-color="#5fb9a8"/></linearGradient>
+      <radialGradient id="head" cx="0.35" cy="0.35" r="0.8"><stop offset="0" stop-color="#fbf8f2"/><stop offset="1" stop-color="#d8d0c2"/></radialGradient>
+      <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fdccd"/><stop offset="1" stop-color="#63bfae"/></linearGradient>
+      <linearGradient id="panelback" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3f3ef"/><stop offset="1" stop-color="#c7e6df"/></linearGradient>
+      <linearGradient id="desk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f2ec"/><stop offset="1" stop-color="#e3ddd3"/></linearGradient>
+      <linearGradient id="mug" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5fb9a8"/><stop offset="0.35" stop-color="#93ddcf"/><stop offset="1" stop-color="#57ad9c"/></linearGradient>
+      <linearGradient id="canvas" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3236"/><stop offset="1" stop-color="#14191b"/></linearGradient>
+      <radialGradient id="haze" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#eef4f5" stop-opacity="0.2"/><stop offset="1" stop-color="#eef4f5" stop-opacity="0"/></radialGradient>
+      <radialGradient id="vig" cx="0.6" cy="0.45" r="0.85"><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#0b1a1f" stop-opacity="0.42"/></radialGradient>
+      <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+      <filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
+      <filter id="bloom" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="9"/></filter>
+      <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4471"/><feColorMatrix type="saturate" values="0"/>
+        <feComponentTransfer><feFuncA type="table" tableValues="0 0.07"/></feComponentTransfer></filter>
+      <filter id="carpet"><feTurbulence type="fractalNoise" baseFrequency="0.6 1.8" numOctaves="3" seed="7"/><feColorMatrix type="saturate" values="0"/>
+        <feComponentTransfer><feFuncA type="table" tableValues="0 0.12"/></feComponentTransfer></filter>
+      <clipPath id="floorclip"><polygon points="FLOORPTS"/></clipPath>
+    </defs>""".replace("FLOORPTS", f"{bx0},{by1} {bx1},{by1} {W},{H} 0,{H}")]
     g.append(f'<polygon points="0,0 {W},0 {bx1},{by0} {bx0},{by0}" fill="url(#ceil)"/>')
-    g.append(f'<polygon points="0,0 {bx0},{by0} {bx0},{by1} 0,{H}" fill="#e6eef0"/>')        # left wall (windows)
-    g.append(f'<polygon points="{W},0 {bx1},{by0} {bx1},{by1} {W},{H}" fill="#dfe7ea"/>')    # right wall
+    g.append(f'<polygon points="0,0 {bx0},{by0} {bx0},{by1} 0,{H}" fill="url(#lwall)"/>')
+    g.append(f'<polygon points="{W},0 {bx1},{by0} {bx1},{by1} {W},{H}" fill="url(#rwall)"/>')
     g.append(f'<polygon points="{bx0},{by1} {bx1},{by1} {W},{H} 0,{H}" fill="url(#floor)"/>')
-    g.append(f'<rect x="{bx0}" y="{by0}" width="{bx1 - bx0}" height="{by1 - by0}" fill="#6f8e9c"/>')  # back wall, blue-grey
-    # ceiling light panels, in rows toward the back
+    g.append(f'<rect x="0" y="0" width="{W}" height="{H}" filter="url(#carpet)" clip-path="url(#floorclip)"/>')
+    g.append(f'<rect x="{bx0}" y="{by0}" width="{bx1 - bx0}" height="{by1 - by0}" fill="url(#back)"/>')
+    # corners: a little ambient occlusion where walls meet
+    g.append(f'<g opacity="0.35" filter="url(#soft)"><line x1="{bx0}" y1="{by0}" x2="{bx0}" y2="{by1}" stroke="#4e6a76" stroke-width="18"/>'
+             f'<line x1="{bx1}" y1="{by0}" x2="{bx1}" y2="{by1}" stroke="#4e6a76" stroke-width="18"/>'
+             f'<line x1="{bx0}" y1="{by1}" x2="{bx1}" y2="{by1}" stroke="#2e434d" stroke-width="16"/>'
+             f'<line x1="{bx0}" y1="{by1}" x2="0" y2="{H}" stroke="#2e434d" stroke-width="22"/><line x1="{bx1}" y1="{by1}" x2="{W}" y2="{H}" stroke="#2e434d" stroke-width="22"/></g>')
+    # ceiling light panels with bloom
     for row in range(5):
         t = 0.12 + row * 0.17
         y = (1 - t) * 40 + t * by0
         for col in (-1, 0, 1):
             cx = (1 - t) * (960 + col * 620) + t * (vx + col * 230)
             wdt = (1 - t) * 260 + t * 90
-            g.append(f'<rect x="{cx - wdt / 2:.0f}" y="{y:.0f}" width="{wdt:.0f}" height="{(1 - t) * 22 + t * 8:.0f}" rx="4" fill="#ffffff" opacity="0.95"/>')
-    # windows on the left wall: tall glass panes with mullions
+            hgt = (1 - t) * 22 + t * 8
+            g.append(f'<rect x="{cx - wdt / 2:.0f}" y="{y - hgt:.0f}" width="{wdt:.0f}" height="{hgt * 3:.0f}" fill="#ffffff" opacity="0.55" filter="url(#bloom)"/>')
+            g.append(f'<rect x="{cx - wdt / 2:.0f}" y="{y:.0f}" width="{wdt:.0f}" height="{hgt:.0f}" rx="4" fill="#ffffff"/>')
+    # windows on the left wall, and the daylight they throw across the floor
     for i in range(6):
         t0, t1 = i / 6, (i + 0.82) / 6
         x0, x1 = t0 * bx0, t1 * bx0
         yt0, yt1 = t0 * by0 + 60 * (1 - t0), t1 * by0 + 60 * (1 - t1)
         yb0, yb1 = H - t0 * (H - by1) - 200 * (1 - t0), H - t1 * (H - by1) - 200 * (1 - t1)
-        g.append(f'<polygon points="{x0:.0f},{yt0:.0f} {x1:.0f},{yt1:.0f} {x1:.0f},{yb1:.0f} {x0:.0f},{yb0:.0f}" fill="#cfe6e8"/>')
-        g.append(f'<polygon points="{x0:.0f},{yt0:.0f} {x1:.0f},{yt1:.0f} {x1:.0f},{yt1 + (yb1 - yt1) * 0.35:.0f} {x0:.0f},{yt0 + (yb0 - yt0) * 0.35:.0f}" fill="#e2f1f1"/>')
-    # the back wall: a door (red light over it), a HALCYON mark, a camera
-    g.append(f'<rect x="1400" y="440" width="92" height="170" fill="#4b6672"/><circle cx="1446" cy="424" r="6" fill="#e5484d"/>')
+        g.append(f'<polygon points="{x0:.0f},{yt0:.0f} {x1:.0f},{yt1:.0f} {x1:.0f},{yb1:.0f} {x0:.0f},{yb0:.0f}" fill="url(#glass)"/>')
+        g.append(f'<polygon points="{x0:.0f},{yt0:.0f} {x1:.0f},{yt1:.0f} {x1:.0f},{yt1 + (yb1 - yt1) * 0.3:.0f} {x0:.0f},{yt0 + (yb0 - yt0) * 0.3:.0f}" fill="#f4fbfb" opacity="0.7"/>')
+        # the light patch on the carpet: the window's shape, sheared toward the middle of the room
+        fx0, fx1 = x0 + 260 * (1 - t0) + 120, x1 + 260 * (1 - t1) + 120
+        g.append(f'<polygon points="{x0:.0f},{yb0:.0f} {x1:.0f},{yb1:.0f} {fx1 + 140:.0f},{yb1 + 40:.0f} {fx0 + 140:.0f},{yb0 + 80:.0f}" fill="url(#shaft)" opacity="0.8" clip-path="url(#floorclip)"/>')
+    # the back wall: a door (red light over it), the HALCYON mark, a camera
+    g.append('<rect x="1396" y="436" width="100" height="174" fill="#3f5864"/><rect x="1404" y="444" width="84" height="166" fill="#4b6672"/>'
+             '<circle cx="1446" cy="420" r="16" fill="#e5484d" opacity="0.45" filter="url(#bloom)"/><circle cx="1446" cy="420" r="6" fill="#ff5a5f"/>')
     g.append(mark("#ffffff", 130).replace("<svg ", '<svg x="1076" y="388" opacity="0.92" ', 1))
     g.append('<text x="1141" y="530" text-anchor="middle" font-size="30" font-weight="600" letter-spacing="9" fill="#ffffff" opacity="0.92">HALCYON</text>')
     g.append('<g><rect x="1600" y="250" width="62" height="34" rx="6" fill="#f6f8f8" stroke="#cdd8db" stroke-width="2"/>'
              '<rect x="1650" y="256" width="40" height="22" rx="4" fill="#e9eef0"/><circle cx="1614" cy="267" r="6" fill="#2b3a40"/>'
-             '<circle cx="1640" cy="262" r="3.5" fill="#e5484d"/><rect x="1660" y="226" width="8" height="28" fill="#cdd8db"/></g>')
-    # cubicles along the left: a tall back panel, the person, the monitor beside them, a low front panel
-    for x, y, s in [(870, 655, 0.58), (745, 715, 0.82), (560, 820, 1.2)]:   # far to near
-        g.append(f'<rect x="{x - 180 * s:.0f}" y="{y - 230 * s:.0f}" width="{330 * s:.0f}" height="{230 * s:.0f}" fill="#d4ece6"/>')
+             '<circle cx="1640" cy="262" r="9" fill="#ff4d4f" opacity="0.5" filter="url(#bloom)"/><circle cx="1640" cy="262" r="3.5" fill="#e5484d"/><rect x="1660" y="226" width="8" height="28" fill="#cdd8db"/></g>')
+    # cubicles along the left (far to near): contact shadows, lit panels, people with a little volume
+    for x, y, s in [(870, 655, 0.58), (745, 715, 0.82), (560, 820, 1.2)]:
+        g.append(f'<ellipse cx="{x - 15 * s:.0f}" cy="{y + 6 * s:.0f}" rx="{200 * s:.0f}" ry="{20 * s:.0f}" fill="#22343c" opacity="0.45" filter="url(#soft)"/>')
+        g.append(f'<rect x="{x - 180 * s:.0f}" y="{y - 230 * s:.0f}" width="{330 * s:.0f}" height="{230 * s:.0f}" fill="url(#panelback)"/>')
         g.append(f'<rect x="{x - 180 * s:.0f}" y="{y - 230 * s:.0f}" width="{330 * s:.0f}" height="{8 * s:.0f}" fill="#b6dcd3"/>')
         g.append(f'<rect x="{x - 130 * s:.0f}" y="{y - 150 * s:.0f}" width="{78 * s:.0f}" height="{52 * s:.0f}" rx="3" fill="{SLATE}"/>')
         g.append(f'<rect x="{x - 125 * s:.0f}" y="{y - 145 * s:.0f}" width="{68 * s:.0f}" height="{42 * s:.0f}" fill="#9fdccf"/>')
-        g.append(person(x + 30 * s, y - 40 * s, s * 0.95))
-        g.append(f'<rect x="{x - 185 * s:.0f}" y="{y - 92 * s:.0f}" width="{340 * s:.0f}" height="{92 * s:.0f}" fill="{MINT}"/>')
-        g.append(f'<rect x="{x - 185 * s:.0f}" y="{y - 92 * s:.0f}" width="{340 * s:.0f}" height="{9 * s:.0f}" fill="{MINT_D}"/>')
-    # the director's chair, empty, in the middle of the floor
-    cx, cy = 1330, 790
-    g.append(f'<ellipse cx="{cx}" cy="{cy + 6}" rx="120" ry="18" fill="#3a4f5a" opacity="0.45"/>')
+        g.append(f'<rect x="{x - 135 * s:.0f}" y="{y - 160 * s:.0f}" width="{88 * s:.0f}" height="{70 * s:.0f}" fill="#bff0e6" opacity="0.35" filter="url(#bloom)"/>')
+        px, py, ps = x + 30 * s, y - 40 * s, s * 0.95
+        g.append(f'<rect x="{px - 23 * ps:.0f}" y="{py - 110 * ps:.0f}" width="{46 * ps:.0f}" height="{110 * ps:.0f}" rx="{23 * ps:.0f}" fill="url(#body)"/>')
+        g.append(f'<circle cx="{px:.0f}" cy="{py - 130 * ps:.0f}" r="{19 * ps:.0f}" fill="url(#head)"/>')
+        g.append(f'<rect x="{x - 185 * s:.0f}" y="{y - 92 * s:.0f}" width="{340 * s:.0f}" height="{92 * s:.0f}" fill="url(#panel)"/>')
+        g.append(f'<rect x="{x - 185 * s:.0f}" y="{y - 92 * s:.0f}" width="{340 * s:.0f}" height="{9 * s:.0f}" fill="#a9e6da"/>')
+    # haze toward the back (depth)
+    g.append(f'<ellipse cx="{vx}" cy="{vy}" rx="520" ry="230" fill="url(#haze)"/>')
+    # the director's chair, empty, on its tape mark, in a pool of light
+    cx, cy = 1360, 790
+    g.append(f'<ellipse cx="{cx}" cy="{cy - 10}" rx="230" ry="70" fill="#ffffff" opacity="0.16" filter="url(#softer)"/>')
+    g.append(f'<ellipse cx="{cx + 10}" cy="{cy + 8}" rx="125" ry="20" fill="#1c2b31" opacity="0.6" filter="url(#soft)"/>')
+    g.append(f'<g stroke="{MINT}" stroke-width="7" stroke-linecap="round" opacity="0.9"><line x1="{cx - 60}" y1="{cy + 30}" x2="{cx + 60}" y2="{cy + 60}"/>'
+             f'<line x1="{cx + 60}" y1="{cy + 30}" x2="{cx - 60}" y2="{cy + 60}"/></g>')
     g.append(f'<g stroke="#1b2326" stroke-width="12" stroke-linecap="round">'
              f'<line x1="{cx - 70}" y1="{cy}" x2="{cx + 60}" y2="{cy - 130}"/><line x1="{cx + 70}" y1="{cy}" x2="{cx - 60}" y2="{cy - 130}"/>'
              f'<line x1="{cx - 75}" y1="{cy - 130}" x2="{cx - 75}" y2="{cy - 290}"/><line x1="{cx + 75}" y1="{cy - 130}" x2="{cx + 75}" y2="{cy - 290}"/>'
              f'<line x1="{cx - 95}" y1="{cy - 190}" x2="{cx - 40}" y2="{cy - 190}"/><line x1="{cx + 40}" y1="{cy - 190}" x2="{cx + 95}" y2="{cy - 190}"/></g>')
-    g.append(f'<rect x="{cx - 80}" y="{cy - 140}" width="160" height="18" fill="#1b2326"/>')
-    g.append(f'<rect x="{cx - 80}" y="{cy - 290}" width="160" height="62" fill="#1b2326"/>')
-    g.append(f'<text x="{cx}" y="{cy - 248}" text-anchor="middle" font-size="24" font-weight="700" letter-spacing="5" fill="#ffffff">DIRECTOR</text>')
-    g.append(f'<g stroke="{MINT}" stroke-width="7" stroke-linecap="round" opacity="0.9"><line x1="{cx - 60}" y1="{cy + 30}" x2="{cx + 60}" y2="{cy + 60}"/>'
-             f'<line x1="{cx + 60}" y1="{cy + 30}" x2="{cx - 60}" y2="{cy + 60}"/></g>')   # the tape mark
+    g.append(f'<g stroke="#3a464b" stroke-width="3" stroke-linecap="round" opacity="0.8"><line x1="{cx - 79}" y1="{cy - 135}" x2="{cx - 79}" y2="{cy - 285}"/>'
+             f'<line x1="{cx + 71}" y1="{cy - 135}" x2="{cx + 71}" y2="{cy - 285}"/></g>')   # a highlight on the frame
+    g.append(f'<rect x="{cx - 80}" y="{cy - 140}" width="160" height="18" fill="url(#canvas)"/>')
+    g.append(f'<rect x="{cx - 80}" y="{cy - 290}" width="160" height="62" fill="url(#canvas)"/>')
+    g.append(f'<text x="{cx}" y="{cy - 248}" text-anchor="middle" font-size="24" font-weight="700" letter-spacing="5" fill="#f4f7f8">DIRECTOR</text>')
     # a plant by the back wall
-    g.append('<rect x="1560" y="560" width="54" height="64" rx="6" fill="#f4f7f8"/>' +
+    g.append('<ellipse cx="1590" cy="626" rx="40" ry="8" fill="#22343c" opacity="0.4" filter="url(#soft)"/><rect x="1560" y="560" width="54" height="64" rx="6" fill="#f4f7f8"/>' +
              "".join(f'<ellipse cx="{1587 + dx}" cy="{548 + dy}" rx="22" ry="40" transform="rotate({rot} {1587 + dx} {548 + dy})" fill="{c}"/>'
                      for dx, dy, rot, c in [(-18, -10, -25, "#5aa47f"), (16, -14, 22, "#4c9572"), (0, -36, 0, "#6bb88f"), (-4, 4, -60, "#4c9572"), (8, 0, 60, "#5aa47f")]))
-    # foreground: the corner of desk 4471, your mug, your lanyard and badge
-    g.append(f'<polygon points="1060,1080 1240,860 {W},830 {W},1080" fill="#f1ede6"/>')
-    g.append(f'<polygon points="1060,1080 1240,860 1250,878 1076,1080" fill="#dcd5ca"/>')
-    g.append(f'<g transform="translate(1430,770)"><rect x="0" y="0" width="120" height="140" rx="16" fill="{MINT}"/>'
-             f'<path d="M120 34 q46 0 46 38 q0 38 -46 38" fill="none" stroke="{MINT}" stroke-width="18"/>'
-             f'<ellipse cx="60" cy="2" rx="60" ry="10" fill="{MINT_D}"/><g transform="translate(22,44)">{mark("#ffffff", 76)}</g></g>')
+    # foreground: the corner of desk 4471, your mug, your lanyard and badge (slightly soft: it's close to the lens)
+    g.append(f'<polygon points="1060,1080 1240,860 {W},830 {W},1080" fill="url(#desk)"/>')
+    g.append(f'<polygon points="1060,1080 1240,860 1250,878 1076,1080" fill="#d2cabd"/>')
+    g.append('<ellipse cx="1550" cy="912" rx="90" ry="14" fill="#5b5146" opacity="0.35" filter="url(#soft)"/>')
+    g.append(f'<g transform="translate(1480,772)"><rect x="0" y="0" width="120" height="140" rx="16" fill="url(#mug)"/>'
+             f'<path d="M120 34 q46 0 46 38 q0 38 -46 38" fill="none" stroke="{MINT_D}" stroke-width="18"/>'
+             f'<ellipse cx="60" cy="2" rx="60" ry="10" fill="#4f9f90"/><ellipse cx="60" cy="4" rx="50" ry="7" fill="#3a2a22" opacity="0.85"/>'
+             f'<rect x="14" y="10" width="10" height="120" rx="5" fill="#ffffff" opacity="0.28"/>'
+             f'<g transform="translate(22,44)">{mark("#ffffff", 76)}</g></g>')
+    g.append(f'<path d="M1300 984 C 1380 904, 1560 964, 1640 944 S 1800 904, 1820 964" fill="none" stroke="#3f7f73" stroke-width="16" stroke-linecap="round" opacity="0.35" filter="url(#bloom)"/>')
     g.append(f'<path d="M1300 980 C 1380 900, 1560 960, 1640 940 S 1800 900, 1820 960" fill="none" stroke="{MINT_D}" stroke-width="16" stroke-linecap="round"/>')
-    g.append('<g transform="translate(1700,945) rotate(-12)"><rect x="0" y="0" width="150" height="100" rx="10" fill="#ffffff" stroke="#d3dcde" stroke-width="3"/>'
+    g.append('<g transform="translate(1700,945) rotate(-12)"><rect x="4" y="8" width="150" height="100" rx="10" fill="#5b5146" opacity="0.3" filter="url(#soft)"/>'
+             '<rect x="0" y="0" width="150" height="100" rx="10" fill="#ffffff" stroke="#d3dcde" stroke-width="3"/>'
              f'<rect x="58" y="-14" width="34" height="22" rx="4" fill="#b8c4c7"/><text x="75" y="70" text-anchor="middle" font-size="40" font-weight="700" fill="{INK}">4471</text></g>')
     g.append('<rect width="1920" height="1080" fill="url(#vig)"/>')
+    g.append('<rect width="1920" height="1080" filter="url(#grain)"/>')
     return (W, H, svg_page(W, H, "".join(g)))
 
 
@@ -276,6 +329,8 @@ if __name__ == "__main__":
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path="/usr/bin/google-chrome")
         for name, fn in PAGES.items():
+            if ONLY and name not in ONLY:
+                continue
             w, h, html = fn()
             pg = b.new_page(viewport={"width": w, "height": h})
             pg.set_content(f'<html><head><style>*{{margin:0;padding:0}} body{{background:transparent}}</style></head><body>{html}</body></html>')

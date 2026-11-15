@@ -1021,3 +1021,14 @@ A running record of every AI tool used and what it did.
 - **Sol's ending plates wired in:** the four dailies (ART-012) on the director's monitors, and the dusk skyline (ART-014) past the open side of the penthouse. The wrap banner was moved off the ELEVATOR sign it was covering.
 - **Startup ensures** (*"precision loss while converting matrix"*, *"non-invertible matrix"*): they fire at editor frame 3, before Play, inside the renderer. That's the editor's own viewport or thumbnails, not game code. Left alone.
 - **AI tools used:** Claude (log, notes and screenshot review; C++; Unreal Python; cake-top texture fill with Python/PIL). Sol / ChatGPT (ART-011 cake top, ART-012 dailies, ART-014 skyline, made earlier).
+
+### Session 63: Sun Nov 15, 2026, 03:16–03:40 MST: House-style art, cake in every hand, a city outside
+
+- **Art direction call:** Sol's ending pieces were made in a different sandbox and didn't quite match the game. I redrew them in the game's own flat HALCYON style, using Sol's pieces as the content reference (`SourceArt/Textures/Ending/house/make_house_ending_art.py`, HTML rendered with Chrome). **Approved and swapped in:** wrap banner, cake top, overtime menu, director's chair cards, the four dailies, skyline. **Title background:** v01 was too clip-art, so v02 sits between the flat style and Sol's photographic key art (lit: daylight, soft shadows, light glow, haze, grain). It's waiting on my approval.
+- **Playtest notes (round 7):** *"the cake actually looks pretty cool"*, *"nice red clock"*. Asked for cake in hands with bites, 30% Black coworkers, the skyline as art on a wall and the outside built differently, and the Collector's skin.
+- **Built:**
+  - Party guests now hold a real wedge of the cake on a plate and take bites: it rises to the face, gets smaller, and after four bites it's an empty plate.
+  - 30% of the coworkers are now Black.
+  - The skyline is a framed print on the director's floor's east wall, and outside the open side there's a city of simple blocks with a taller HALCYON tower.
+- **The Collector's skin:** that note was written at 3:20 in Act 2. The build with the fix had been compiled at 3:17, and the party (with the Collector) loaded at 3:20:38, after the note. The code applies the same `M_SkinTone` brown to his `M_Skin` slot as the coworkers', so it needs a look at the party.
+- **AI tools used:** Claude (C++, HTML/SVG art via Playwright + Chrome, screenshot and log review). Sol / ChatGPT (the original ending art, used as reference).
