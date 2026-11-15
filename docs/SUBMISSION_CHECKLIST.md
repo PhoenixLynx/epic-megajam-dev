@@ -35,3 +35,17 @@
 | 2026-11-12 19:40 | Added rule items found while checking the asset rules: pre-jam declaration, human submits, rating/IP, Glass Box dev log. |
 
 - Note (Sat 12:10): rebuild with `Rebuild.bat` (project folder) after C++ changes; package again after this batch compiles and at end of Saturday.
+
+## Sunday Nov 15: the day's plan (from the 8:45 AM debrief)
+
+| Time (MST) | Step |
+|---|---|
+| on waking | Open the editor (the 3:55 AM build is current), run `import_memorial.py` (9 photos picked from the playtest screenshots), playtest pass |
+| by 12:00 | **Feature freeze.** Title background v02 approve/redo, last notes |
+| 12:00-13:00 | **Package:** Platforms > Windows > Package Project (Development) into `DirectorsCut_58/Builds/Sunday`; launch the .exe on a clean run (title, morning, one ending) |
+| 13:00-14:00 | **Gameplay video** 30-60 s, 1920x1080 (OBS): morning office, coffee splash, Corridor B loop, the ward, the party, the director's chair |
+| 14:00-15:30 | **itch.io page:** cover, screenshots, controls, AI-tool summary, devlog link (make the repo public or post the devlog on itch), zip upload |
+| by 17:00 | **Submit** (deadline 18:59) |
+
+Cook settings checked 8:45 AM: `DirectoriesToAlwaysCook` now also has `/Game/Ending`, `/Game/Memorial` and `/Engine/BasicShapes` (all loaded by path at runtime; without them a packaged build would lose Sol's signs, the memorial and the party shapes). Backup: `Config/DefaultGame.ini.bak-2026-11-15`.
+
