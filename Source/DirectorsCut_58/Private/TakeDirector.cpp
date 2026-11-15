@@ -126,8 +126,15 @@ void UTakeGrabComponent::BuildLobbyParty()
 	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(75.f, 0.f, 76.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 
 	// The banner: over the elevator doors, on the lobby side
-	SpawnLabel(World, TakeText::Fill(this, TEXT("THAT'S A WRAP, {EMP}!")), FVector(2000.f, 518.f, 272.f), FRotator(0.f, 90.f, 0.f), 34.f, FColor(70, 190, 160));
-	SpawnSetPiece(Cube, FVector(2000.f, 512.f, 272.f), FRotator::ZeroRotator, FVector(4.2f, 0.02f, 0.5f), White, false);
+	if (UMaterialInterface* BannerArt = Mat(TEXT("/Game/Ending/MI_WrapBanner.MI_WrapBanner")))   // Sol's banner (ART-010), 4:1
+	{
+		SpawnSetPiece(Cube, FVector(2000.f, 512.f, 250.f), FRotator::ZeroRotator, FVector(3.6f, 0.02f, 0.9f), BannerArt, false);
+	}
+	else   // (not imported yet: 3D text)
+	{
+		SpawnLabel(World, TakeText::Fill(this, TEXT("THAT'S A WRAP, {EMP}!")), FVector(2000.f, 518.f, 272.f), FRotator(0.f, 90.f, 0.f), 34.f, FColor(70, 190, 160));
+		SpawnSetPiece(Cube, FVector(2000.f, 512.f, 272.f), FRotator::ZeroRotator, FVector(4.2f, 0.02f, 0.5f), White, false);
+	}
 
 	// Bunting: two strings of little flags across the lobby, mint / white / gold
 	for (int32 Row = 0; Row < 2; ++Row)
@@ -367,7 +374,15 @@ void UTakeGrabComponent::BuildPenthouse()
 		Chair->Tags.Add(TEXT("Use=DirectorsChair"));
 		DirectorChair = Chair;
 	}
-	if (ATextRenderActor* Name = SpawnLabel(World, TEXT("DIRECTOR: ______"), P + FVector(0.f, 112.f, 118.f), FRotator(0.f, 90.f, 0.f), 13.f, FColor(245, 245, 240)))
+	// Sol's name card (ART-013) on the chair back: blank until you sit (her "4471" card is used when you are 4471)
+	if (UMaterialInterface* CardArt = Mat(TEXT("/Game/Ending/MI_DirectorCard_Blank.MI_DirectorCard_Blank")))
+	{
+		if (AStaticMeshActor* Card = SpawnSetPiece(Cube, P + FVector(0.f, 106.f, 118.f), FRotator::ZeroRotator, FVector(0.6f, 0.015f, 0.15f), CardArt, false))
+		{
+			DirectorCard = Card->GetStaticMeshComponent();
+		}
+	}
+	if (ATextRenderActor* Name = SpawnLabel(World, DirectorCard.IsValid() ? FString() : FString(TEXT("DIRECTOR: ______")), P + FVector(0.f, 112.f, 118.f), FRotator(0.f, 90.f, 0.f), 13.f, FColor(245, 245, 240)))
 	{
 		ChairName = Name->GetTextRender();
 	}
@@ -499,7 +514,15 @@ void UTakeGrabComponent::SitDirector()
 	{
 		if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController())) { PC->SetIgnoreMoveInput(true); }
 	}
-	if (UTextRenderComponent* Name = ChairName.Get()) { Name->SetText(FText::FromString(TakeText::Fill(this, TEXT("DIRECTOR: {EMP}")))); }
+	const UTakeGameInstance* CardGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	UMaterialInterface* Named = Mat(TEXT("/Game/Ending/MI_DirectorCard_4471.MI_DirectorCard_4471"));
+	UStaticMeshComponent* CardSM = DirectorCard.Get();
+	if (CardSM && Named && CardGI && CardGI->EmployeeNumber == 4471) { CardSM->SetMaterial(0, Named); }   // Sol's card says 4471
+	else
+	{
+		if (CardSM) { CardSM->SetVisibility(false); }   // a later take: the number is yours, not 4471
+		if (UTextRenderComponent* Name = ChairName.Get()) { Name->SetText(FText::FromString(TakeText::Fill(this, TEXT("DIRECTOR: {EMP}")))); }
+	}
 	// The live monitor: your desk, now
 	if (AActor* New = Employee4472.Get()) { New->SetActorHiddenInGame(false); }
 	if (AActor* Badge = Badge4472.Get()) { Badge->SetActorHiddenInGame(false); }

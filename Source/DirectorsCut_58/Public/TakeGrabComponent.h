@@ -352,6 +352,7 @@ private:
 	TArray<FLifted> Lifted;
 	TWeakObjectPtr<AActor> DirectorChair;
 	TWeakObjectPtr<class UTextRenderComponent> ChairName;
+	TWeakObjectPtr<class UStaticMeshComponent> DirectorCard;
 	TWeakObjectPtr<class UStaticMeshComponent> LiveMonitor;
 	int32 LiveMonitorSlot = 0;
 	TWeakObjectPtr<AActor> Employee4472;

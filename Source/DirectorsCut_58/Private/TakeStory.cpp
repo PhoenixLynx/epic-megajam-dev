@@ -482,7 +482,18 @@ void UTakeGrabComponent::TickAct2(float DeltaTime)
 			AActor* A = R.Actor.Get();
 			const UStaticMeshComponent* RSM = A ? Cast<UStaticMeshComponent>(A->GetRootComponent()) : nullptr;
 			const UMaterialInterface* RM = RSM ? RSM->GetMaterial(0) : nullptr;
-			const bool bMenu = RM && RM->GetName().Contains(TEXT("LunchSpecials"));   // the lunch board goes too
+			const bool bMenu = RM && RM->GetName().Contains(TEXT("LunchSpecials"));   // the lunch board: the overtime menu now (Sol's ART-016)
+			if (bMenu && RSM)
+			{
+				if (UMaterialInterface* Overtime = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Ending/MI_OvertimeMenu.MI_OvertimeMenu")))
+				{
+					UStaticMeshComponent* Board = const_cast<UStaticMeshComponent*>(RSM);
+					Board->SetMaterial(0, Overtime);
+					const FVector S = Board->GetComponentScale();
+					Board->SetWorldScale3D(FVector(S.Z, S.Y, S.Z));   // the menu is square (the lunch board was portrait)
+					continue;
+				}
+			}
 			if (R.bPhysics || bMenu) { PutAway(A); }
 		}
 		for (FFood& F : Foods) { PutAway(F.Actor.Get()); F.Back = -1.f; }
