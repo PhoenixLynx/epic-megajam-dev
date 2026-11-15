@@ -17,6 +17,7 @@
 #include "TakeStalker.h"
 #include "TakeTypes.h"
 #include "TakeCake.h"
+#include "ProceduralMeshComponent.h"
 #include "Components/AudioComponent.h"
 #include "TakeWidgets.h"
 #include "Engine/World.h"
