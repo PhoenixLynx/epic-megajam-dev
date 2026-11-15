@@ -25,7 +25,8 @@ public:
 	UFUNCTION() void OnWindowMode(int32 Mode);
 	UFUNCTION() void OnVolume(float Value);
 	UFUNCTION() void OnDialogueMode(int32 Mode);
-	UFUNCTION() void OnSaveNote(int32 Which);   // 0 = save the note, 1 = skip current tasks
+	UFUNCTION() void OnSaveNote(int32 Which);
+	UFUNCTION() void OnChecklistChanged(bool bChecked);   // a tick on the playtest checklist: rewrites Saved/VerifyChecklist.txt   // 0 = save the note, 1 = skip current tasks
 
 	/** Save / load the workday. Static so other code (autosave) can call them too. */
 	static bool SaveProgress(const UObject* WorldContext);
@@ -45,6 +46,10 @@ private:
 	UPROPERTY() TObjectPtr<UTextBlock> StatusText;
 	UPROPERTY() TObjectPtr<UTextBlock> SaveInfo;
 	UPROPERTY() TObjectPtr<class UMultiLineEditableTextBox> NotesBox;
+	// The playtest checklist (Saved/VerifyChecklist.txt, if it exists): "[ ] item" lines become tick boxes, other lines are headings
+	UPROPERTY() TArray<TObjectPtr<class UCheckBox>> CheckBoxes;
+	TArray<FString> ChecklistLines;
+	TArray<int32> CheckLineIndex;   // which line each tick box writes back to
 	bool bFocusNotes = false;
 	UTextBlock* MakeText(const FString& Text, int32 Size, const FLinearColor& Color, bool bBold = false);
 	UTakeIndexedButton* MakeButton(const FString& Text, int32 Index, bool bPrimary = false);

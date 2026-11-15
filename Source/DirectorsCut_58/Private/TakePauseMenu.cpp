@@ -28,6 +28,8 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Misc/App.h"
 #include "Components/MultiLineEditableTextBox.h"
+#include "Components/CheckBox.h"
+#include "Components/ScrollBox.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
@@ -182,6 +184,40 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 		UVerticalBox* NotesPage = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
 		NotesPage->AddChildToVerticalBox(MakeText(TEXT("TO-DO LIST"), 13, PMuted, true));
 		NotesPage->AddChildToVerticalBox(MakeText(TEXT("Type a note, then Save note. It's stamped with the game clock, act and where you're standing."), 14, PMuted))->SetPadding(FMargin(0.f, 4.f, 0.f, 8.f));
+		// The playtest checklist, when Saved/VerifyChecklist.txt exists (a dev aid; the packaged game has none, so it's just notes)
+		{
+			FString List;
+			const FString ListPath = FPaths::ProjectSavedDir() / TEXT("VerifyChecklist.txt");
+			if (FFileHelper::LoadFileToString(List, *ListPath))
+			{
+				List.ParseIntoArrayLines(ChecklistLines, false);
+				UScrollBox* ListScroll = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass());
+				for (int32 L = 0; L < ChecklistLines.Num(); ++L)
+				{
+					const FString Line = ChecklistLines[L].TrimStartAndEnd();
+					if (Line.IsEmpty()) { continue; }
+					const bool bItem = Line.StartsWith(TEXT("[ ]")) || Line.StartsWith(TEXT("[x]")) || Line.StartsWith(TEXT("[X]"));
+					if (!bItem)
+					{
+						ListScroll->AddChild(MakeText(Line, 14, PInk, true));
+						continue;
+					}
+					UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+					UCheckBox* Box = WidgetTree->ConstructWidget<UCheckBox>(UCheckBox::StaticClass());
+					Box->SetIsChecked(!Line.StartsWith(TEXT("[ ]")));
+					Box->OnCheckStateChanged.AddDynamic(this, &UTakePauseMenu::OnChecklistChanged);
+					Row->AddChildToHorizontalBox(Box)->SetPadding(FMargin(0.f, 0.f, 8.f, 0.f));
+					UHorizontalBoxSlot* TextSlot = Row->AddChildToHorizontalBox(MakeText(Line.RightChop(3).TrimStart(), 14, PInk));
+					TextSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+					ListScroll->AddChild(Row);
+					CheckBoxes.Add(Box);
+					CheckLineIndex.Add(L);
+				}
+				UVerticalBoxSlot* ListSlot = NotesPage->AddChildToVerticalBox(ListScroll);
+				ListSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+				ListSlot->SetPadding(FMargin(0.f, 0.f, 0.f, 10.f));
+			}
+		}
 		NotesBox = WidgetTree->ConstructWidget<UMultiLineEditableTextBox>(UMultiLineEditableTextBox::StaticClass());
 		UVerticalBoxSlot* NoteSlot = NotesPage->AddChildToVerticalBox(NotesBox);
 		NoteSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
@@ -267,6 +303,21 @@ void UTakePauseMenu::OnMenu(int32 Item)
 		break;
 	default: break;
 	}
+}
+
+void UTakePauseMenu::OnChecklistChanged(bool bChecked)
+{
+	// Write every tick back, so the list keeps its state between plays (and Claude can read what's been checked)
+	for (int32 K = 0; K < CheckBoxes.Num() && K < CheckLineIndex.Num(); ++K)
+	{
+		if (!CheckBoxes[K] || !ChecklistLines.IsValidIndex(CheckLineIndex[K])) { continue; }
+		FString& Line = ChecklistLines[CheckLineIndex[K]];
+		const int32 At = Line.Find(TEXT("["));
+		if (At != INDEX_NONE && At + 2 < Line.Len()) { Line[At + 1] = CheckBoxes[K]->IsChecked() ? TEXT('x') : TEXT(' '); }
+	}
+	const FString ListPath = FPaths::ProjectSavedDir() / TEXT("VerifyChecklist.txt");
+	FFileHelper::SaveStringToFile(FString::Join(ChecklistLines, TEXT("\n")), *ListPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+	SetStatus(bChecked ? TEXT("Checked.") : TEXT("Unchecked."));
 }
 
 void UTakePauseMenu::OnQuality(int32 Level)
