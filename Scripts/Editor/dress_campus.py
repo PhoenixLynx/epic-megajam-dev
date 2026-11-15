@@ -86,7 +86,7 @@ cabinet(1760, 3500, 0, 2)
 put("SM_Printer", 3300, 2300, 0, -90, ["Use=Printer"])   # (moved out of the restroom corner) E = print
 put("SM_PlantTall", 860, 1780)
 put("SM_PlantTall", 3330, 3620)
-put("SM_WallClock", 870, 1712, 240, 180)    # (moved along: it overlapped the office print)
+put("SM_WallClock", 1375, 1712, 200, 180)    # to the right of the office print, with room around it (playtest 13:02)
 
 # --- 12 cubicles (seeded so the layout is stable; the RUN seed varies clues, not furniture)
 rnd = random.Random(4471)
@@ -322,7 +322,7 @@ BOXES += [
     ("OfficeArt", 1100, 1713.5, 175, 400, 1, 100, "/Game/Ending/MI_OfficeArt", ["Inspectable"]),
     # a window in the open office (playtest: "add a window in the office"): on the east wall, a perfect day outside, always
     ("OfficeWindow_Frame", 3388.5, 2950, 172, 3, 530, 170, "/Game/Props/Meshes/M_MetalLight", []),
-    ("OfficeWindow_View", 3386.5, 2950, 172, 1, 500, 150, "/Game/Ending/MI_WindowView", []),
+    ("OfficeWindow_View", 3386.5, 2950, 172, 1, 500, 150, "/Game/Ending/MI_WindowView", ["Inspectable"]),   # E: look out
     ("OfficeWindow_Mullion1", 3385.5, 2825, 172, 2, 5, 150, "/Game/Props/Meshes/M_MetalLight", []),
     ("OfficeWindow_Mullion2", 3385.5, 2950, 172, 2, 5, 150, "/Game/Props/Meshes/M_MetalLight", []),
     ("OfficeWindow_Mullion3", 3385.5, 3075, 172, 2, 5, 150, "/Game/Props/Meshes/M_MetalLight", []),
