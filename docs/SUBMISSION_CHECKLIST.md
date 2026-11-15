@@ -7,6 +7,7 @@
 
 - [ ] Windows development build packaged (zipped, tested by launching it on a clean run)
   - Fri Nov 13, 21:47: first test package OK (`Builds/FridayNight`, 1.1 GB, Development, exit code 0). Still to do: the final build Sunday, zip it, test on a clean run.
+  - Sun 14:45: feature freeze. All critical playtest fixes verified in the editor. Engine debug view-mode keys cleared in `Config/DefaultInput.ini` (F5 was shader complexity). Final package started.
   - Always-cook folders: `/Game/Ending`, `/Game/Memorial` and `/Engine/BasicShapes` were added at 8:45 AM. `/Game/FirstPerson` and `/Game/Input` are optional extras. See [PACKAGING.md](PACKAGING.md) for the steps and the .exe test.
 - [ ] **Gameplay video, 30–60 s, 1920×1080 or higher** (rules sections 1 and 7(c)): shot list in [VIDEO_SHOTLIST.md](VIDEO_SHOTLIST.md)
 - [ ] itch.io game page set to **public**
@@ -24,7 +25,7 @@
 ## Nice to have
 
 - [ ] Cover image + screenshots on the itch page (page text drafted: [ITCH_PAGE.md](ITCH_PAGE.md))
-- [ ] Controls listed on the page
+- [ ] Controls listed on the page (drafted in ITCH_PAGE.md, with the director's tools: F5/F6/F7/F8/Ctrl+1–4 stay in for judges, decided 14:04)
 - [ ] AI tool usage summarized on the page (pulled from the devlog ledger)
 - [ ] "Tools you used" field filled in at submission (some partner prizes, e.g. Hyper3D Rodin's pool, depend on it)
 
@@ -34,6 +35,7 @@
 |------------|--------|
 | 2026-11-12 19:17 | Checklist created. Nothing ticked yet. |
 | 2026-11-12 19:40 | Added rule items found while checking the asset rules: pre-jam declaration, human submits, rating/IP, Glass Box dev log. |
+| 2026-11-15 14:45 | Playtest verification done (critical: NO-ending fall, penthouse edge, YES-ending dialogue, blank inbox rows, F5 shader view): all fixed and checked. Feature freeze. Packaging. Next: .exe test, video, itch page, submit. |
 | 2026-11-15 04:20 | Moved the gameplay video into Required. Packaging review → PACKAGING.md. itch page + video shot list drafted. Plan for today: playtest pass, my title background, feature freeze ~noon, package + .exe test, video, itch page, submit by ~5 PM. |
 
 - Note (Sat 12:10): rebuild with `Rebuild.bat` (project folder) after C++ changes; package again after this batch compiles and at end of Saturday.

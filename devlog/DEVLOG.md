@@ -1061,3 +1061,27 @@ A running record of every AI tool used and what it did.
 - **Deferred past the jam:** something to do during the conference call, a live camera of me on the security monitors, a longer Corridor B, more ward props, an actors' lounge.
 - **AI tools used:** Claude (notes and log review on my PC, C++, Unreal Python, Blender Python, house-style art rendered from HTML with Playwright + Chrome, the audit). No new Sol art this session.
 - 📸 **Screenshot reminder:** drop a few of the party cake, the office window and the FOR LATER sticky into `devlog/screenshots/` for the itch page and link them here.
+
+### Session 66: Sun Nov 15, 2026, 12:45–14:45 MST: Verification pass and feature freeze
+
+- **How it ran:** a checklist inside the game. The To-do list page (N) showed the items to verify as tick boxes, loaded from `Saved/VerifyChecklist.txt`, and my ticks were saved back to that file. Claude read my ticks and notes every ~10 minutes, fixed what failed, and pushed small batches. I rebuilt between rounds.
+- **Critical bugs found and fixed:**
+  - **I could walk off the edge of the set in the NO ending** (the walls lift). Now there's a safety net everywhere: fall about 10 m and you're back on the last floor you stood on, with "Back to one."
+  - **In the YES ending, guests downstairs talked over the director's lines.** The director's floor is right above the party, and the subtitle code didn't check floors. Coworkers are now heard only on your floor, and the director's chair clears any leftover lines and blocks cake and coffee talk.
+  - **Blank inbox rows:** an unescaped quote in the new Wardrobe email broke its row in the text table.
+  - **F5 turned the screen green.** Unreal's Development builds bind F1–F5 to debug view modes, and F5 is shader complexity. Those engine keys are now off in `DefaultInput.ini`.
+  - **Wellness chatter at the party:** the overtime announcement was still queued when the party started. The party now starts with a clean subtitle queue.
+- **Smaller fixes:**
+  - seated coworkers spin in their chair when hit
+  - the conference phone rings with callers asking for the Chairman and Dana
+  - printer memos read the right way round
+  - the fridge's top shelf is open (the freezer panel in code was 60 cm)
+  - the Act 2 task list is in the order you play it
+  - new mail goes to the top of the inbox
+  - the party phone is Wardrobe saying thank you
+  - the cakes are fixed facing the front of the table
+  - "E  Call ACTION" shows in the director's chair
+- **Decision (14:04):** the director's tools (F5/F6 endings, F7 stalker, F8 skip, Ctrl+1–4 Fear) stay in the build for the judges, and they're listed on the itch page.
+- **Left for after the jam:** party hats and favors, cups on the party table, something to do during the call.
+- **AI tools used:** Claude (reading notes, logs and screenshots on my PC; C++; Unreal Python; text tables; config review; the in-game checklist).
+- 📸 **Screenshot reminder:** grab the party cake, the director's chair and the NO ending from the packaged .exe for the itch page.
