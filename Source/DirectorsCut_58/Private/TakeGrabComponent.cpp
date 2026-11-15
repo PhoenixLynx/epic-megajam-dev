@@ -3,6 +3,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "DirectorsCut_58.h"
 #include "TakeGameInstance.h"
+#include "TakeCake.h"
 #include "TakeCoworker.h"
 #include "TakeFearDirector.h"
 #include "TakeWidgets.h"
@@ -696,6 +697,7 @@ void UTakeGrabComponent::Eat()
 
 void UTakeGrabComponent::Sip()
 {
+	if (EndStep >= 13 && EndStep < 20) { return; }   // the director's chair: no coffee talk over the cut
 	if (IsHoldingSnack()) { Eat(); return; }   // F: eat / drink whatever you're holding
 	if (!IsHoldingMug() || SipLeft > 0.f || bSeated) { return; }
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
@@ -969,6 +971,7 @@ void UTakeGrabComponent::TickPhones(float DeltaTime)
 		}
 	}
 	if (RingWho && RingWho->ActorHasTag(TEXT("CallScreen")) && CanJoinCall()) { return; }   // not while it's the way into the call
+	if (RingWho && RingWho->ActorHasTag(TEXT("WardPhone"))) { return; }   // the nurses' station only rings while you're down there
 	RingPhone(RingWho);
 }
 
@@ -1773,6 +1776,15 @@ void UTakeGrabComponent::TickSafetyNet(float DeltaTime)
 	const ACharacter* Me = Cast<ACharacter>(GetOwner());
 	UCharacterMovementComponent* Move = Me ? Me->GetCharacterMovement() : nullptr;
 	if (!Move) { return; }
+	// The party and director's floor cakes: until the first cut, while you're more than 3 m away, the lettering turns to
+	// you, so it reads from whichever side you walk up to (playtest: "cake still facing wrong way")
+	for (TActorIterator<ATakeCake> CakeIt(GetWorld()); CakeIt; ++CakeIt)
+	{
+		if (!CakeIt->ActorHasTag(TEXT("AimCake")) || CakeIt->CutsSoFar() > 0) { continue; }
+		const FVector To = CakeIt->GetActorLocation() - Me->GetActorLocation();
+		if (To.Size2D() < 300.f || FMath::Abs(To.Z) > 500.f) { continue; }
+		CakeIt->SetActorRotation(FRotator(0.f, To.Rotation().Yaw, 0.f));   // the lettering's "up" points away from you
+	}
 	if (Move->IsMovingOnGround())
 	{
 		SafeSampleT -= DeltaTime;

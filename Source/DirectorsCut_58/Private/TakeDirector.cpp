@@ -382,14 +382,14 @@ ATakeCake* UTakeGrabComponent::SpawnCake(const FVector& Base, float Yaw, float R
 	if (!Cake) { return nullptr; }
 	Cake->BuildCake(Radius, Height, 8, Missing);
 	if (Key) { Cake->Tags.Add(FName(*FString::Printf(TEXT("Use=%s"), Key))); }
-	if (Key && FCString::Strcmp(Key, TEXT("Cake")) == 0) { Cake->AimAtPlayer(); }   // the party and the director's floor
+	if (Key && FCString::Strcmp(Key, TEXT("Cake")) == 0) { Cake->Tags.Add(TEXT("AimCake")); }   // the party and the director's floor (TickSafetyNet turns it)
 	Cake->Tags.Add(TEXT("DirectorsFloor"));   // (the refusal's set-lift leaves it alone)
 	return Cake;
 }
 
 void UTakeGrabComponent::UseCake(ATakeCake* Cake, int32 N)
 {
-	if (!Cake) { return; }
+	if (!Cake || (EndStep >= 13 && EndStep < 20)) { return; }   // (in the director's chair: no cake talk)
 	// One slice at a time, per cake (playtest: "can't take a new slice until you eat the previous one"; but a slice
 	// left downstairs doesn't stop you cutting the director's cake)
 	if (Cake->ServedSlice.IsValid())
@@ -449,6 +449,7 @@ void UTakeGrabComponent::UseCake(ATakeCake* Cake, int32 N)
 
 void UTakeGrabComponent::EatSlice(AActor* Slice)
 {
+	if (EndStep >= 13 && EndStep < 20) { return; }   // (in the director's chair)
 	if (!Slice) { return; }
 	PlaySfx(TEXT("sfx_eat_crunch"), Slice->GetActorLocation(), 0.7f);
 	if (UTakeGameInstance* CakeGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { CakeGI->AddEnergy(25.f); }
@@ -771,6 +772,11 @@ void UTakeGrabComponent::SitDirector()
 {
 	if (EndStep != 12) { return; }
 	EndStep = 13;
+	// The director's cut has the floor: nothing left over (cake, coffee) talks over it (playtest "critical")
+	SubQueue.Reset();
+	SubQueueWho.Reset();
+	SubtitleLeft = 0.f;
+	if (IsHolding()) { Drop(); }
 	AStaticMeshActor* Chair = Cast<AStaticMeshActor>(DirectorChair.Get());
 	if (Chair) { Chair->SetActorEnableCollision(false); }
 	const FVector Seat = (Chair ? Chair->GetActorLocation() : Penthouse) + FVector(0.f, 10.f, 92.f);
