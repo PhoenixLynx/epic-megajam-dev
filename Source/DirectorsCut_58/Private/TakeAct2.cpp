@@ -610,7 +610,9 @@ void UTakeGrabComponent::TickElevatorDoors(float DeltaTime)
 	const FVector P = Me->GetActorLocation();
 	const bool bInCar = P.X > 1800.f && P.X < 2400.f && P.Y > 0.f && P.Y < 500.f && P.Z > -100.f && P.Z < 400.f;
 	bool bWant = bInCar || FVector::Dist2D(P, Doorway) < 260.f;   // in the car they stay open (you never get shut in)
-	for (TActorIterator<ACharacter> It(GetWorld()); It && !bWant; ++It)
+	const bool bPartyShut = EndT >= 0.f && EndStep != 11 && !bPenthouseBuilt;   // the wrap party: shut until C is lit
+	if (bPartyShut && !bInCar) { bWant = false; }
+	for (TActorIterator<ACharacter> It(GetWorld()); It && !bWant && !bPartyShut; ++It)
 	{
 		if (FVector::Dist2D(It->GetActorLocation(), Doorway) < 170.f) { bWant = true; }
 	}

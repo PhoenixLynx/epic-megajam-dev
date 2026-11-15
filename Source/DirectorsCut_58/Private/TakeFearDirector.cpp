@@ -205,7 +205,7 @@ void ATakeFearDirector::ApplyFear()
 		if (!L || !L->GetLightComponent()) { continue; }
 		float& Base = BaseIntensity.FindOrAdd(L, L->GetLightComponent()->Intensity);
 		// dim with Fear; above 0.5, flicker irregularly
-		float Scale = FMath::Lerp(1.f, 0.25f, F);
+		float Scale = FMath::Lerp(1.f, 0.25f, F) * LightScale;
 		const bool bBurst = BurstLeft > 0.f;
 		if (F > 0.5f || bBurst)
 		{

@@ -212,7 +212,7 @@ void UTakeGrabComponent::BuildPenthouse()
 	{
 		const int32 Col = I % 3, Row = I / 3;
 		const FVector At = P + FVector(-260.f + Col * 260.f, -PD * 0.5f + 40.f, Row == 0 ? 200.f : 70.f);
-		AStaticMeshActor* Mon = SpawnSetPiece(Prop(TEXT("SM_Monitor")), At, FRotator(0.f, 180.f, 0.f), FVector(2.4f), nullptr, false);
+		AStaticMeshActor* Mon = SpawnSetPiece(Prop(TEXT("SM_Monitor")), At, FRotator(0.f, 0.f, 0.f), FVector(2.4f), nullptr, false);   // screens toward the chair
 		if (!Mon) { continue; }
 		UStaticMeshComponent* SM = Mon->GetStaticMeshComponent();
 		const int32 Slot = SM->GetMaterialIndex(FName(TEXT("M_Screen")));
@@ -221,7 +221,12 @@ void UTakeGrabComponent::BuildPenthouse()
 		{
 			if (UMaterialInterface* Feed = Mat(*FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), Feeds[I], Feeds[I]))) { SM->SetMaterial(Slot, Feed); }
 		}
-		else { LiveMonitor = SM; LiveMonitorSlot = Slot; }
+		else { LiveMonitor = SM; LiveMonitorSlot = Slot; continue; }
+		FScreen Daily;   // the others keep cutting between takes (TickDailies)
+		Daily.Comp = SM;
+		Daily.Slot = Slot;
+		Daily.Next = FMath::FRandRange(1.f, 3.f);
+		Dailies.Add(Daily);
 	}
 	SpawnLabel(World, TEXT("DAILIES  ·  TAKES 1 - 4471"), P + FVector(0.f, -PD * 0.5f + 14.f, PH - 40.f), FRotator(0.f, 90.f, 0.f), 22.f, FColor(150, 225, 205));
 
@@ -311,6 +316,20 @@ void UTakeGrabComponent::BuildPenthouse()
 		}
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] The director's floor is built (%s)"), MyMonitor ? TEXT("with a live feed of desk 4471") : TEXT("no desk 4471 found: no live feed"));
+}
+
+void UTakeGrabComponent::TickDailies(float DeltaTime)
+{
+	static const TCHAR* Feeds[] = { TEXT("MI_Screen_CCTV"), TEXT("MI_Screen_Call"), TEXT("MI_Screen_Chart"), TEXT("MI_Screen_Fear"),
+	                                TEXT("MI_Screen_Promo"), TEXT("MI_Screen_Glyphs"), TEXT("MI_Screen_Inbox"), TEXT("MI_Screen_Code"), TEXT("MI_Screen_Saver") };
+	for (FScreen& S : Dailies)
+	{
+		UStaticMeshComponent* SM = S.Comp.Get();
+		if (!SM || (S.Next -= DeltaTime) > 0.f) { continue; }
+		S.Next = FMath::FRandRange(1.2f, 3.5f);
+		const TCHAR* Pick = Feeds[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Feeds)) - 1)];
+		if (UMaterialInterface* Feed = Mat(*FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), Pick, Pick))) { SM->SetMaterial(S.Slot, Feed); }
+	}
 }
 
 void UTakeGrabComponent::GoToPenthouse()

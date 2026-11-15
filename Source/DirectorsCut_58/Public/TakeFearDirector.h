@@ -100,6 +100,7 @@ private:
 	float RedAlert = 0.f;   // 0..1: the lights go red while the stalker is out
 public:
 	bool bForceRed = false;   // the refusal ending: red without a stalker
+	float LightScale = 1.f;   // house lights (the wrap party dims them)
 private:
 	float FlickerClock = 0.f;
 	float BurstLeft = 0.f;

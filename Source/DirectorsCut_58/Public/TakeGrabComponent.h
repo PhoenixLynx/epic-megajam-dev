@@ -354,6 +354,8 @@ private:
 	UPROPERTY() TObjectPtr<class UTextureRenderTarget2D> DailiesTarget;
 	class AStaticMeshActor* SpawnSetPiece(class UStaticMesh* M, const FVector& At, const FRotator& Rot, const FVector& Scale, class UMaterialInterface* Material, bool bCollide);
 	void BuildPenthouse();
+	void TickDailies(float DeltaTime);
+	TArray<FScreen> Dailies;
 	void BuildLobbyParty();   // the wrap party, in the lobby: there in both endings
 	bool bLobbyPartyBuilt = false;
 	void GoToPenthouse();
@@ -368,6 +370,8 @@ private:
 	void TickForeshadow(float DeltaTime);
 	void EndForeshadow(bool bCaught);     // threw too much at people today: the wrap party notices
 	bool bPartyLeashSaid = false;
+	bool bPartyLiftSaid = false;
+	float MonitorSwapIn = 0.f;   // the director's floor: the dailies change
 	int32 EndStep = 0;
 	float EndCardT = -1.f;
 	bool bEndingYes = false;

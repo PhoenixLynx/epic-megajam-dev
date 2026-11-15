@@ -208,6 +208,30 @@ void ATakeCoworker::LoadLines()
 			for (const TPair<int32, FString>& L : Set.Value) { Ordered.Add(L.Value); }
 		}
 	}
+	// Overtime (Act 3): the story characters have something new to say (no more lunch talk)
+	if (bStoryNPC && LinesAct >= 3)
+	{
+		TArray<FString>& Over = StorySets.FindOrAdd(TEXT("Overtime"));
+		if (NPCRole.Equals(TEXT("Receptionist"), ESearchCase::IgnoreCase))
+		{
+			Over = { TEXT("Still here, {EMP}? Everyone's still here. Nobody's signed out all day."),
+			         TEXT("Team building is in the Wellness Center. End of Corridor B. Bring your pass."),
+			         TEXT("After that, there's a party. There's always a party. ...You didn't hear that from me.") };
+		}
+		else if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase))
+		{
+			Over = { TEXT("Overtime. Badge. ...Pass 2. Then the Wellness Center's open to you."),
+			         TEXT("If you hear footsteps that aren't yours, keep walking. Don't run. Running makes it worse."),
+			         TEXT("I'm not supposed to tell you there's a cake. So I didn't.") };
+		}
+		else if (NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase))
+		{
+			Over = { TEXT("The clocks stopped. I told you not to wait for them."),
+			         TEXT("Something's been walking the open office. Heavy. Doesn't wipe its feet."),
+			         TEXT("Below the Wellness Center there's a ward. I clean that too. Nobody's ever in the beds. Except when they are.") };
+		}
+		else { StorySets.Remove(TEXT("Overtime")); }
+	}
 	if (Lines.Num() == 0) { Lines = MorningLines; }
 	if (Lines.Num() == 0)   // fallback until the DataTable is imported
 	{
@@ -421,6 +445,7 @@ bool ATakeCoworker::CurrentStorySet(FString& OutSet) const
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (GI)
 	{
+		if (GI->CurrentAct() >= 3 && StorySets.Contains(TEXT("Overtime")))    { OutSet = TEXT("Overtime"); return true; }
 		if (GI->Beat >= ETakeBeat::Lunch && StorySets.Contains(TEXT("Lunch")))  { OutSet = TEXT("Lunch"); return true; }
 		if (GI->Beat >= ETakeBeat::Corridor && StorySets.Contains(TEXT("Slip"))) { OutSet = TEXT("Slip"); return true; }
 		if (GI->MorningTasksDone() && StorySets.Contains(TEXT("Done")))   { OutSet = TEXT("Done"); return true; }

@@ -428,6 +428,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 	if (EndT < 0.f) { return; }
 	EndT += DeltaTime;
 	TickRefusal(DeltaTime);
+	if (bPenthouseBuilt) { TickDailies(DeltaTime); }
 	// The party stays calm... unless you spent the day throwing things at these people
 	if (EndStep >= 1 && !bRefused)
 	{
@@ -452,7 +453,11 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			if (!Leash.Equals(P, 1.f))
 			{
 				Pawn->SetActorLocation(Leash, false, nullptr, ETeleportType::None);
-				if (!bPartyLeashSaid) { bPartyLeashSaid = true; ShowSubtitle(TEXT("PA"), TEXT("The party is in the lobby. The rest of the building has gone home."), 3.f); }
+				if (P.Y < 600.f && EndStep < 10)
+				{
+					if (!bPartyLiftSaid) { bPartyLiftSaid = true; ShowSubtitle(TEXT(""), TEXT("(The elevator doesn't open for you. Not yet. Not until you answer.)"), 3.f); }
+				}
+				else if (!bPartyLeashSaid) { bPartyLeashSaid = true; ShowSubtitle(TEXT("PA"), TEXT("The party is in the lobby. The rest of the building has gone home."), 3.f); }
 			}
 		}
 	}
@@ -464,6 +469,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			EndStep = 1;
 			TeleportPlayer(LobbyParty, 90.f);   // facing the party (the elevator is behind you, the way stays clear)
 			BuildLobbyParty();
+			if (ATakeFearDirector* PartyLights = FindFearDirector()) { PartyLights->LightScale = 0.5f; }   // house lights down: a little too dim for a party
 			if (APawn* Pawn = Cast<APawn>(GetOwner()))   // you can mingle now (a few steps; see the leash below)
 			{
 				if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController())) { PC->SetIgnoreMoveInput(false); }
@@ -481,8 +487,9 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			{
 				// a half ring in front of you, two rows deep, on the far side from the elevator (so the way to it stays clear)
 				const float A = FMath::DegreesToRadians(15.f + 150.f * (N > 1 ? float(I) / float(N - 1) : 0.5f));
-				const float R = (I % 2 == 0) ? 330.f : 450.f;
-				const FVector P = LobbyParty + FVector(FMath::Cos(A) * R, FMath::Sin(A) * R * 0.66f, -8.f);
+				const float R = (I % 2 == 0) ? 300.f : 420.f;
+				FVector P = LobbyParty + FVector(FMath::Cos(A) * R, FMath::Sin(A) * R * 0.42f, -8.f);   // y stays under ~1230 (the reception desk starts ~1300)
+				GetWorld()->FindTeleportSpot(*It, P, It->GetActorRotation());   // never inside furniture
 				It->JoinParty(P, LobbyParty);
 			}
 		}
