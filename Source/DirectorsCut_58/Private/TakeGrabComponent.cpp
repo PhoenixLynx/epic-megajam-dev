@@ -815,7 +815,7 @@ void UTakeGrabComponent::BindPropImpacts()
 				if (!Scr.bMine && !It->ActorHasTag(TEXT("Terminal"))) { It->Tags.AddUnique(TEXT("Use=Screen")); }   // E: a look at someone else's screen
 			}
 		}
-		if (It->ActorHasTag(TEXT("CallScreen")))   // the conference screen, between calls: same idea (the call still wins when there is one)
+		if (It->ActorHasTag(TEXT("CallScreen")) && !SM->GetStaticMesh()->GetName().Contains(TEXT("Phone")))   // the conference screen, between calls: same idea (the call still wins when there is one)
 		{
 			It->Tags.AddUnique(TEXT("Use=Screen"));
 		}
@@ -828,6 +828,7 @@ void UTakeGrabComponent::BindPropImpacts()
 			DeskItems.Add(D);
 		}
 	}
+	SetCallScreens(false);   // the conference screen waits to connect until you join
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %d screen(s) (%d images), %d desk item(s)"), Screens.Num(), WorkScreens.Num(), DeskItems.Num());
 }
 
@@ -848,6 +849,12 @@ void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 	if (ATakeCoworker* Victim = Cast<ATakeCoworker>(OtherActor))
 	{
 		Victim->HitByProp(Speed);
+		if (++HitsSinceDock >= 3)   // playtest: "energy should get docked after throwing 3 items at people"
+		{
+			HitsSinceDock = 0;
+			if (UTakeGameInstance* DockGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { DockGI->AddEnergy(-15.f); }
+			ShowSubtitle(TEXT("HR"), TEXT("Three incidents. Your energy has been docked. Please channel it into your work."), 3.5f);
+		}
 		if (bSpilled) { Victim->SplashedByCoffee(); }
 		// (the new-mail chime comes from TickMail when Security / HR write to you)
 	}

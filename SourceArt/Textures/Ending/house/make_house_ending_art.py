@@ -338,7 +338,19 @@ def officeart():
     return (W, H, svg_page(W, H, "".join(g)))
 
 
+# ------------------------------------------------------------------ the conference screen before you join
+def callwaiting():
+    return (1024, 576, f'''<div style="position:relative;width:1024px;height:576px;background:#1b2a30;font-family:Poppins,Inter,sans-serif;overflow:hidden">
+      <div style="position:absolute;left:0;right:0;top:0;height:46px;background:#24363d;color:#cfe;font:600 18px/46px Poppins;padding:0 22px">HALCYON MEET</div>
+      <div style="position:absolute;left:0;right:0;top:110px;text-align:center">{mark(MINT, 120)}</div>
+      <div style="position:absolute;left:0;right:0;top:230px;font:700 46px Poppins;color:#f4f7f8;text-align:center">Sync (12:30)</div>
+      <div style="position:absolute;left:0;right:0;top:300px;font:500 26px Inter;color:#9fb3b9;text-align:center">Not connected. Waiting for you to join.</div>
+      <div style="position:absolute;left:0;right:0;top:350px;font:500 22px Inter;color:#6f8790;text-align:center">11 participants are already here. The host's camera is off.</div>
+      <div style="position:absolute;left:312px;width:400px;top:420px;height:58px;border-radius:29px;background:{MINT};font:600 24px/58px Poppins;color:{INK};text-align:center">Use the conference phone</div></div>''')
+
+
 PAGES = {
+    "T_Screen_CallWaiting": callwaiting,
     "T_PartyFlier": flier,
     "T_OfficeArt": officeart,
     "T_TitleKeyArt": title,

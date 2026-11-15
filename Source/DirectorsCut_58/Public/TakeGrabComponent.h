@@ -440,6 +440,8 @@ private:
 	float ChatNext = 0.f;      // seconds to the next line (or, between chats, to the next look around)
 	int32 ChatsHeard = 0;
 	void TickChats(float DeltaTime);
+	void SetCallScreens(bool bLive);   // the conference screen: the call, or "waiting to connect"
+	int32 HitsSinceDock = 0;          // every third thing that hits a coworker costs you energy
 	// Zoom: hold Z or the middle mouse button (the FOV eases in and out)
 	bool bZooming = false;
 	float BaseFOV = -1.f;

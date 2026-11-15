@@ -348,7 +348,9 @@ void UTakeGrabComponent::JoinCall()
 	if (bCallIsMeeting) { bMeetingReminded = true; } else { bCallReminded = true; }
 	GI->AddEnergy(-10.f);   // meetings are draining (that's the joke; it's also the mechanic)
 	GI->WorkdayMinutes = FMath::Max(GI->WorkdayMinutes, bCallIsMeeting ? 13.f * 60.f : 12.f * 60.f + 30.f);
+	PlaySfx2D(TEXT("sfx_phone_pickup"), 0.6f);   // the conference phone (playtest: "sound effect for joining call")
 	PlaySfx2D(TEXT("sfx_badge_ok"), 0.5f);
+	SetCallScreens(true);
 	StopMusic(3.f);   // the call: the music steps out of the room
 	PlaySfx2D(TEXT("sfx_phone_static"), 0.25f);   // a laptop speaker, someone's open mic
 
@@ -390,6 +392,8 @@ void UTakeGrabComponent::TickCall(float DeltaTime)
 	CallLeft -= DeltaTime;
 	if (CallLeft > 0.f) { return; }
 	CallLeft = -1.f;
+	SetCallScreens(false);
+	PlaySfx2D(TEXT("sfx_phone_pickup"), 0.4f);   // hang up
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (!GI) { return; }
 	NoteGlyphs(2, TEXT("call captions"));
@@ -1401,5 +1405,25 @@ void UTakeGrabComponent::TestStalker()
 	{
 		GI->TakeStalker();
 		ShowSubtitle(TEXT(""), TEXT("(Playtest: the stalker is coming.)"), 2.f);
+	}
+}
+
+// The conference screen: the call while you're on it; otherwise "waiting to connect" (playtest: "different screen for
+// joining call versus when you aren't conferencing in")
+void UTakeGrabComponent::SetCallScreens(bool bLive)
+{
+	UMaterialInterface* Live = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Screen_Call.MI_Screen_Call"));
+	UMaterialInterface* Idle = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Ending/MI_Screen_CallWaiting.MI_Screen_CallWaiting"));
+	UMaterialInterface* Want = bLive ? Live : Idle;
+	if (!Want) { return; }
+	for (TActorIterator<AStaticMeshActor> It(GetWorld()); It; ++It)
+	{
+		if (!It->ActorHasTag(TEXT("CallScreen"))) { continue; }
+		UStaticMeshComponent* SM = It->GetStaticMeshComponent();
+		if (!SM || !SM->GetStaticMesh()) { continue; }
+		const FString MeshName = SM->GetStaticMesh()->GetName();
+		if (MeshName.Contains(TEXT("Laptop")) || MeshName.Contains(TEXT("Phone"))) { continue; }   // only the big conference screen
+		const int32 Slot = SM->GetMaterialIndex(FName(TEXT("M_Screen")));
+		SM->SetMaterial(Slot == INDEX_NONE ? 0 : Slot, Want);
 	}
 }

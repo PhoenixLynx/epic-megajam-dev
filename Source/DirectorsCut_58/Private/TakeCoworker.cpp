@@ -299,7 +299,7 @@ void ATakeCoworker::HitByProp(float Speed)
 	if (Now - LastHitTime < 1.0 || bVanished) { return; }
 	LastHitTime = Now;
 	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (Player && State != ETakeCoworkerState::Watching)
+	if (Player && State != ETakeCoworkerState::Watching && !bSitsAtDesk)   // (seated: the chair doesn't turn with them, so they'd clip through it)
 	{
 		const FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
 		SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));   // they turn to see who did it

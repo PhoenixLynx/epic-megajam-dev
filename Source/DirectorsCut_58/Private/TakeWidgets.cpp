@@ -918,7 +918,7 @@ TSharedRef<SWidget> UTakeInspectWidget::RebuildWidget()
 
 		if (Picture)
 		{
-			const float MaxH = 640.f, MaxW = 1100.f;
+			const float MaxH = 800.f, MaxW = 1400.f;   // (playtest: notes and the polaroid were too small to read)
 			const float W = float(FMath::Max(1, Picture->GetSizeX())), H = float(FMath::Max(1, Picture->GetSizeY()));
 			const float Scale = FMath::Min(MaxH / H, MaxW / W);
 			UImage* Img = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());

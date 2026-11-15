@@ -225,6 +225,9 @@ put("SM_DirectorsChair", 1150, 1100, 0, 90)          # at the head of the table,
 TABLE_Z = 75
 for (x, y, yaw) in ((600, 1030, 0), (800, 1030, 0), (1000, 1170, 180)):   # screens toward the chairs (playtest: they faced away)
     put("SM_Laptop", x, y, TABLE_Z, yaw, ["CallScreen"])          # E = join the 12:30 call / 1:00 meeting (Act 2)
+# the conference phone in the middle of the table: E here joins the call too (playtest: "we should start the call with
+# the conference room phone the way they do in corporate offices")
+put("SM_DeskPhone", 850, 1100, TABLE_Z, 90, ["CallScreen"])
 for (x, y) in ((660, 1060), (950, 1080), (720, 1150), (1060, 1130)):
     put("SM_Mug", x, y, TABLE_Z, rnd.uniform(0, 360))
 for (x, y) in ((880, 1090), (900, 1110), (520, 1100)):
