@@ -355,7 +355,8 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		// some final little easter egg")
 		UMaterialInterface* NoteArt = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Ending/MI_StickyLater.MI_StickyLater"));
 		if (AStaticMeshActor* Note = SpawnSetPiece(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")), IslandTop + FVector(-4.f, 34.f, 5.6f),
-			FRotator(0.f, 0.f, 0.f), FVector(0.11f, 0.004f, 0.11f),   // standing up against the cake, facing you (playtest: flat, it read sideways) NoteArt ? NoteArt : LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Yellow.M_Yellow")), true))
+			// standing up against the cake, facing you (playtest: flat, it read sideways)
+			FRotator(0.f, 0.f, 0.f), FVector(0.11f, 0.004f, 0.11f), NoteArt ? NoteArt : LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Yellow.M_Yellow")), true))
 		{
 			Note->Tags.Add(TEXT("Inspectable"));
 		}
