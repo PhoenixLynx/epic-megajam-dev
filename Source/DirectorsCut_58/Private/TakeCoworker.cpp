@@ -137,12 +137,18 @@ void ATakeCoworker::SetupSkeletal()
 			UMaterialInstanceDynamic* Skin = UMaterialInstanceDynamic::Create(Shape, this);
 			Skin->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.12f, 0.06f, 0.035f));   // the director: the face reads fine at the Collector's tone
 			const TArray<FName> Slots = M->GetMaterialSlotNames();
+			int32 Toned = 0;
+			FString AllSlots;
 			for (int32 S = 0; S < M->GetNumMaterials(); ++S)
 			{
 				const FString SlotName = Slots.IsValidIndex(S) ? Slots[S].ToString() : FString();
+				AllSlots += SlotName + TEXT(" ");
 				if (!SlotName.Contains(TEXT("Skin"))) { continue; }   // head, neck, hands; the suit stays the office's colour
 				M->SetMaterial(S, Skin);
+				++Toned;
 			}
+			// (playtest: "still texture map for head" - this says which slots the mesh really has)
+			UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %s: brown skin on %d slot(s); slots: %s"), *GetName(), Toned, *AllSlots);
 		}
 	}
 	FaceMode = -1;

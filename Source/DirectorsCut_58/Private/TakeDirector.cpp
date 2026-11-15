@@ -397,7 +397,7 @@ void UTakeGrabComponent::BuildPenthouse()
 	SpawnSetPiece(Cyl, Table + FVector(-20.f, 0.f, 74.f + 9.f), FRotator::ZeroRotator, FVector(0.5f, 0.5f, 0.18f), Frosting, false);    // bottom tier
 	SpawnSetPiece(Cyl, Table + FVector(-20.f, 0.f, 74.f + 25.f), FRotator::ZeroRotator, FVector(0.32f, 0.32f, 0.14f), Fabric, false);  // top tier (mint)
 	Box(Table + FVector(26.f, 0.f, 74.f + 9.f), FVector(10.f, 30.f, 16.f), Mat(TEXT("/Game/Props/Meshes/M_Bread.M_Bread")), false);  // the cut: you can see the sponge
-	SpawnLabel(World, TakeText::Fill(this, TEXT("THAT'S A WRAP, {EMP}")), Table + FVector(-20.f, -27.f, 74.f + 12.f), FRotator(0.f, -90.f, 0.f), 4.f, FColor(40, 140, 115));
+	// (the cake's lettering comes with Sol's cake top, ART-011)
 	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(55.f, -25.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 	SpawnSetPiece(Prop(TEXT("SM_SodaCan")), Table + FVector(60.f, 25.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 	SpawnSetPiece(Prop(TEXT("SM_LobbySofa")), P + FVector(430.f, -250.f, 0.f), FRotator(0.f, -90.f, 0.f), FVector(1.f), nullptr, true);
