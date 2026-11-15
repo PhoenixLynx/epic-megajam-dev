@@ -218,6 +218,77 @@ namespace
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Fridge: rebuilt open (front %s), %d item(s) on the shelves, %d old one(s) retired"),
 			F > 0.f ? TEXT("+Y") : TEXT("-Y"), Stocked, Retired);
 	}
+
+	// The memorial wall (playtest: "some artwork on walls with memorial shots from the game" / "let's do something with
+	// this wall"). The lobby's south wall, east of the door to the open office (x 2300-2800, inner face y 1690): blank,
+	// behind and to the side of the reception desk, across the lobby from the elevator and the Chairman's portrait.
+	// Every /Game/Memorial/MI_Memorial_01..09 that exists (import_memorial.py) gets a dark frame, 16:9, three to a row,
+	// two rows here; a 7th-9th go on the south wall's west half, over the armchairs. A small plaque underneath.
+	// Nothing is hung (no frames, no plaque) until at least one photo has been imported.
+	void HangMemorialWall(UWorld* World)
+	{
+		if (!World) { return; }
+		for (TActorIterator<AActor> It(World); It; ++It) { if (It->ActorHasTag(TEXT("MemorialWall"))) { return; } }
+		TArray<UMaterialInterface*> Photos;
+		for (int32 I = 1; I <= 9; ++I)
+		{
+			const FString Name = FString::Printf(TEXT("MI_Memorial_%02d"), I);
+			if (UMaterialInterface* M = LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("/Game/Memorial/%s.%s"), *Name, *Name))) { Photos.Add(M); }
+		}
+		if (Photos.Num() == 0) { UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Memorial wall: no MI_Memorial_* yet (run import_memorial.py)")); return; }
+		UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+		if (!Cube) { return; }
+		UMaterialInterface* FrameMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_PlasticBlack.M_PlasticBlack"));
+		UMaterialInterface* PlaqueMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Wood.M_Wood"));
+		auto Board = [World, Cube](const FVector& At, const FVector& SizeCm, UMaterialInterface* Mat, bool bInspect) -> AStaticMeshActor*
+		{
+			FActorSpawnParameters P;
+			P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			AStaticMeshActor* A = World->SpawnActor<AStaticMeshActor>(At, FRotator::ZeroRotator, P);   // unrotated, like the other wall boards
+			if (!A) { return nullptr; }
+			UStaticMeshComponent* SM = A->GetStaticMeshComponent();
+			SM->SetMobility(EComponentMobility::Movable);
+			SM->SetStaticMesh(Cube);
+			SM->SetWorldScale3D(SizeCm / 100.f);
+			if (Mat) { SM->SetMaterial(0, Mat); }
+			SM->SetCollisionProfileName(TEXT("BlockAll"));
+			SM->SetCastShadow(false);
+			A->Tags.Add(TEXT("MemorialWall"));
+			if (bInspect) { A->Tags.Add(TEXT("Inspectable")); }   // E: look closer (the screenshot, full size)
+			return A;
+		};
+		const float WallY = 1690.f;          // the lobby side of the south wall
+		const float PhotoW = 96.f, PhotoH = 54.f;
+		struct FSlot { float X; float Z; };
+		const FSlot Slots[] = {
+			{ 2390.f, 205.f }, { 2505.f, 205.f }, { 2620.f, 205.f },   // east half, top row
+			{ 2390.f, 138.f }, { 2505.f, 138.f }, { 2620.f, 138.f },   // east half, bottom row
+			{ 1560.f, 195.f }, { 1675.f, 195.f }, { 1790.f, 195.f },   // west half, over the armchairs
+		};
+		int32 Hung = 0;
+		for (int32 I = 0; I < Photos.Num() && I < int32(UE_ARRAY_COUNT(Slots)); ++I)
+		{
+			const FSlot& S = Slots[I];
+			Board(FVector(S.X, WallY - 1.f, S.Z), FVector(PhotoW + 6.f, 2.f, PhotoH + 6.f), FrameMat, false);      // frame
+			Board(FVector(S.X, WallY - 2.3f, S.Z), FVector(PhotoW, 0.4f, PhotoH), Photos[I], true);              // the shot
+			++Hung;
+		}
+		// The plaque, under the east half
+		Board(FVector(2505.f, WallY - 1.f, 92.f), FVector(64.f, 2.f, 14.f), PlaqueMat, false);
+		FActorSpawnParameters TP;
+		TP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		if (ATextRenderActor* T = World->SpawnActor<ATextRenderActor>(FVector(2505.f, WallY - 2.2f, 88.f), FRotator(0.f, -90.f, 0.f), TP))   // reads from the lobby (-Y)
+		{
+			UTextRenderComponent* TR = T->GetTextRender();
+			TR->SetHorizontalAlignment(EHTA_Center);
+			TR->SetVerticalAlignment(EVRTA_TextCenter);
+			TR->SetWorldSize(7.f);
+			TR->SetTextRenderColor(FColor(235, 225, 190));
+			TR->SetText(FText::FromString(TEXT("HALCYON: OUR PEOPLE")));
+			T->Tags.Add(TEXT("MemorialWall"));
+		}
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Memorial wall: %d photo(s) in the lobby"), Hung);
+	}
 }
 
 // ------------------------------------------------------------------ the call and the meeting
@@ -455,6 +526,7 @@ void UTakeGrabComponent::CollectFunProps()
 {
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	StockTheFridge(GetWorld());   // first: it retires the old fridge food, so that isn't collected below
+	HangMemorialWall(GetWorld());
 	for (TActorIterator<AStaticMeshActor> It(GetWorld()); It; ++It)
 	{
 		UStaticMeshComponent* SM = It->GetStaticMeshComponent();

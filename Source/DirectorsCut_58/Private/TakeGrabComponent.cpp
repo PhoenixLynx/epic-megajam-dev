@@ -1095,6 +1095,7 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		{ TEXT("CallSheet"), TEXT("CALL SHEET"), TEXT("Today's date. A shooting schedule for an office.\nOne line is highlighted: EMPLOYEE 4471. You."), 0 },
 		{ TEXT("FridgeNote_Yogurt"), TEXT("KITCHEN"), TEXT("Someone has strong feelings about yogurt."), 0 },
 		{ TEXT("FridgeNote_Memo"), TEXT("KITCHEN"), TEXT("A memo about the fridge. It's signed by the fridge."), 0 },
+		{ TEXT("Memorial"), TEXT("HALCYON: OUR PEOPLE"), TEXT("A still from an earlier take. Everyone in it is looking at the camera.\nThe name card under the frame has been left blank. It always is."), 0 },
 		{ TEXT("Energy_Changed"), TEXT("YOUR ENERGY IS OUR GREATEST ASSET"), TEXT("The bolt is pointing at you now.\nIn the corner, very small, someone has drawn a row of squares."), 2 },
 		{ TEXT("Present_Changed"), TEXT("BE PRESENT."), TEXT("The eye is closed.\nWasn't it open a minute ago?"), 0 },
 		{ TEXT("CorridorB_Changed"), TEXT("THERE IS NO CORRIDOR B"), TEXT("The arrow points back the way you came.\nThat's the one."), 0 },
