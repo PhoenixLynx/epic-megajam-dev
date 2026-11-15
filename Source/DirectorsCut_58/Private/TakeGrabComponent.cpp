@@ -866,6 +866,21 @@ void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 		if (bSpilled) { Victim->SplashedByCoffee(); }
 		// (the new-mail chime comes from TickMail when Security / HR write to you)
 	}
+	else if (!Cast<APawn>(OtherActor))
+	{
+		// People at desks only block you, not props (so their chair and desk can't shove them out of their seat), so a
+		// throw goes through them and lands on the chair, the desk or the floor right by them. Count that as a hit
+		// (playtest: "coworkers still don't turn when hit in chair").
+		for (TActorIterator<ATakeCoworker> SeatIt(GetWorld()); SeatIt; ++SeatIt)
+		{
+			if (!SeatIt->bSitsAtDesk || SeatIt->IsHidden()) { continue; }
+			const FVector D = Hit.ImpactPoint - SeatIt->GetActorLocation();
+			if (D.Size2D() > 70.f || D.Z < -110.f || D.Z > 110.f) { continue; }
+			SeatIt->HitByProp(Speed);
+			if (bSpilled) { SeatIt->SplashedByCoffee(); }
+			break;
+		}
+	}
 }
 
 void UTakeGrabComponent::ShowSubtitleSequence(const FString& Who, const TArray<FString>& Lines)
