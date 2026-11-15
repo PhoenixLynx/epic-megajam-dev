@@ -923,6 +923,11 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			TEXT("Don't drink from the one in Corridor B. There isn't one in Corridor B."),
 			TEXT("The new one's doing well. They always do well. Until the retake."),
 			TEXT("...shh. They're here."),
+			TEXT("Somebody microwaved fish again. Same fish. Every morning."),
+			TEXT("Legal says we can't say 'loop'. We say 'continuity'."),
+			TEXT("I saw the custodian's closet once. There's a door in the back. It's painted on."),
+			TEXT("They're replacing the coffee machine. With the same coffee machine."),
+			TEXT("Have you noticed the receptionist never blinks on the left side?"),
 		};
 		// Overtime: the gossip slips out of character, like actors waiting between setups
 		static const TCHAR* GossipAct3[] = {
@@ -931,10 +936,15 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			TEXT("Don't look at me, I'm not in this scene. ...Am I in this scene?"),
 			TEXT("The tall one's a stunt double. Nobody knows whose."),
 			TEXT("...shh. Rolling. We're rolling."),
+			TEXT("Craft services says there's cake later. Don't tell the lead."),
+			TEXT("My agent says this is a 'limited series'. It's been limited for years."),
+			TEXT("If the lights go red, hit your mark and don't look at the corridor."),
 		};
 		const UTakeGameInstance* CGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 		const bool bOvertime = CGI && CGI->CurrentAct() >= 3;
-		const FString Line = bOvertime ? GossipAct3[N % int32(UE_ARRAY_COUNT(GossipAct3))] : Gossip[N % int32(UE_ARRAY_COUNT(Gossip))];
+		const int32 TakeShift = CGI ? CGI->TakeNumber * 3 + CGI->EmployeeNumber : 0;   // every take starts somewhere else in the gossip
+		const int32 G = N + TakeShift;
+		const FString Line = bOvertime ? GossipAct3[G % int32(UE_ARRAY_COUNT(GossipAct3))] : Gossip[G % int32(UE_ARRAY_COUNT(Gossip))];
 		ATakeCoworker* Gossiper = FindGossiper(GetWorld());
 		if (Gossiper && !Gossiper->IsHidden() && FVector::Dist(Gossiper->GetActorLocation(), Thing->GetActorLocation()) < 600.f)
 		{

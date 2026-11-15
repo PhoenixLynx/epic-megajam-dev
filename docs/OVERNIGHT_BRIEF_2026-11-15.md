@@ -62,6 +62,15 @@ Main is at the commit that added this file. Everything on main has been copied t
    taking a break, on their phone/vaping/lounging... showing more actors out of character"*. Design it in the report (fake window: emissive panel with a
    backdrop texture to come from Sol, or a real opening if the wall is separate geometry) and only build it if it's clean.
 
+8. **Cake in hand** (*"employees should have cake in hands"*, *"stalker should be allowed a slice of cake"*). After the first slice is cut
+   (`CutTheCake` in TakeDirector.cpp), some mingling coworkers (`ATakeCoworker::StartMingling`, `bAtParty`) carry a small plate with a slice:
+   a thin cylinder + small cube attached to the coworker (`NewObject<UStaticMeshComponent>`, `SetupAttachment`, `RegisterComponent`, no collision),
+   held in front at hand height (see `SpawnCollector`'s `Wear` lambda for the pattern). In the NO ending the stalker lurks by reception
+   (`StartRefusal`): give it a plate too, untouched.
+
+Also added at 00:10: the NO ending now always cuts to the card; the banner hangs across the lobby (smaller); the open office is walkable at the
+party; Black coworkers have brown skin on the `M_Skin` slots only; the gossip changes every take. Don't redo those.
+
 ## Don't
 - Don't change the endings' flow, the Fear Director's tuning, music cues or the stalker's AI: those were just playtested.
 - Don't add new DataTable rows (they need a re-import); put new text in code like the rest of tonight's work.

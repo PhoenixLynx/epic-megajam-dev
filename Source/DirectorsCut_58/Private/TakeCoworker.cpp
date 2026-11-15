@@ -129,18 +129,18 @@ void ATakeCoworker::SetupSkeletal()
 		if (UMaterialInterface* Neutral = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Neutral.MI_Face_Neutral"))) { FaceCalm = Neutral; }
 	}
 	FaceFrown = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Frown.MI_Face_Frown"));
-	// About one in five of the office are Black: the whole mannequin in a deep brown skin tone (not just a dark texture)
+	// About one in five of the office are Black: brown skin (the M_Skin slots), same suits as everyone
 	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && GetTypeHash(GetName()) % 5 == 1)
 	{
 		if (UMaterialInterface* Shape = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial")))
 		{
 			UMaterialInstanceDynamic* Skin = UMaterialInstanceDynamic::Create(Shape, this);
-			Skin->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.2f, 0.105f, 0.06f));
+			Skin->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.12f, 0.06f, 0.035f));   // the director: the face reads fine at the Collector's tone
 			const TArray<FName> Slots = M->GetMaterialSlotNames();
 			for (int32 S = 0; S < M->GetNumMaterials(); ++S)
 			{
 				const FString SlotName = Slots.IsValidIndex(S) ? Slots[S].ToString() : FString();
-				if (SlotName.Contains(TEXT("Face"))) { continue; }   // the face card keeps its drawn features
+				if (!SlotName.Contains(TEXT("Skin"))) { continue; }   // head, neck, hands; the suit stays the office's colour
 				M->SetMaterial(S, Skin);
 			}
 		}
@@ -902,6 +902,8 @@ void ATakeCoworker::JoinParty(const FVector& Where, const FVector& LookAt)
 	SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));
 	Home = Where;
 	HomeRot = GetActorRotation();
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);   // stand on the floor, not floating or sunk into it
+	GetCharacterMovement()->GravityScale = 1.f;
 	if (bSitsAtDesk)   // everyone stands for the wrap party
 	{
 		bSitsAtDesk = false;

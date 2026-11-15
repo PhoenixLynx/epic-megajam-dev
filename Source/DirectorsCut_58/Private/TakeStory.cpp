@@ -351,6 +351,7 @@ void UTakeGrabComponent::PlayMusicCue(const TCHAR* Why, const TCHAR* Track, bool
 	MusicAudio->FadeIn(4.f, 0.55f);   // slow swell under the ambience
 	MusicLeft = Music->Duration > 0.f ? Music->Duration : 90.f;
 	MusicTrack = Track;
+	if (MusicTrack.Contains(TEXT("tension")) || MusicTrack.Contains(TEXT("fear"))) { bTensionFirstDone = true; }   // (Fear Lvl 1 was being replaced a second later)
 	MusicAge = 0.f;
 	bMusicFading = false;
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Music: %s (%s)"), Track, Why);

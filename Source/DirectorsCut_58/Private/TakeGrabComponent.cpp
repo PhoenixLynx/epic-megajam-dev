@@ -75,7 +75,12 @@ void UTakeGrabComponent::BeginPlay()
 	}
 	BindStoryEvents();
 	const UTakeGameInstance* TitleGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
-	if (bPlayColdOpen && TitleGI && !TitleGI->bTitleDone) { ShowTitle(); return; }   // the title screen first, once per launch
+	if (bPlayColdOpen && TitleGI && !TitleGI->bTitleDone)   // the title screen first, once per launch
+	{
+		if (UTakeGameInstance* HideGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { HideGI->HideWorldUntilTitle(true); }   // (in case the early hook missed this world)
+		ShowTitle();
+		return;
+	}
 	if (UTakeGameInstance* ShowGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { ShowGI->HideWorldUntilTitle(false); }   // no title: draw the world
 	if (APawn* InPawn = Cast<APawn>(GetOwner()))   // (PLAY AGAIN came from the credits' UI-only input: give the controls back)
 	{
@@ -782,6 +787,10 @@ void UTakeGrabComponent::BindPropImpacts()
 				Screens.Add(Scr);
 				if (!Scr.bMine && !It->ActorHasTag(TEXT("Terminal"))) { It->Tags.AddUnique(TEXT("Use=Screen")); }   // E: a look at someone else's screen
 			}
+		}
+		if (It->ActorHasTag(TEXT("CallScreen")))   // the conference screen, between calls: same idea (the call still wins when there is one)
+		{
+			It->Tags.AddUnique(TEXT("Use=Screen"));
 		}
 		if (It->ActorHasTag(TEXT("DeskItem")))
 		{

@@ -457,7 +457,9 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			// The lobby + kitchen box, and (to the west) the conference room; clamp to whichever is nearer
 			const FVector InLobby(FMath::Clamp(P.X, 1550.f, 3650.f), FMath::Clamp(P.Y, EndStep == 11 ? 0.f : 560.f, 1450.f), P.Z);
 			const FVector InConf(FMath::Clamp(P.X, 500.f, 1600.f), FMath::Clamp(P.Y, 800.f, 1400.f), P.Z);
-			const FVector Leash = FVector::DistSquared2D(InLobby, P) <= FVector::DistSquared2D(InConf, P) ? InLobby : InConf;
+			const FVector InOffice(FMath::Clamp(P.X, 1600.f, 3200.f), FMath::Clamp(P.Y, 1400.f, 3500.f), P.Z);   // the open office (after hours)
+			FVector Leash = FVector::DistSquared2D(InLobby, P) <= FVector::DistSquared2D(InConf, P) ? InLobby : InConf;
+			if (FVector::DistSquared2D(InOffice, P) < FVector::DistSquared2D(Leash, P)) { Leash = InOffice; }
 			if (!Leash.Equals(P, 1.f))
 			{
 				Pawn->SetActorLocation(Leash, false, nullptr, ETeleportType::None);
@@ -465,7 +467,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 				{
 					if (!bPartyLiftSaid) { bPartyLiftSaid = true; ShowSubtitle(TEXT(""), TEXT("(The elevator doesn't open for you. Not yet. Not until you answer.)"), 3.f); }
 				}
-				else if (!bPartyLeashSaid) { bPartyLeashSaid = true; ShowSubtitle(TEXT("PA"), TEXT("The party is in the lobby. The rest of the building has gone home."), 3.f); }
+				else if (!bPartyLeashSaid) { bPartyLeashSaid = true; ShowSubtitle(TEXT("PA"), TEXT("The party is in the lobby. Corridor B has gone home."), 3.f); }
 			}
 		}
 	}
@@ -497,7 +499,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 				// a half ring in front of you, two rows deep, on the far side from the elevator (so the way to it stays clear)
 				const float A = FMath::DegreesToRadians(15.f + 150.f * (N > 1 ? float(I) / float(N - 1) : 0.5f));
 				const float R = (I % 2 == 0) ? 300.f : 420.f;
-				FVector P = LobbyParty + FVector(FMath::Cos(A) * R, FMath::Sin(A) * R * 0.42f, -8.f);   // y stays under ~1230 (the reception desk starts ~1300)
+				FVector P = LobbyParty + FVector(FMath::Cos(A) * R, FMath::Sin(A) * R * 0.42f, 2.f);   // y stays under ~1230 (the reception desk starts ~1300)
 				GetWorld()->FindTeleportSpot(*It, P, It->GetActorRotation());   // never inside furniture
 				It->JoinParty(P, LobbyParty);
 				++I;

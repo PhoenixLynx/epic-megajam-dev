@@ -116,8 +116,7 @@ void UTakeGrabComponent::BuildLobbyParty()
 	}
 	SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 28.f), FRotator::ZeroRotator, FVector(0.36f, 0.36f, 0.16f), FabricMint, false);
 	SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 41.f), FRotator::ZeroRotator, FVector(0.02f, 0.02f, 0.1f), White, false);       // one candle
-	SpawnLabel(World, TakeText::Fill(this, TEXT("THAT'S A WRAP, {EMP}")), Table + FVector(0.f, -29.f, 76.f + 12.f), FRotator(0.f, -90.f, 0.f), 4.5f, FColor(40, 140, 115));
-	SpawnLabel(World, TakeText::Fill(this, TEXT("THAT'S A WRAP, {EMP}")), Table + FVector(0.f, 29.f, 76.f + 12.f), FRotator(0.f, 90.f, 0.f), 4.5f, FColor(40, 140, 115));
+	// (the cake's lettering comes with Sol's cake top, ART-011: no floating text meanwhile)
 	for (int32 I = 0; I < 6; ++I)   // cups and cans, a little everywhere
 	{
 		const FVector At = Table + FVector(-70.f + I * 28.f, (I % 2 == 0) ? -28.f : 30.f, 76.f);
@@ -128,7 +127,12 @@ void UTakeGrabComponent::BuildLobbyParty()
 	// The banner: over the elevator doors, on the lobby side
 	if (UMaterialInterface* BannerArt = Mat(TEXT("/Game/Ending/MI_WrapBanner.MI_WrapBanner")))   // Sol's banner (ART-010), 4:1
 	{
-		SpawnSetPiece(Cube, FVector(2000.f, 512.f, 250.f), FRotator::ZeroRotator, FVector(3.6f, 0.02f, 0.9f), BannerArt, false);
+		const FVector BannerAt(2100.f, 820.f, 245.f);   // across the lobby, between the elevator and the party, under the ceiling
+		SpawnSetPiece(Cube, BannerAt, FRotator::ZeroRotator, FVector(2.4f, 0.02f, 0.6f), BannerArt, false);
+		for (const float Side : { -110.f, 110.f })   // two strings up to the ceiling
+		{
+			SpawnSetPiece(Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder")), BannerAt + FVector(Side, 0.f, 42.f), FRotator::ZeroRotator, FVector(0.006f, 0.006f, 0.25f), White, false);
+		}
 	}
 	else   // (not imported yet: 3D text)
 	{
@@ -622,7 +626,7 @@ void UTakeGrabComponent::TickRefusal(float DeltaTime)
 		const float E = T * T * (3.f - 2.f * T);
 		A->SetActorLocation(L.From + FVector(0.f, 0.f, 1100.f * E));
 	}
-	if (RefuseT > 16.f && SubQueue.Num() == 0 && SubtitleLeft <= 0.f)
+	if (RefuseT > 16.f && ((SubQueue.Num() == 0 && SubtitleLeft <= 0.f) || RefuseT > 24.f))
 	{
 		bEndingYes = false;
 		EndStep = 4;
