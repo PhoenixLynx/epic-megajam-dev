@@ -244,7 +244,6 @@ void UTakeTerminalWidget::BuildMail(const UObject* WorldContext, TArray<FMail>& 
 			if (When == TEXT("KeyLock2"))     { return GI->SoulBits >= 2; }
 			return false;
 		};
-		int32 NewMail = 0;
 		for (const TPair<FName, uint8*>& Pair : Table->GetRowMap())
 		{
 			const FTakeEmailRow* R = reinterpret_cast<const FTakeEmailRow*>(Pair.Value);
@@ -259,9 +258,14 @@ void UTakeTerminalWidget::BuildMail(const UObject* WorldContext, TArray<FMail>& 
 			if (R->Act == 1)
 			{
 				if (When.IsEmpty() || When == TEXT("Start") || When == TEXT("AfterEmails")) { Out.Add(Mail); }
-				else if (Arrived(When)) { Out.Insert(Mail, NewMail++); }   // things that happened today, newest on top
+				else if (Arrived(When)) { Out.Insert(Mail, 0); }   // things that happened today, newest on top
 			}
-			else if (R->Act <= Act && Arrived(When)) { Out.Insert(Mail, NewMail++); }
+			else if (R->Act <= Act && Arrived(When)) { Out.Insert(Mail, 0); }
+		}
+		// Unread mail first (playtest: "inbox pushes new mail to top"), the rest in the same order as before
+		if (GI)
+		{
+			Out.StableSort([GI](const FMail& A, const FMail& B) { return !GI->ReadMail.Contains(A.Id) && GI->ReadMail.Contains(B.Id); });
 		}
 	}
 	if (Out.Num() == 0)   // fallback until the DataTable is imported

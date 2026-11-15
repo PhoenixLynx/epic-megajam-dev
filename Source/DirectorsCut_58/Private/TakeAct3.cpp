@@ -351,11 +351,11 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		const FVector IslandTop(3355.f, 830.f, 90.5f);   // the east end of the island (top 90 cm)
 		// the lettering reads from the kitchen side, where you stand at the island (playtest: "rotate cake to face the person")
 		OvertimeCake = SpawnCake(IslandTop, -90.f, 24.f, 14.f, 0, TEXT("CakeLater"));
-		// the sticky note, flat on the island in front of the cake: E to read it (playtest: "have it be on the table with
+		// the sticky note, propped up in front of the cake: E to read it (playtest: "have it be on the table with
 		// some final little easter egg")
 		UMaterialInterface* NoteArt = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Ending/MI_StickyLater.MI_StickyLater"));
-		if (AStaticMeshActor* Note = SpawnSetPiece(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")), IslandTop + FVector(-6.f, 40.f, 0.3f),
-			FRotator(0.f, -78.f, 0.f), FVector(0.11f, 0.11f, 0.004f), NoteArt ? NoteArt : LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Yellow.M_Yellow")), true))
+		if (AStaticMeshActor* Note = SpawnSetPiece(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")), IslandTop + FVector(-4.f, 34.f, 5.6f),
+			FRotator(0.f, 0.f, 0.f), FVector(0.11f, 0.004f, 0.11f),   // standing up against the cake, facing you (playtest: flat, it read sideways) NoteArt ? NoteArt : LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Yellow.M_Yellow")), true))
 		{
 			Note->Tags.Add(TEXT("Inspectable"));
 		}

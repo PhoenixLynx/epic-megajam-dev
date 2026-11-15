@@ -382,6 +382,7 @@ ATakeCake* UTakeGrabComponent::SpawnCake(const FVector& Base, float Yaw, float R
 	if (!Cake) { return nullptr; }
 	Cake->BuildCake(Radius, Height, 8, Missing);
 	if (Key) { Cake->Tags.Add(FName(*FString::Printf(TEXT("Use=%s"), Key))); }
+	if (Key && FCString::Strcmp(Key, TEXT("Cake")) == 0) { Cake->AimAtPlayer(); }   // the party and the director's floor
 	Cake->Tags.Add(TEXT("DirectorsFloor"));   // (the refusal's set-lift leaves it alone)
 	return Cake;
 }

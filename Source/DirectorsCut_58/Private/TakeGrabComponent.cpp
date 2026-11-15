@@ -1014,6 +1014,26 @@ void UTakeGrabComponent::AnswerPhone(AActor* Phone)
 		ShowSubtitleSequence(TEXT("???"), Lines);
 		return;
 	}
+	// At the wrap party: the phone is Wardrobe saying thank you (playtest: "I got a call at the party and it was automated
+	// wellness, not a thank you from Wardrobe")
+	if (const UTakeGameInstance* PartyGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)); PartyGI && PartyGI->Beat == ETakeBeat::Wrap)
+	{
+		switch (UseCounts.FindOrAdd(TEXT("PartyPhone"))++)
+		{
+		case 0:
+			Lines = { TEXT("Hi! Wardrobe. Just calling to say thank you for your performance today. Really. Every take."),
+			          TEXT("Your THAT'S A WRAP shirt is ready. Corridor B, the door that isn't there."), TEXT("One size. It fits everyone. *click*") };
+			break;
+		case 1:
+			Lines = { TEXT("Wardrobe again. Did you find the shirt? ...You're wearing it. Of course you are. *click*") };
+			break;
+		default:
+			Lines = { TEXT("(the party, on the other end of the line too: music, laughing, someone saying your number) *click*") };
+			break;
+		}
+		ShowSubtitleSequence(TEXT("Wardrobe"), Lines);
+		return;
+	}
 	if (bMine && ReminderRinging > 0)
 	{
 		if (ReminderRinging == 1)
@@ -1588,6 +1608,7 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickAct3(DeltaTime);
 	TickZoom(DeltaTime);
 	TickChats(DeltaTime);
+	TickSafetyNet(DeltaTime);
 	TickMusic(DeltaTime);
 	TickFun(DeltaTime);
 	TickMail(DeltaTime);
@@ -1729,5 +1750,26 @@ void UTakeGrabComponent::TickChats(float DeltaTime)
 			UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Chat: %s and %s"), *Idle[I]->GetName(), *Idle[J]->GetName());
 			return;
 		}
+	}
+}
+
+void UTakeGrabComponent::TickSafetyNet(float DeltaTime)
+{
+	const ACharacter* Me = Cast<ACharacter>(GetOwner());
+	UCharacterMovementComponent* Move = Me ? Me->GetCharacterMovement() : nullptr;
+	if (!Move) { return; }
+	if (Move->IsMovingOnGround())
+	{
+		SafeSampleT -= DeltaTime;
+		if (SafeSampleT <= 0.f) { SafeSampleT = 0.5f; LastSafeGround = Me->GetActorLocation(); }
+		return;
+	}
+	// Falling fast (about 10 m down, never a step or a jump; teleports carry no speed): back to the last floor you stood on
+	if (Move->IsFalling() && Move->Velocity.Z < -1400.f && !LastSafeGround.IsZero())
+	{
+		Move->StopMovementImmediately();
+		GetOwner()->TeleportTo(LastSafeGround + FVector(0.f, 0.f, 20.f), GetOwner()->GetActorRotation());
+		ShowSubtitle(TEXT("From above"), TEXT("Back to one."), 2.f);
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Safety net: fell off the set, back to %s"), *LastSafeGround.ToString());
 	}
 }

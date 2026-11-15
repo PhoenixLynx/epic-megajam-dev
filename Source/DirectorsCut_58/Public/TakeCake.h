@@ -42,6 +42,10 @@ public:
 	TWeakObjectPtr<AActor> ServedSlice;   // the slice on it you haven't eaten yet
 	/** How many slices have been cut from this cake so far (not counting the ones already gone when it was built). */
 	int32 CutsSoFar() const { return Slices - SlicesLeft() - StartMissing; }
+	/** Until the first cut, keep the lettering turned toward the player while they're more than ~4 m away, so it reads
+	 *  from whichever side they walk up to (playtest: the party and penthouse cakes faced the wrong way). */
+	void AimAtPlayer();
+	virtual void Tick(float DeltaSeconds) override;
 
 private:
 	TArray<bool> Present;

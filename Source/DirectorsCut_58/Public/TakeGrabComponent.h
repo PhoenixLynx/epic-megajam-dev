@@ -435,6 +435,11 @@ private:
 	int32 SlicesEaten = 0;
 	bool bPartyCakeCut = false;
 	bool b4472Called = false;   // the new hire leaves a voicemail during the party
+	// Safety net: anywhere off the edge of the set (the NO ending lifts the walls; the director's floor is open on one
+	// side), a long fall puts you back where you last stood
+	FVector LastSafeGround = FVector::ZeroVector;
+	float SafeSampleT = 0.f;
+	void TickSafetyNet(float DeltaTime);
 	// Coworkers talking to each other (TakeGrabComponent.cpp): a short exchange between two standing near each other, near you
 	TWeakObjectPtr<class ATakeCoworker> ChatA, ChatB;
 	TArray<FString> ChatLines;

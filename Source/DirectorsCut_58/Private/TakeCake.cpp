@@ -4,6 +4,8 @@
 #include "ProceduralMeshComponent.h"
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Pawn.h"
 
 namespace
 {
@@ -20,7 +22,8 @@ namespace
 
 ATakeCake::ATakeCake()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = false;   // only cakes that aim at you tick (AimAtPlayer)
 	Cake = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Cake"));
 	RootComponent = Cake;
 	Cake->bUseComplexAsSimpleCollision = true;   // E finds it with the ordinary look trace
@@ -158,4 +161,21 @@ int32 ATakeCake::SlicesLeft() const
 	int32 N = 0;
 	for (const bool B : Present) { if (B) { ++N; } }
 	return N;
+}
+
+void ATakeCake::AimAtPlayer()
+{
+	SetActorTickEnabled(true);
+	SetActorTickInterval(0.1f);
+}
+
+void ATakeCake::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (CutsSoFar() > 0) { SetActorTickEnabled(false); return; }   // cut: it stays where it is now
+	const APawn* Viewer = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (!Viewer) { return; }
+	const FVector To = GetActorLocation() - Viewer->GetActorLocation();
+	if (To.Size2D() < 380.f) { return; }   // close enough to see it: it holds still
+	SetActorRotation(FRotator(0.f, To.Rotation().Yaw, 0.f));   // the lettering's "up" points away from you, so it reads
 }

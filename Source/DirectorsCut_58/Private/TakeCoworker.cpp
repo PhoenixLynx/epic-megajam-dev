@@ -643,7 +643,10 @@ void ATakeCoworker::SayLine(const FString& Line)
 	if (const UWorld* World = GetWorld()) { NextAnyoneMayTalk = World->GetTimeSeconds() + SpeechLeft * 0.8f; }
 	if (TakeSettings::DialogueMode != 1)   // subtitles
 	{
-		if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+		// (not from another floor: on the director's floor, right above the party, the guests downstairs were still being
+		// heard talking about cake over the ending; playtest "critical")
+		APawn* P = UGameplayStatics::GetPlayerPawn(this, 0);
+		if (P && FMath::Abs(P->GetActorLocation().Z - GetActorLocation().Z) < 400.f)
 		{
 			if (UTakeGrabComponent* Hands = P->FindComponentByClass<UTakeGrabComponent>())
 			{
