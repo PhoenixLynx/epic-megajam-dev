@@ -98,6 +98,22 @@ void ATakeCoworker::BeginPlay()
 	LoadLines();
 }
 
+bool ATakeCoworker::IsBlackCoworker() const
+{
+	auto Key = [](const AActor* A) { const FVector L = A->GetActorLocation(); return FMath::RoundToInt(L.Y / 250.f) * 100000 + FMath::RoundToInt(L.X); };
+	const int32 Mine = Key(this);
+	int32 Rank = 0;
+	for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
+	{
+		if (*It == this || !It->NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase)) { continue; }
+		const int32 Theirs = Key(*It);
+		if (Theirs < Mine || (Theirs == Mine && It->GetName() < GetName())) { ++Rank; }
+	}
+	// 30%: in each run of ten neighbours, three are Black, at shuffled places (never two next to each other)
+	static const bool Pattern[10] = { false, true, false, false, true, false, false, false, true, false };
+	return Pattern[Rank % 10];
+}
+
 void ATakeCoworker::SetupSkeletal()
 {
 	const TCHAR* MeshName = NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase) ? TEXT("SK_MannequinGuard")
@@ -130,7 +146,10 @@ void ATakeCoworker::SetupSkeletal()
 	}
 	FaceFrown = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Frown.MI_Face_Frown"));
 	// About three in ten of the office are Black (playtest: "30% if possible"): dark skin (the M_Skin slots), same suits as everyone
-	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && (GetTypeHash(GetName()) % 10) < 3)
+	// Spread out, not side by side (playtest: "they shouldn't all sit together, they should be randomly placed"): every
+	// office coworker is ranked by where they stand (rows of desks, then along the row) and every third or so in that
+	// order is Black, with a fixed shuffle so it doesn't read as a pattern. Same people every take.
+	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && IsBlackCoworker())
 	{
 		// Playtest: "switch black skin tone to previous collectors... the white employees are white and having brown or beige
 		// shades does not fit the aesthetic". So: the Collector's dark (M_MetalDark), the same stylised flat colour as the

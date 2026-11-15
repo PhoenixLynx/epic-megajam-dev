@@ -66,6 +66,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Coworker") void SayLine(const FString& Line);
 	/** The NO ending: what they say to you after you refuse (haunting, a little mean). */
 	static FString RefusalLine();
+	/** About 30% of the office, spread out across the desks (see TakeCoworker.cpp). */
+	bool IsBlackCoworker() const;
 	/** Something you threw hit them. */
 	void HitByProp(float Speed);
 	/** After HitByProp, when the thing was a full mug: they get coffee on them, and HR counts it twice. */

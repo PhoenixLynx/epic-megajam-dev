@@ -433,7 +433,6 @@ private:
 	int32 CakeLaterTries = 0;
 	int32 SlicesEaten = 0;
 	bool bPartyCakeCut = false;
-	TWeakObjectPtr<class ATakeCake> PlatedSlice;   // the slice you cut and haven't eaten yet
 	TArray<struct FHeldCake> HeldCakes;   // slices in people's hands at the party (they take bites)
 	void TickHeldCakes(float DeltaTime);
 	bool bMusicLoop = false;         // the party and the director's floor: the happy cue keeps playing

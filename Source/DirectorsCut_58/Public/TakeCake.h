@@ -38,6 +38,8 @@ public:
 	float Height = 16.f;
 	int32 Slices = 8;
 	int32 StartMissing = 0;
+	TWeakObjectPtr<AActor> ServePlate;    // the one plate slices from this cake go on
+	TWeakObjectPtr<AActor> ServedSlice;   // the slice on it you haven't eaten yet
 	/** How many slices have been cut from this cake so far (not counting the ones already gone when it was built). */
 	int32 CutsSoFar() const { return Slices - SlicesLeft() - StartMissing; }
 

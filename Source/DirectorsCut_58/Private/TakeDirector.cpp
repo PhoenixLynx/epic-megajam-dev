@@ -375,13 +375,12 @@ ATakeCake* UTakeGrabComponent::SpawnCake(const FVector& Base, float Yaw, float R
 void UTakeGrabComponent::UseCake(ATakeCake* Cake, int32 N)
 {
 	if (!Cake) { return; }
-	if (ATakeCake* Waiting = PlatedSlice.Get())   // playtest: "can't take a new slice until you eat the previous one"
+	// One slice at a time, per cake (playtest: "can't take a new slice until you eat the previous one"; but a slice
+	// left downstairs doesn't stop you cutting the director's cake)
+	if (Cake->ServedSlice.IsValid())
 	{
-		if (!Waiting->IsHidden())
-		{
-			ShowSubtitle(TEXT(""), TEXT("(Your slice is right there on the plate. Finish it first.)"), 2.5f);
-			return;
-		}
+		ShowSubtitle(TEXT(""), TEXT("(Your slice is right there on the plate. Finish it first.)"), 2.5f);
+		return;
 	}
 	const FVector C = Cake->GetActorLocation();
 	int32 Wedge = 0;
@@ -392,23 +391,27 @@ void UTakeGrabComponent::UseCake(ATakeCake* Cake, int32 N)
 		return;
 	}
 	PlaySfx(TEXT("sfx_pickup"), C + FVector(0.f, 0.f, 20.f), 0.45f);
-	// The slice goes on a plate just past the cake, on the side you're standing (always on the table)
-	FVector ToMe = FVector::ForwardVector;
-	if (const AActor* Me = GetOwner()) { ToMe = (Me->GetActorLocation() - C).GetSafeNormal2D(); }
-	if (ToMe.IsNearlyZero()) { ToMe = FVector::ForwardVector; }
-	const FVector Side(-ToMe.Y, ToMe.X, 0.f);
 	const int32 Cuts = Cake->CutsSoFar() - 1;   // 0 for the first slice off this cake
-	const float Spread = (Cuts % 3 - 1) * 24.f;   // a second plate doesn't land on the first
-	const FVector PlateAt = C + ToMe * (Cake->Radius + 14.f) + Side * Spread;
-	UMaterialInterface* White = Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite"));
-	SpawnSetPiece(Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder")), PlateAt + FVector(0.f, 0.f, 0.5f), FRotator::ZeroRotator, FVector(0.2f, 0.2f, 0.01f), White, false);
+	// One plate per cake (playtest: "don't need to spawn new plate every slice"): it goes just past the cake on the
+	// side you're standing the first time, and every slice after lands on the same plate
+	FVector PlateAt;
+	if (const AActor* Plate = Cake->ServePlate.Get()) { PlateAt = Plate->GetActorLocation() - FVector(0.f, 0.f, 0.5f); }
+	else
+	{
+		FVector ToMe = FVector::ForwardVector;
+		if (const AActor* Me = GetOwner()) { ToMe = (Me->GetActorLocation() - C).GetSafeNormal2D(); }
+		if (ToMe.IsNearlyZero()) { ToMe = FVector::ForwardVector; }
+		PlateAt = C + ToMe * (Cake->Radius + 14.f);
+		UMaterialInterface* White = Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite"));
+		Cake->ServePlate = SpawnSetPiece(Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder")), PlateAt + FVector(0.f, 0.f, 0.5f), FRotator::ZeroRotator, FVector(0.2f, 0.2f, 0.01f), White, false);
+	}
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	if (ATakeCake* Slice = GetWorld()->SpawnActor<ATakeCake>(PlateAt + FVector(0.f, 0.f, 1.1f), Cake->GetActorRotation(), Params))
 	{
 		Slice->BuildSlice(Cake->Radius, Cake->Height, Cake->Slices, Wedge);
 		Slice->Tags.Add(TEXT("Use=CakeSlice"));
-		PlatedSlice = Slice;
+		Cake->ServedSlice = Slice;
 		Slice->Tags.Add(TEXT("DirectorsFloor"));
 	}
 	const bool bPenthouse = bPenthouseBuilt && C.Z > 2000.f;
@@ -552,18 +555,22 @@ void UTakeGrabComponent::BuildPenthouse()
 			return M;
 		};
 		UMaterialInterface* Blocks[] = { Shade(FLinearColor(0.10f, 0.15f, 0.18f)), Shade(FLinearColor(0.16f, 0.22f, 0.26f)), Shade(FLinearColor(0.24f, 0.31f, 0.35f)) };
-		for (int32 I = 0; I < 26; ++I)
+		// Playtest: "floating cubes in the air... is there a way to make infinite horizon?" The blocks had no ground: now
+		// a huge dark plain runs out to the horizon under them (the fog fades it into the sky), and the city is lower and
+		// further away, so from 30 m up you look down across rooftops instead of into a wall of towers
+		SpawnSetPiece(Cube, FVector(P.X - PW * 0.5f - 3000.f - 100000.f, P.Y, -60.f), FRotator::ZeroRotator, FVector(2000.f, 2400.f, 1.f), Shade(FLinearColor(0.07f, 0.10f, 0.12f)), false);
+		for (int32 I = 0; I < 60; ++I)
 		{
-			const float Dist = City.FRandRange(2600.f, 7000.f);   // (well clear of the office building, which ends at x 0)
-			const float W = City.FRandRange(300.f, 900.f), D = City.FRandRange(300.f, 900.f);
-			const float Top = City.FRandRange(1600.f, 4300.f) * (Dist > 4500.f ? 1.15f : 0.9f);
-			const FVector At(P.X - PW * 0.5f - Dist, P.Y + City.FRandRange(-4500.f, 4500.f), (Top - 300.f) * 0.5f);
-			SpawnSetPiece(Cube, At, FRotator(0.f, City.FRandRange(-8.f, 8.f), 0.f), FVector(W, D, Top + 300.f) / 100.f, Blocks[(I + (Dist > 4500.f ? 2 : 0)) % 3], false);
+			const float Dist = City.FRandRange(3000.f, 16000.f);   // (well clear of the office building, which ends at x 0)
+			const float W = City.FRandRange(400.f, 1100.f), D = City.FRandRange(400.f, 1100.f);
+			const float Top = City.FRand() < 0.15f ? City.FRandRange(2800.f, 4200.f) : City.FRandRange(600.f, 2400.f);   // mostly below you
+			const FVector At(P.X - PW * 0.5f - Dist, P.Y + City.FRandRange(-1.2f, 1.2f) * Dist, (Top - 100.f) * 0.5f);
+			SpawnSetPiece(Cube, At, FRotator(0.f, City.FRandRange(-8.f, 8.f), 0.f), FVector(W, D, Top + 100.f) / 100.f, Blocks[(I + (Dist > 9000.f ? 2 : 0)) % 3], false);
 		}
 		// HALCYON HQ: the tallest, a mint band at the top
-		const FVector HQ(P.X - PW * 0.5f - 3800.f, P.Y + 900.f, 0.f);
-		SpawnSetPiece(Cube, HQ + FVector(0.f, 0.f, 2600.f), FRotator::ZeroRotator, FVector(7.f, 7.f, 52.f), Blocks[0], false);
-		SpawnSetPiece(Cube, HQ + FVector(0.f, 0.f, 5150.f), FRotator::ZeroRotator, FVector(7.1f, 7.1f, 0.6f), Shade(FLinearColor(0.32f, 0.78f, 0.64f)), false);
+		const FVector HQ(P.X - PW * 0.5f - 6500.f, P.Y + 1800.f, 0.f);
+		SpawnSetPiece(Cube, HQ + FVector(0.f, 0.f, 2600.f), FRotator::ZeroRotator, FVector(9.f, 9.f, 52.f), Blocks[0], false);
+		SpawnSetPiece(Cube, HQ + FVector(0.f, 0.f, 5150.f), FRotator::ZeroRotator, FVector(9.1f, 9.1f, 0.6f), Shade(FLinearColor(0.32f, 0.78f, 0.64f)), false);
 	}
 	// A rug under the chair
 	Box(P + FVector(0.f, 40.f, 1.f), FVector(520.f, 380.f, 2.f), Mat(TEXT("/Game/Props/Materials/MI_Rug.MI_Rug")), false);
