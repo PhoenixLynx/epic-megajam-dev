@@ -432,6 +432,23 @@ void UTakeGrabComponent::ToggleOpen(AActor* Openable)
 	}
 	S->bOpen = !S->bOpen;
 	PlaySfx(S->bOpen ? TEXT("sfx_door_open") : TEXT("sfx_door_close"), Where, S->Slide > 0.f ? 0.45f : 0.8f);
+	if (S->bOpen && Openable->ActorHasTag(TEXT("FridgeDoor")))   // the food on the shelves wakes up (asleep until now so nothing fell out)
+	{
+		int32 Woken = 0;
+		for (TActorIterator<AStaticMeshActor> FIt(GetWorld()); FIt; ++FIt)
+		{
+			if (!FIt->ActorHasTag(TEXT("FridgeFood"))) { continue; }
+			UStaticMeshComponent* FoodSM = FIt->GetStaticMeshComponent();
+			if (!FoodSM) { continue; }
+			FoodSM->SetSimulatePhysics(true);
+			FoodSM->SetNotifyRigidBodyCollision(true);
+			FoodSM->OnComponentHit.AddUniqueDynamic(this, &UTakeGrabComponent::OnPropHit);
+			FIt->Tags.Remove(TEXT("FridgeFood"));
+			FIt->Tags.Add(TEXT("FridgeFoodAwake"));
+			++Woken;
+		}
+		if (Woken > 0) { UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Fridge opened: %d item(s) can be picked up"), Woken); }
+	}
 	if (S->bOpen && S->Slide > 0.f)   // a drawer with something worth reading in it
 	{
 		for (const FName& Tag : Openable->Tags)

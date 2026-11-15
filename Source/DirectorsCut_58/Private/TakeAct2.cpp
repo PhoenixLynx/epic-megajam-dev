@@ -70,6 +70,154 @@ namespace
 			|| N.Contains(TEXT("LunchBox")) || N.Contains(TEXT("MilkCarton")) || N.Contains(TEXT("Sandwich")) || N.Contains(TEXT("Pizza"))
 			|| N.Contains(TEXT("Salad")) || N.Contains(TEXT("Donut"));
 	}
+
+	// The kitchen fridge, stocked (playtest: "have items in fridge").
+	// Why the fridge looked empty: SM_FridgeBody (make_office_props.py) has its white liner as one SOLID box that fills the
+	// inside, with its front face 7 cm behind the opening. Open the door and you see a white wall; the food dress_campus.py
+	// put on the shelves is inside that box (hidden, and the complex collision keeps the player's trace off it).
+	// So at play: hide the body and build the same fridge from engine cubes with an open inside (steel shell, thin white
+	// liner panels, three glass shelves, the freezer lip), then put 6 props and a note on the shelves.
+	// The food is Throwable but NOT simulating until the door is first opened (ToggleOpen wakes everything tagged
+	// FridgeFood), so nothing falls out or rattles before anyone looks. Placement comes from the body's own bounds and
+	// the door's position (that side is the front), so it follows the fridge if it moves.
+	AStaticMeshActor* SpawnFridgePart(UWorld* World, UStaticMesh* M, const FTransform& Body, const FVector& Local, const FVector& SizeCm,
+		UMaterialInterface* Mat, float LocalYaw = 0.f)
+	{
+		if (!World || !M) { return nullptr; }
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		const FRotator Rot = (Body.GetRotation() * FQuat(FRotator(0.f, LocalYaw, 0.f))).Rotator();
+		AStaticMeshActor* A = World->SpawnActor<AStaticMeshActor>(Body.TransformPosition(Local), Rot, Params);
+		if (!A) { return nullptr; }
+		UStaticMeshComponent* SM = A->GetStaticMeshComponent();
+		SM->SetMobility(EComponentMobility::Movable);
+		SM->SetStaticMesh(M);
+		SM->SetWorldScale3D(SizeCm / 100.f);   // the engine cube is 100 cm
+		if (Mat) { SM->SetMaterial(0, Mat); }
+		SM->SetCollisionProfileName(TEXT("BlockAll"));
+		SM->CanCharacterStepUpOn = ECB_No;
+		A->Tags.Add(TEXT("FridgeShell"));
+		return A;
+	}
+
+	void StockTheFridge(UWorld* World)
+	{
+		if (!World) { return; }
+		AStaticMeshActor* BodyActor = nullptr;
+		AActor* Door = nullptr;
+		for (TActorIterator<AActor> It(World); It; ++It)
+		{
+			if (It->ActorHasTag(TEXT("FridgeShell"))) { return; }   // already built this play
+			if (It->ActorHasTag(TEXT("FridgeDoor"))) { Door = *It; }
+			const AStaticMeshActor* SMA = Cast<AStaticMeshActor>(*It);
+			const UStaticMeshComponent* BodySM = SMA ? SMA->GetStaticMeshComponent() : nullptr;
+			if (!BodyActor && BodySM && BodySM->GetStaticMesh() && BodySM->GetStaticMesh()->GetName() == TEXT("SM_FridgeBody")) { BodyActor = Cast<AStaticMeshActor>(*It); }
+		}
+		if (!BodyActor) { UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Fridge: no SM_FridgeBody in the level, nothing stocked")); return; }
+		UStaticMeshComponent* BodySM = BodyActor->GetStaticMeshComponent();
+		const FBox LB = BodySM->GetStaticMesh()->GetBoundingBox();   // mesh space (cm): about 70 x 70 x 180, pivot floor centre
+		const FVector Ext = LB.GetExtent();
+		const FVector Mid = LB.GetCenter();
+		const float W = Ext.X * 2.f, D = Ext.Y * 2.f, H = Ext.Z * 2.f;
+		const FTransform Body = BodySM->GetComponentTransform();
+		// The front is the side the door is on
+		float F = 1.f;
+		if (Door)
+		{
+			const FVector DoorLocal = Body.InverseTransformPosition(Door->GetActorLocation());
+			F = (DoorLocal.Y - Mid.Y) >= 0.f ? 1.f : -1.f;
+		}
+		UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+		if (!Cube) { return; }
+		UMaterialInterface* Steel = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Steel.M_Steel"));
+		UMaterialInterface* White = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite"));
+		UMaterialInterface* Glass = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Glass.M_Glass"));
+		if (!Glass) { Glass = White; }
+
+		// Swap the solid body for an open one
+		BodyActor->SetActorHiddenInGame(true);
+		BodyActor->SetActorEnableCollision(false);
+		const float Z0 = LB.Min.Z;
+		const float S = H / 180.f;   // shelf heights scale with the fridge (made at 1.8 m)
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X, Mid.Y, Z0 + 2.f), FVector(W, D, 4.f), Steel);                       // floor
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X, Mid.Y, Z0 + H - 2.f), FVector(W, D, 4.f), Steel);                   // top
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X - (W * 0.5f - 2.f), Mid.Y, Z0 + H * 0.5f), FVector(4.f, D, H), Steel);  // sides
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X + (W * 0.5f - 2.f), Mid.Y, Z0 + H * 0.5f), FVector(4.f, D, H), Steel);
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X, Mid.Y - F * (D * 0.5f - 2.f), Z0 + H * 0.5f), FVector(W, 4.f, H), Steel);   // back
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X, Mid.Y - F * (D * 0.5f - 4.5f), Z0 + H * 0.5f), FVector(W - 8.f, 1.f, H - 10.f), White);   // liner: back
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X - (W * 0.5f - 4.5f), Mid.Y, Z0 + H * 0.5f), FVector(1.f, D - 8.f, H - 10.f), White);   // liner: sides
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X + (W * 0.5f - 4.5f), Mid.Y, Z0 + H * 0.5f), FVector(1.f, D - 8.f, H - 10.f), White);
+		const float Shelves[] = { 45.f * S, 85.f * S, 125.f * S };
+		for (const float SZ : Shelves)
+		{
+			SpawnFridgePart(World, Cube, Body, FVector(Mid.X, Mid.Y, Z0 + SZ), FVector(W - 10.f, D - 12.f, 1.2f), Glass);
+		}
+		SpawnFridgePart(World, Cube, Body, FVector(Mid.X, Mid.Y + F * (D * 0.5f - 6.f), Z0 + 145.f * S), FVector(W - 8.f, 1.f, 60.f * S), White);   // freezer lip
+
+		// Anything dress_campus.py left inside the old solid liner: retired (it was never visible)
+		int32 Retired = 0;
+		for (TActorIterator<AStaticMeshActor> It(World); It; ++It)
+		{
+			UStaticMeshComponent* OldSM = It->GetStaticMeshComponent();
+			if (!OldSM || !OldSM->GetStaticMesh() || *It == BodyActor || It->ActorHasTag(TEXT("FridgeShell"))) { continue; }
+			if (!IsFoodMesh(OldSM->GetStaticMesh()->GetName())) { continue; }
+			const FVector L = Body.InverseTransformPosition(It->GetActorLocation());
+			if (FMath::Abs(L.X - Mid.X) > Ext.X || FMath::Abs(L.Y - Mid.Y) > Ext.Y || L.Z < LB.Min.Z - 5.f || L.Z > LB.Max.Z) { continue; }
+			OldSM->SetSimulatePhysics(false);
+			It->SetActorHiddenInGame(true);
+			It->SetActorEnableCollision(false);
+			It->Tags.Add(TEXT("FridgeOld"));
+			++Retired;
+		}
+
+		// The food: (mesh, x across, y toward the front, which surface 0 = floor .. 3 = top shelf, local yaw)
+		struct FFridgeItem { const TCHAR* Mesh; float X; float Y; int32 Level; float Yaw; };
+		const FFridgeItem Items[] = {
+			{ TEXT("SM_FruitBowl"),   -12.f,  2.f, 0,   0.f },
+			{ TEXT("SM_WaterBottle"),  15.f, -6.f, 0,   0.f },
+			{ TEXT("SM_MilkCarton"),  -18.f, -4.f, 1,  10.f },
+			{ TEXT("SM_SodaCan"),       6.f,  4.f, 1,   0.f },
+			{ TEXT("SM_SodaCan"),      15.f, -7.f, 1,  40.f },
+			{ TEXT("SM_LunchBox"),     -4.f,  0.f, 2,  -5.f },
+		};
+		const float Surface[] = { 4.f, 45.f * S + 0.6f, 85.f * S + 0.6f, 125.f * S + 0.6f };
+		int32 Stocked = 0;
+		for (const FFridgeItem& It : Items)
+		{
+			UStaticMesh* FoodMesh = LoadObject<UStaticMesh>(nullptr, *FString::Printf(TEXT("/Game/Props/Meshes/%s.%s"), It.Mesh, It.Mesh));
+			if (!FoodMesh) { continue; }
+			FActorSpawnParameters Params;
+			Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			const FVector Where = Body.TransformPosition(FVector(Mid.X + It.X, Mid.Y + F * It.Y, Z0 + Surface[It.Level] + 0.3f));
+			const FRotator Rot = (Body.GetRotation() * FQuat(FRotator(0.f, It.Yaw, 0.f))).Rotator();
+			AStaticMeshActor* A = World->SpawnActor<AStaticMeshActor>(Where, Rot, Params);
+			if (!A) { continue; }
+			UStaticMeshComponent* FoodSM = A->GetStaticMeshComponent();
+			FoodSM->SetMobility(EComponentMobility::Movable);
+			FoodSM->SetStaticMesh(FoodMesh);
+			FoodSM->SetCollisionProfileName(TEXT("PhysicsActor"));
+			FoodSM->SetSimulatePhysics(false);   // asleep until the door opens (UTakeGrabComponent::ToggleOpen)
+			FoodSM->CanCharacterStepUpOn = ECB_No;
+			A->Tags.Add(TEXT("Throwable"));
+			A->Tags.Add(TEXT("FridgeFood"));
+			++Stocked;
+		}
+		// A note on the back wall of the middle shelf, facing out (same cube note as the two on the door)
+		if (UMaterialInterface* NoteMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_FridgeNote_Yogurt.MI_FridgeNote_Yogurt")))
+		{
+			// A cube's +Y face is the one the door notes show: turn it to the front
+			AStaticMeshActor* Note = SpawnFridgePart(World, Cube, Body, FVector(Mid.X + 8.f, Mid.Y - F * (D * 0.5f - 5.3f), Z0 + 85.f * S + 18.f),
+				FVector(14.f, 0.5f, 18.f), NoteMat, F > 0.f ? 0.f : 180.f);
+			if (Note)
+			{
+				Note->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+				Note->Tags.Add(TEXT("Inspectable"));
+				++Stocked;
+			}
+		}
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Fridge: rebuilt open (front %s), %d item(s) on the shelves, %d old one(s) retired"),
+			F > 0.f ? TEXT("+Y") : TEXT("-Y"), Stocked, Retired);
+	}
 }
 
 // ------------------------------------------------------------------ the call and the meeting
@@ -306,6 +454,7 @@ void UTakeGrabComponent::Vend(AActor* Machine)
 void UTakeGrabComponent::CollectFunProps()
 {
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	StockTheFridge(GetWorld());   // first: it retires the old fridge food, so that isn't collected below
 	for (TActorIterator<AStaticMeshActor> It(GetWorld()); It; ++It)
 	{
 		UStaticMeshComponent* SM = It->GetStaticMeshComponent();
@@ -327,7 +476,7 @@ void UTakeGrabComponent::CollectFunProps()
 		if (It->ActorHasTag(TEXT("FearReveal"))) { FearReveals.Add(*It); }
 		if (It->ActorHasTag(TEXT("SecurityCam"))) { Cams.Add(*It); }
 		if (N.Contains(TEXT("TrashBin"))) { Bins.Add(*It); }
-		else if (IsFoodMesh(N) && It->ActorHasTag(TEXT("Throwable")))
+		else if (IsFoodMesh(N) && It->ActorHasTag(TEXT("Throwable")) && !It->ActorHasTag(TEXT("FridgeFood")) && !It->ActorHasTag(TEXT("FridgeOld")))   // fridge food doesn't come back (or get put away)
 		{
 			FFood F;
 			F.Actor = *It;

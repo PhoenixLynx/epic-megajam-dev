@@ -721,7 +721,10 @@ def fridge_body():
     for x in (-w / 2 + 0.02, w / 2 - 0.02):
         p.box((0.04, d, h), (x, 0, h / 2), "M_Steel")
     p.box((w, 0.04, h), (0, d / 2 - 0.02, h / 2), "M_Steel")
-    p.box((w - 0.08, d - 0.1, h - 0.1), (0, 0.02, h / 2), "M_PlasticWhite")      # liner (back/inside)
+    # liner: thin panels (it used to be one solid box that filled the inside, so the fridge looked like a white wall)
+    p.box((w - 0.08, 0.01, h - 0.1), (0, d / 2 - 0.045, h / 2), "M_PlasticWhite")     # back
+    for x in (-w / 2 + 0.045, w / 2 - 0.045):
+        p.box((0.01, d - 0.08, h - 0.1), (x, 0, h / 2), "M_PlasticWhite")            # sides
     for z in (0.45, 0.85, 1.25):
         p.box((w - 0.1, d - 0.12, 0.012), (0, -0.02, z), "M_Glass")              # glass shelves
     p.box((w - 0.08, 0.01, 0.6), (0, -d / 2 + 0.06, 1.45), "M_PlasticWhite")    # freezer divider lip
