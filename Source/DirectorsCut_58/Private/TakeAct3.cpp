@@ -27,7 +27,26 @@
 namespace
 {
 	const FVector WardLanding(1400.f, 6400.f, -1400.f);    // HospitalWard marker (floor at -1500)
-	const FVector WardStalkerStart(2800.f, 7200.f, -1380.f);
+
+	// Things to fight back with in the ward (the stalker is stunned by anything tagged Throwable).
+	// Floor items sit in the aisles between bed rows (y 5900-6350 and 6550-7000); "on a bed" ones drop onto the mattress.
+	struct FWardProp { const TCHAR* Mesh; FVector Where; };
+	const FWardProp WardProps[] = {
+		{ TEXT("SM_FireExtinguisher"), FVector(1550.f, 6250.f, -1450.f) },   // right by the landing
+		{ TEXT("SM_TrashBin"),         FVector( 650.f, 6450.f, -1460.f) },
+		{ TEXT("SM_MeetingChair"),     FVector(1650.f, 6780.f, -1450.f) },
+		{ TEXT("SM_WetFloorSign"),     FVector(2050.f, 6800.f, -1450.f) },
+		{ TEXT("SM_ReamOfPaper"),      FVector(1300.f, 5800.f, -1410.f) },   // on a bed
+		{ TEXT("SM_Binder"),           FVector(1800.f, 6450.f, -1410.f) },   // on a bed
+		{ TEXT("SM_WaterBottle"),      FVector(2300.f, 7100.f, -1410.f) },   // on a bed
+		{ TEXT("SM_Mug"),              FVector(1100.f, 7020.f, -1450.f) },
+		{ TEXT("SM_FireExtinguisher"), FVector(2750.f, 6250.f, -1450.f) },   // a second one, far side
+		// things to drag into its path (chairs roll; signs and buckets are light)
+		{ TEXT("SM_OfficeChair"),      FVector(1050.f, 6250.f, -1450.f) },
+		{ TEXT("SM_OfficeChair"),      FVector(2550.f, 6780.f, -1450.f) },
+		{ TEXT("SM_WetFloorSign"),     FVector(1300.f, 7350.f, -1450.f) },   // CAUTION
+		{ TEXT("SM_MopBucket"),        FVector(2900.f, 7420.f, -1460.f) },
+	};
 	const FVector ElevatorCar(2100.f, 250.f, 100.f);
 	const FVector LobbyParty(2100.f, 1050.f, 100.f);
 }
@@ -86,6 +105,28 @@ void UTakeGrabComponent::EnterWard()
 	QueueSubtitle(TEXT(""), TEXT("...Nobody caught you."));
 	QueueSubtitle(TEXT(""), TEXT("A hospital ward. Beds in rows, like cubicles. Every bed has a chart."));
 	StalkerIn = 25.f;
+	// Weapons in the ward, once per play (a rewind to the ward door keeps whatever is lying around)
+	bool bHaveWardProps = false;
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It) { if (It->ActorHasTag(TEXT("WardProp"))) { bHaveWardProps = true; break; } }
+	if (!bHaveWardProps)
+	{
+		int32 Made = 0;
+		for (const FWardProp& P : WardProps)
+		{
+			if (AActor* A = SpawnProp(P.Mesh, P.Where, FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f)))
+			{
+				A->Tags.Add(TEXT("WardProp"));
+				Spawned.Remove(A);   // not part of the snack/mug recycling: these stay for the whole ward
+				++Made;
+				const UPrimitiveComponent* Root = Cast<UPrimitiveComponent>(A->GetRootComponent());
+				if (!Root || !Root->IsSimulatingPhysics())   // can't be picked up: its mesh still has complex-only collision
+				{
+					UE_LOG(LogTake, Warning, TEXT("[TAKE 4471] Ward: %s has no physics (run fix_prop_collision.py)"), P.Mesh);
+				}
+			}
+		}
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Ward: %d throwable(s) placed"), Made);
+	}
 	GI->SetObjective(GI->ObjectiveForBeat());
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Beat -> Ward"));
 }
@@ -119,7 +160,18 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 	// 3.0: the afternoon is done and the clocks have stopped -> overtime (or right away for a dev jump)
 	if (GI->Beat == ETakeBeat::Lunch && GI->bClocksFrozen && GI->Act2TasksDone())
 	{
-		if (GI->bDevAct3Now) { StartOvertime(); }
+		if (GI->bDevAct3Now)
+		{
+			const ETakeBeat Target = GI->DevAct3Target;
+			GI->DevAct3Target = ETakeBeat::Overtime;
+			StartOvertime();
+			if (Target == ETakeBeat::Ward || Target == ETakeBeat::Wrap)   // TakeBeat 6 / 7: skip the walk and the fall
+			{
+				GI->SetSoulBits(Target == ETakeBeat::Wrap ? 3 : 2);
+				EnterWard();
+				if (Target == ETakeBeat::Wrap) { ExitWard(); }
+			}
+		}
 		else if (OvertimeIn < 0.f) { OvertimeIn = 20.f; }
 		else if ((OvertimeIn -= DeltaTime) <= 0.f) { StartOvertime(); }
 	}
@@ -151,7 +203,16 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		{
 			for (TActorIterator<ATakeStalker> It(GetWorld()); It; ++It)
 			{
-				It->SetActorLocation(WardStalkerStart, false, nullptr, ETeleportType::TeleportPhysics);
+				// Never start inside furniture: nudge to the nearest spot where its capsule fits
+				// The open aisle south of the last bed row (2800,7200 was inside bed 3-5). Kept here, not in a
+				// file-level constant, because Live Coding doesn't update constants (it kept the old spot).
+				FVector Start(2500.f, 7420.f, -1380.f);
+				if (!GetWorld()->FindTeleportSpot(*It, Start, It->GetActorRotation()))
+				{
+					UE_LOG(LogTake, Warning, TEXT("[TAKE 4471] Ward: no free spot near the stalker start, using it anyway"));
+				}
+				It->SetActorLocation(Start, false, nullptr, ETeleportType::TeleportPhysics);
+				UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Ward: stalker enters at %s"), *Start.ToCompactString());
 				It->Activate();
 				break;
 			}

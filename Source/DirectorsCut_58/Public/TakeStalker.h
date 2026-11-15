@@ -64,6 +64,8 @@ private:
 	float SlowMultiplier = 1.f;
 	float SlowTimeLeft = 0.f;
 	float StunFor = 1.5f;
+	float StuckTime = 0.f;          // how long it has wanted to move without getting anywhere
+	FVector StuckCheckFrom = FVector::ZeroVector;
 	void SetState(ETakeStalkerState NewState);
 	float ChaseSpeed() const;
 	APawn* GetPlayerPawn() const;

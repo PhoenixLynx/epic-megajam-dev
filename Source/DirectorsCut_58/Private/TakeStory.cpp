@@ -399,6 +399,22 @@ void UTakeGrabComponent::TickAct2(float DeltaTime)
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if (!GI || GI->CurrentAct() < 2) { return; }
 	if (!bAct2Revealed) { RevealAct2(); }   // lunch is out (also after loading an Act 2 save)
+	if (GI->CurrentAct() >= 3 && !bLunchPutAway)   // overtime: lunch is over. Someone cleared it away while nobody watched.
+	{
+		bLunchPutAway = true;
+		int32 Gone = 0;
+		auto PutAway = [&Gone](AActor* A)
+		{
+			if (!A || A->IsHidden()) { return; }
+			if (UPrimitiveComponent* P = Cast<UPrimitiveComponent>(A->GetRootComponent())) { P->SetSimulatePhysics(false); }
+			A->SetActorHiddenInGame(true);
+			A->SetActorEnableCollision(false);
+			++Gone;
+		};
+		for (const FReveal& R : Act2Things) { if (R.bPhysics) { PutAway(R.Actor.Get()); } }
+		for (FFood& F : Foods) { PutAway(F.Actor.Get()); F.Back = -1.f; }
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Act 3: lunch put away (%d item(s))"), Gone);
+	}
 	// Beat 2.6: after the clocks stop, Fear never quite leaves (checked about once a second)
 	FloorCheckIn -= DeltaTime;
 	if (GI->bClocksFrozen && FloorCheckIn <= 0.f && GI->Beat != ETakeBeat::Wrap)

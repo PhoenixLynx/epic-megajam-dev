@@ -59,7 +59,13 @@ void ATakeStalker::BeginPlay()
 		GetMesh()->SetRelativeScale3D(FVector(1.3f));
 		GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 		GetMesh()->PlayAnimation(AnimStare ? AnimStare.Get() : AnimWalk.Get(), true);
-		if (UMaterialInterface* Fear = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Fear.MI_Face_Fear"))) { GetMesh()->SetMaterialByName(FName(TEXT("M_Face")), Fear); }
+		// Sol's stalker face (approved Nov 14: red eyes, curled grin); the coworkers' Fear face if it isn't imported yet
+		UMaterialInterface* Face = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Stalker.MI_Face_Stalker"));
+		if (!Face) { Face = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Fear.MI_Face_Fear")); }
+		if (Face) { GetMesh()->SetMaterialByName(FName(TEXT("M_Face")), Face); }
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Stalker: rigged mannequin, face %s, face slot %s"),
+			Face ? *Face->GetName() : TEXT("(none)"),
+			GetMesh()->GetMaterialIndex(FName(TEXT("M_Face"))) != INDEX_NONE ? TEXT("found") : TEXT("MISSING"));
 		Body->SetHiddenInGame(true);
 		bRigged = true;
 	}
@@ -152,6 +158,27 @@ void ATakeStalker::Tick(float DeltaSeconds)
 	APawn* Player = GetPlayerPawn();
 	AAIController* AI = Cast<AAIController>(GetController());
 	if (!Player || !AI) { return; }
+
+	// Wedged in furniture (it tries to move but hasn't for a second)? Pop it out to the nearest free spot
+	// (only while chasing and still far from you: when stalking it is allowed to stand and watch)
+	if (State == ETakeStalkerState::Chase && FVector::Dist2D(GetActorLocation(), Player->GetActorLocation()) > 200.f)
+	{
+		const FVector Here = GetActorLocation();
+		if (FVector::DistSquared2D(Here, StuckCheckFrom) > FMath::Square(25.f)) { StuckCheckFrom = Here; StuckTime = 0.f; }
+		else if ((StuckTime += DeltaSeconds) > 1.f)
+		{
+			FVector Free = Here + (Player->GetActorLocation() - Here).GetSafeNormal2D() * 80.f;   // a step toward you
+			if (GetWorld()->FindTeleportSpot(this, Free, GetActorRotation()))
+			{
+				SetActorLocation(Free, false, nullptr, ETeleportType::TeleportPhysics);
+				UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Stalker was stuck at %s, moved to %s"), *Here.ToCompactString(), *Free.ToCompactString());
+			}
+			StuckCheckFrom = GetActorLocation();
+			StuckTime = 0.f;
+		}
+	}
+	else { StuckTime = 0.f; StuckCheckFrom = GetActorLocation(); }
+
 	if (bRigged)
 	{
 		const bool bMoving = GetVelocity().SizeSquared2D() > 100.f;
@@ -162,7 +189,28 @@ void ATakeStalker::Tick(float DeltaSeconds)
 	if ((State == ETakeStalkerState::Chase || State == ETakeStalkerState::Stalk) && AI->GetMoveStatus() == EPathFollowingStatus::Idle)
 	{
 		const FVector To = Player->GetActorLocation() - GetActorLocation();
-		if (To.Size2D() > 60.f) { AddMovementInput(FVector(To.X, To.Y, 0.f).GetSafeNormal(), 1.f); }
+		if (To.Size2D() > 60.f)
+		{
+			FVector Dir = FVector(To.X, To.Y, 0.f).GetSafeNormal();
+			// Something in the way (a bed, a curtain)? Steer along it instead of pushing into it
+			FHitResult Hit;
+			FCollisionQueryParams Q(SCENE_QUERY_STAT(StalkerSteer), false, this);
+			Q.AddIgnoredActor(Player);
+			const FVector From = GetActorLocation();
+			if (GetWorld()->SweepSingleByChannel(Hit, From, From + Dir * 150.f, FQuat::Identity, ECC_Pawn,
+				FCollisionShape::MakeSphere(35.f), Q) && !(Hit.GetActor() && Hit.GetActor()->ActorHasTag(TEXT("Throwable"))))
+			{
+				const FVector N = FVector(Hit.ImpactNormal.X, Hit.ImpactNormal.Y, 0.f).GetSafeNormal();
+				FVector Slide = Dir - N * FVector::DotProduct(Dir, N);          // the part of the way that isn't into the obstacle
+				if (Slide.SizeSquared() < 0.09f)                              // head-on: go round, on the side nearer the player
+				{
+					Slide = FVector::CrossProduct(N, FVector::UpVector);
+					if (FVector::DotProduct(Slide, To) < 0.f) { Slide = -Slide; }
+				}
+				Dir = (Slide.GetSafeNormal() * 0.85f + N * 0.15f).GetSafeNormal();   // slide along, eased off the surface
+			}
+			AddMovementInput(Dir, 1.f);
+		}
 	}
 
 	switch (State)

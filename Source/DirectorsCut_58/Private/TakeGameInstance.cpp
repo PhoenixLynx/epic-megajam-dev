@@ -1,5 +1,6 @@
 // TAKE 4471 - run state + console commands
 #include "TakeGameInstance.h"
+#include "Engine/Engine.h"
 #include "TakeGrabComponent.h"
 #include "GameFramework/Pawn.h"
 #include "TakeCoworker.h"
@@ -124,6 +125,13 @@ FString UTakeGameInstance::ObjectiveForBeat() const
 
 void UTakeGameInstance::TakeBeat(int32 NewBeat)
 {
+	if (NewBeat < 0)
+	{
+		const TCHAR* Help = TEXT("TakeBeat N:  0 morning | 1 meeting | 2 corridor | 3 back to desk | 4 lunch (Act 2) | 5 overtime (Act 3) | 6 the ward | 7 wrap party");
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %s"), Help);
+		if (GEngine) { GEngine->AddOnScreenDebugMessage(-1, 8.f, FColor::Cyan, Help); }
+		return;
+	}
 	const int32 Clamped = FMath::Clamp(NewBeat, 0, static_cast<int32>(ETakeBeat::Count) - 1);
 	if (Clamped == static_cast<int32>(ETakeBeat::Morning))
 	{
@@ -147,7 +155,10 @@ void UTakeGameInstance::TakeBeat(int32 NewBeat)
 		CoworkersCheckedIn = 3;
 		WorkdayMinutes = 14.f * 60.f + 14.f;
 		bDevAct3Now = true;
+		DevAct3Target = static_cast<ETakeBeat>(Clamped);   // Overtime, Ward or Wrap: the story code goes on from there
 		SetObjective(ObjectiveForBeat());
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] TakeBeat %d: jumping to Act 3%s"), Clamped,
+			Clamped == static_cast<int32>(ETakeBeat::Ward) ? TEXT(", then the ward") : Clamped == static_cast<int32>(ETakeBeat::Wrap) ? TEXT(", then the wrap party") : TEXT(""));
 		return;
 	}
 	if (Clamped >= static_cast<int32>(ETakeBeat::Lunch))

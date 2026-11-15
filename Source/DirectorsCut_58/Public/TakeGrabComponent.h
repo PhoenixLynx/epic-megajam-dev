@@ -259,11 +259,17 @@ private:
 	struct FReveal { TWeakObjectPtr<AActor> Actor; bool bPhysics = false; };
 	TArray<FReveal> Act2Things;
 	bool bAct2Revealed = false;
+	bool bLunchPutAway = false;   // Act 3: lunch is over, the food is gone (and stops coming back)
 	void RevealAct2();
 	TArray<TWeakObjectPtr<AActor>> Spawned;   // vended snacks and poured mugs (oldest recycled)
 	TArray<TWeakObjectPtr<AActor>> Bins;
+	// Digital clock over the lobby elevator (shows the game clock; stuck at 2:14 once the clocks stop)
+	TWeakObjectPtr<class UTextRenderComponent> ElevatorClock;
+	int32 ElevatorClockShown = -1;
+	void MakeElevatorClock();
 	TWeakObjectPtr<UPrimitiveComponent> TossProp;
 	float TossLeft = 0.f;
+	FVector TossFrom = FVector::ZeroVector;   // where the last throw left your hands (to rescue a prop that falls through the floor)
 	int32 TossStreak = 0;
 	void CollectFunProps();
 	void TickFun(float DeltaTime);

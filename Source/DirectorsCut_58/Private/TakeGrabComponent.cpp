@@ -310,6 +310,8 @@ void UTakeGrabComponent::Throw()
 	GetView(Loc, Rot);
 	Handle->ReleaseComponent();
 	Comp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);   // pawns include coworkers: let it hit them
+	Comp->SetUseCCD(true);   // fast and the floors/curtains are thin (10 cm / 4 cm): without this a hard throw can pass right through
+	TossFrom = Comp->GetComponentLocation();
 	Comp->AddImpulse(Rot.Vector() * ThrowStrength, NAME_None, /*bVelChange=*/true);
 	PlaySfx(TEXT("sfx_throw"), Comp->GetComponentLocation(), 0.7f);
 	TossProp = Comp;   // paper toss: watch where it lands

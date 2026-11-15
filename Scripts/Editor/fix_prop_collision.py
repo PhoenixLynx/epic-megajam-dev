@@ -11,6 +11,10 @@ For every static mesh in /Game/Props/Meshes:
   - pick-up-able props       -> collision complexity = "Project Default" (simple for physics)
   - big furniture / walls    -> left on complex collision so you can walk snugly around them
 Safe to re-run. import_jam_assets.py runs it automatically at the end.
+
+The physics list is the fixed set below PLUS every mesh used by an actor tagged "Throwable" in the
+open level, so a new throwable (brochures, paper balls, lunch...) can't be missed again. Run it with
+the campus level open.
 """
 import unreal
 
@@ -22,7 +26,21 @@ PHYSICS = {"SM_CoffeeBag", "SM_TeaBox", "SM_CupStack", "SM_SnackBag", "SM_SnackB
            "SM_BinderMint", "SM_BinderRed", "SM_ReamOfPaper", "SM_FireExtinguisher", "SM_WetFloorSign",
            "SM_TrashBin", "SM_PlantDesk", "SM_Laptop", "SM_PCTower", "SM_CoffeePot", "SM_Kettle",
            "SM_Microwave", "SM_Monitor", "SM_MeetingChair", "SM_BarStool", "SM_CoffeeMachine",
-           "SM_OfficeChair", "SM_MopBucket", "SM_FridgeDoor", "SM_Door"}
+           "SM_OfficeChair", "SM_MopBucket", "SM_FridgeDoor", "SM_Door",
+           # added after the list drifted from dress_campus.THROWABLE (they froze: lunch, printouts, confetti)
+           "SM_Brochure", "SM_PaperBall", "SM_Sandwich", "SM_PizzaSlice", "SM_SaladBowl", "SM_Donut"}
+
+# ...and whatever the level actually tags as Throwable
+_from_level = set()
+for actor in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors():
+    if unreal.Name("Throwable") in actor.tags and isinstance(actor, unreal.StaticMeshActor):
+        mesh = actor.static_mesh_component.static_mesh
+        if mesh:
+            _from_level.add(mesh.get_name())
+_new = _from_level - PHYSICS
+if _new:
+    unreal.log(f"[TAKE 4471] Prop collision: also simple collision for level throwables {sorted(_new)}")
+PHYSICS |= _from_level
 
 sme = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
 added = switched = 0

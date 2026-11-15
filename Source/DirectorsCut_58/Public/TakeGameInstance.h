@@ -130,6 +130,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") bool bDevLunchNow = false;
 	/** Dev: start Act 3 now (TakeBeat 5, or F8 once Act 2 is done). */
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") bool bDevAct3Now = false;
+	/** Dev: TakeBeat 6 / 7 go on from Act 3's start straight to the ward / the wrap party. */
+	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") ETakeBeat DevAct3Target = ETakeBeat::Overtime;
 	/** Dev: TakeLoop 1 forces the Corridor B loop on outside its beat. */
 	UPROPERTY(BlueprintReadWrite, Category = "Take|Dev") bool bDevForceLoop = false;
 
@@ -145,7 +147,7 @@ public:
 	UFUNCTION(Exec) void TakeLoop(bool bEnable);         // force the Corridor B loop on/off
 	UFUNCTION(Exec) void TakeSeed();
 	UFUNCTION(Exec) void TakeNPCYaw(float Yaw);          // turn every rigged NPC's body (facing test)
-	UFUNCTION(Exec) void TakeBeat(int32 NewBeat);        // jump to a story beat: 0 morning, 1 meeting, 2 corridor, 3 return to desk, 4 lunch (Act 2)
+	UFUNCTION(Exec) void TakeBeat(int32 NewBeat = -1);   // jump to a story beat: 0 morning, 1 meeting, 2 corridor, 3 return to desk, 4 lunch (Act 2), 5 overtime (Act 3), 6 the ward, 7 wrap party; no number = the list
 	UFUNCTION(Exec) void TakeTime(int32 HHMM);
 	UFUNCTION(Exec) void TakeSkip();                     // playtest: finish the tasks on the current list (morning -> lunch -> 2:14)           // set the clock, e.g. TakeTime 1410 (four minutes before the clocks freeze)
 };

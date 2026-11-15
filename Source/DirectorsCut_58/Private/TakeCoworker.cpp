@@ -297,6 +297,13 @@ FString ATakeCoworker::TaskHint(const UTakeGameInstance* GI) const
 		};
 		return Chef[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Chef)) - 1)];
 	}
+	if (GI->CurrentAct() >= 3)   // overtime: point at what's next, a little more out of character each time
+	{
+		if (GI->SoulBits < 2) { return TEXT("Access pass two's on the supply closet terminal. Everyone has one. Almost everyone."); }
+		if (!GI->bTrustFell) { return TEXT("Team building. Wellness Center. Attendance is mandatory. It's always been mandatory."); }
+		if (GI->SoulBits < 3) { return TEXT("...You're not supposed to be up here. You're supposed to be downstairs. In the ward."); }
+		return TEXT("Elevator. C. Everyone's waiting. Don't tell them I told you.");
+	}
 	if (GI->CurrentAct() < 2)
 	{
 		if (!GI->bTrainingComplete) { return TEXT("Done your compliance training yet? It's mandatory. Everything is."); }
@@ -544,7 +551,8 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 		if (ActorHasTag(TEXT("Act2Reveal")) || ActorHasTag(TEXT("Act3Reveal")))   // lunch attendant; the team-building circle
 		{
 			const int32 FromAct = ActorHasTag(TEXT("Act3Reveal")) ? 3 : 2;
-			const bool bShow = bAtParty || (GameInst && GameInst->CurrentAct() >= FromAct);
+			// The lunch attendant is only there for lunch (Act 2); the team-building circle from Act 3 on
+			const bool bShow = bAtParty || (GameInst && (FromAct == 2 ? GameInst->CurrentAct() == 2 : GameInst->CurrentAct() >= FromAct));
 			if (IsHidden() == bShow) { SetActorHiddenInGame(!bShow); SetActorEnableCollision(bShow); }
 		}
 	}

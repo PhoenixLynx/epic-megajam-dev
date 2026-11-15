@@ -19,6 +19,8 @@
 #include "EngineUtils.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshActor.h"
+#include "Engine/TextRenderActor.h"
+#include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -297,6 +299,39 @@ void UTakeGrabComponent::CollectFunProps()
 		}
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %d bin(s) for the paper toss, %d food item(s) that come back"), Bins.Num(), Foods.Num());
+	MakeElevatorClock();
+}
+
+void UTakeGrabComponent::MakeElevatorClock()
+{
+	if (ElevatorClock.IsValid()) { return; }
+	// On the lobby side of the elevator wall, just right of the doorway, up high (elevator room x 1800-2400, its south wall
+	// at y 500; the doorway x 1950-2250 is full height, so there's no lintel to hang it on)
+	const FVector At(2325.f, 514.f, 250.f);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	if (UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")))
+	{
+		if (AStaticMeshActor* Case = GetWorld()->SpawnActor<AStaticMeshActor>(At - FVector(0.f, 3.f, 0.f), FRotator::ZeroRotator, Params))
+		{
+			UStaticMeshComponent* SM = Case->GetStaticMeshComponent();
+			SM->SetMobility(EComponentMobility::Movable);
+			SM->SetStaticMesh(Cube);
+			SM->SetWorldScale3D(FVector(0.62f, 0.04f, 0.22f));   // 62 x 4 x 22 cm
+			SM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			if (UMaterialInterface* Steel = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/M_BrushedSteel.M_BrushedSteel"))) { SM->SetMaterial(0, Steel); }
+		}
+	}
+	if (ATextRenderActor* T = GetWorld()->SpawnActor<ATextRenderActor>(At, FRotator(0.f, 90.f, 0.f), Params))   // text faces +Y (the lobby)
+	{
+		UTextRenderComponent* TR = T->GetTextRender();
+		TR->SetHorizontalAlignment(EHTA_Center);
+		TR->SetVerticalAlignment(EVRTA_TextCenter);
+		TR->SetWorldSize(17.f);
+		TR->SetTextRenderColor(FColor(255, 40, 30));
+		TR->SetText(FText::FromString(TEXT("9:00")));
+		ElevatorClock = TR;
+	}
 }
 
 void UTakeGrabComponent::RevealAct2()
@@ -339,10 +374,25 @@ void UTakeGrabComponent::TickFun(float DeltaTime)
 {
 	FVector Eye; FRotator View;
 	const bool bView = GetView(Eye, View);
-	// Food comes back to where it was, when you aren't looking at the spot
+	// The elevator clock follows the game clock (h:mm, 12-hour, like an office clock)
+	if (UTextRenderComponent* Clock = ElevatorClock.Get())
+	{
+		if (const UTakeGameInstance* CGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
+		{
+			const int32 Mins = FMath::FloorToInt32(CGI->WorkdayMinutes);
+			if (Mins != ElevatorClockShown)
+			{
+				ElevatorClockShown = Mins;
+				const int32 H = ((Mins / 60) % 12 == 0) ? 12 : (Mins / 60) % 12;
+				Clock->SetText(FText::FromString(FString::Printf(TEXT("%d:%02d"), H, Mins % 60)));
+			}
+		}
+	}
+
+	// Food comes back to where it was, when you aren't looking at the spot (not after lunch is put away in Act 3)
 	for (FFood& F : Foods)
 	{
-		if (F.Back < 0.f) { continue; }
+		if (F.Back < 0.f || bLunchPutAway) { continue; }
 		F.Back -= DeltaTime;
 		AActor* A = F.Actor.Get();
 		if (F.Back > 0.f || !A) { continue; }
@@ -359,6 +409,16 @@ void UTakeGrabComponent::TickFun(float DeltaTime)
 	UPrimitiveComponent* Toss = TossProp.Get();
 	if (!Toss || TossLeft <= 0.f) { return; }
 	TossLeft -= DeltaTime;
+	if (Toss->GetComponentLocation().Z < TossFrom.Z - 500.f)   // went through the floor anyway: put it back where you threw it
+	{
+		Toss->SetPhysicsLinearVelocity(FVector::ZeroVector);
+		Toss->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+		Toss->SetWorldLocation(TossFrom, false, nullptr, ETeleportType::ResetPhysics);
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %s fell through the floor: put back at %s"), *GetNameSafe(Toss->GetOwner()), *TossFrom.ToCompactString());
+		TossProp = nullptr;
+		TossLeft = 0.f;
+		return;
+	}
 	const FVector P = Toss->GetComponentLocation();
 	const bool bSettled = Toss->GetComponentVelocity().Size() < 60.f;
 	for (const TWeakObjectPtr<AActor>& B : Bins)

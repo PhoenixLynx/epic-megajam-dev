@@ -969,3 +969,21 @@ A running record of every AI tool used and what it did.
 - **New:** SK_MannequinStalker; textures for 4 charts, the X, the service sign; `sfx_applause`; ward lights.
 - **AI tools used:** Claude (C++ Act 3, ending, title and credits widgets, Blender stalker variant, HTML textures, applause synthesis, level dressing). Sol / ChatGPT (title art).
 - **Packaging fix found while planning:** the rigged characters live in `/Game/Characters` and are loaded by code, which the cook (the packaging step that converts assets for the build) doesn't follow, so a packaged build would have shown the old static mannequins. Added `/Game/Characters` to `DirectoriesToAlwaysCook` in `Config/DefaultGame.ini`.
+
+### Session 60: Sat Nov 14, 2026, 17:20–18:42 MST: The ward plays (stalker, weapons, Sol's stalker face)
+
+- **Playtest notes (round 4, Act 3):** the stalker never reached me in the ward (*"walking and appears trapped"*), nothing to defend myself with, the extinguisher vanished when thrown, `TakeBeat 5` didn't get me to the ward, still can't take lunch, "lunch is served" hints in Act 3.
+- **Found in the log:**
+  - The stalker started **inside the last bed** (2800, 7200 vs bed 3-5 at 2800, 7100) and never moved a centimetre. The first fix didn't take because Live Coding keeps the old value of a file-level constant: it needed a full rebuild.
+  - `fix_prop_collision.py` had fallen behind `dress_campus.py`: brochures, paper balls and **the lunch dishes** still had complex-only collision, so they couldn't simulate (the *"ComplexAsSimple"* warnings), which is also why lunch couldn't be picked up.
+  - My first copy of `TakeStalker.cpp` (the face swap) was saved over on my PC right after it was written, so the stalker still wore the coworkers' Fear face.
+- **Fixes:**
+  - **Stalker:** starts in the open aisle; `FindTeleportSpot` keeps it out of furniture; with no nav mesh it steers along beds and curtains instead of pushing into them; if it's wedged for a second while chasing, it pops free.
+  - **Sol's stalker face** (red eyes, curled grin, approved by me): `T_Face_Stalker` / `MI_Face_Stalker` via `import_stalker_face.py`; the log confirms *"face MI_Face_Stalker, face slot found"*. Coworker faces unchanged.
+  - **Ward weapons:** 13 throwables appear when you land (2 extinguishers, chairs, CAUTION signs, bin, mop bucket, paper, binder, mug, water bottle).
+  - **Collision script** now also covers every Throwable-tagged mesh in the level, so the list can't drift again (0 warnings since).
+  - **Thrown props** use CCD (the floors are 10 cm thick), and anything that still falls through comes back to where it was thrown.
+  - **`TakeBeat`:** 6 = straight into the ward, 7 = the wrap party; no number shows the list.
+  - **Act 3 cleanup:** lunch and kitchen food put away (34 items), the chef only at lunch, coworkers give Act 3 hints, and a **digital clock** on the lobby wall by the elevator (stops at 2:14).
+- **Notes (round 5):** *"wow the stalker is fast, I like it but I am not good yet haha"*, *"I liked how hard the stalker was actually"* (the chairs make it fair). Next: a warning before it comes (sound + lighting), more throwables, a water-cooler gossiper, CONTINUE from the save point, intro bleed-through, a later overtime time (past 8 PM?), scrub the afterlife/astral content, and flesh out the ending (the director, the director's chair, a penthouse party?, cake?).
+- **AI tools used:** Claude (log and screenshot review, C++, Unreal Python, handoff note to Sol). Sol / ChatGPT (stalker face).
