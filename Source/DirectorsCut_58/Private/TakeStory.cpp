@@ -371,7 +371,7 @@ void UTakeGrabComponent::TickMusic(float DeltaTime)
 	MusicLeft -= DeltaTime;
 	MusicAge += DeltaTime;
 	const ATakeFearDirector* FearDir = FindFearDirector();
-	const bool bTension = MusicTrack.Contains(TEXT("tension"));
+	const bool bTension = MusicTrack.Contains(TEXT("tension")) || MusicTrack.Contains(TEXT("fear"));   // the dark cues
 	// The happy cue steps aside when Fear comes back; the tension cue steps aside when Fear is gone
 	const bool bFearBack = !bTension && EndT < 0.f && MusicAge > 5.f && FearDir && FearDir->TargetFear > 0.4f;   // (the sphere's own calm-down takes a few seconds)
 	const bool bCalmAgain = bTension && EndT < 0.f && MusicAge > 20.f && FearDir && FearDir->Fear < 0.1f && FearDir->TargetFear < 0.1f;

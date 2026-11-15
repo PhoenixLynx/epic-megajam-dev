@@ -379,6 +379,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		if (StalkerIn > 0.f && (StalkerIn -= DeltaTime) <= 0.f)
 		{
 			PlaySfx2D(TEXT("sfx_impact_heavy"), 0.8f);   // it's here
+			if (!bFearWardDone) { bFearWardDone = true; PlayMusicCue(TEXT("the stalker is in the ward"), TEXT("mus_halcyon_fear1"), true); }
 			for (TActorIterator<ATakeStalker> It(GetWorld()); It; ++It)
 			{
 				// Never start inside furniture: nudge to the nearest spot where its capsule fits

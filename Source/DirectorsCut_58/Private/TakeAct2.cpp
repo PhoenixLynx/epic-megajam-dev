@@ -1005,6 +1005,17 @@ void UTakeGrabComponent::TickEnergy(float DeltaTime)
 		PlaySfx2D(TEXT("sfx_fear_hit"), 0.9f);
 		if (!bTensionFirstDone) { bTensionFirstDone = true; PlayMusicCue(TEXT("Fear rises for the first time"), TEXT("mus_halcyon_tension"), true); }
 	}
+	// Fear Lvl 1: Corridor B, the first time it really turns (the loop is on from 0.5)
+	if (FearNow >= 0.5f && LastFearLvl < 0.5f && !bFearCorridorDone)
+	{
+		const UTakeGameInstance* LvlGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		if (LvlGI && LvlGI->Beat == ETakeBeat::Corridor)
+		{
+			bFearCorridorDone = true;
+			PlayMusicCue(TEXT("Corridor B turns"), TEXT("mus_halcyon_fear1"), true);
+		}
+	}
+	LastFearLvl = FearNow;
 	LastFear = FearNow;
 	const bool bLow = GI->Energy < 25.f;
 	Me->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * (bLow ? 0.8f : 1.f);

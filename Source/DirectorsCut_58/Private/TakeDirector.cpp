@@ -546,7 +546,7 @@ void UTakeGrabComponent::StartRefusal()
 		FearDir->bForceRed = true;
 	}
 	PlaySfx2D(TEXT("sfx_fear_hit"), 1.f);
-	PlayMusicCue(TEXT("refusal"), TEXT("mus_halcyon_tension"), true);
+	PlayMusicCue(TEXT("refusal"), TEXT("mus_halcyon_fear1"), true);
 	ShowSubtitle(TEXT(""), TEXT("(The applause stops. Mid-clap. Every face turns to you.)"), 4.f);
 	// And in the corner by the reception desk, where the light doesn't reach: it's back. It doesn't come closer. It doesn't have to.
 	for (TActorIterator<ATakeStalker> It(GetWorld()); It; ++It)

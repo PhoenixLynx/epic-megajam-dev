@@ -156,6 +156,9 @@ private:
 	FString MusicTrack;              // which cue is playing (positive fades when Fear returns; tension fades when it's gone)
 	bool bTensionFirstDone = false;  // the first time Fear rises: the tension cue
 	bool bTensionWardDone = false;
+	bool bFearCorridorDone = false;  // Fear Lvl 1: Corridor B the first time it gets bad, the stalker in the ward, the refusal
+	bool bFearWardDone = false;
+	float LastFearLvl = 0.f;
 	bool bMusicCoffeeDone = false;
 	bool bMusicWispDone = false;
 	void PlayMusicCue(const TCHAR* Why, const TCHAR* Track = TEXT("mus_halcyon_positive"), bool bForce = false);
