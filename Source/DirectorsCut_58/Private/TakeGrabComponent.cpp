@@ -1776,13 +1776,13 @@ void UTakeGrabComponent::TickSafetyNet(float DeltaTime)
 	const ACharacter* Me = Cast<ACharacter>(GetOwner());
 	UCharacterMovementComponent* Move = Me ? Me->GetCharacterMovement() : nullptr;
 	if (!Move) { return; }
-	// The party and director's floor cakes: until the first cut, while you're more than 3 m away, the lettering turns to
+	// The party and director's floor cakes: until the first cut, until you are at the table, the lettering turns to
 	// you, so it reads from whichever side you walk up to (playtest: "cake still facing wrong way")
 	for (TActorIterator<ATakeCake> CakeIt(GetWorld()); CakeIt; ++CakeIt)
 	{
 		if (!CakeIt->ActorHasTag(TEXT("AimCake")) || CakeIt->CutsSoFar() > 0) { continue; }
 		const FVector To = CakeIt->GetActorLocation() - Me->GetActorLocation();
-		if (To.Size2D() < 300.f || FMath::Abs(To.Z) > 500.f) { continue; }
+		if (To.Size2D() < 130.f || FMath::Abs(To.Z) > 500.f) { continue; }   // (keeps turning until you are at the table: at 3 m it locked at an angle)
 		CakeIt->SetActorRotation(FRotator(0.f, To.Rotation().Yaw, 0.f));   // the lettering's "up" points away from you
 	}
 	if (Move->IsMovingOnGround())
