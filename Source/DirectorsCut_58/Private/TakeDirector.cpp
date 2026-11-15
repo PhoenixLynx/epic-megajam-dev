@@ -252,8 +252,15 @@ void UTakeGrabComponent::SpawnCollector()
 	if (UStaticMesh* Body = Prop(TEXT("SM_Mannequin"))) { Col->BodyMesh = Body; }
 	Col->FinishSpawning(T);
 	Col->JoinParty(Where, FVector(2100.f, 1050.f, 92.f));
-	// A black suit (everything but the face), a top hat, a red tie
+	// A black suit, a top hat, a red tie. His skin is the same brown as the Black coworkers' (TakeCoworker.cpp, M_SkinTone):
+	// two skin tones in the whole game, kept simple.
 	UMaterialInterface* Black = Mat(TEXT("/Game/Props/Meshes/M_MetalDark.M_MetalDark"));
+	UMaterialInstanceDynamic* SkinTone = nullptr;
+	if (UMaterialInterface* SkinBase = Mat(TEXT("/Game/Props/Materials/M_SkinTone.M_SkinTone")))
+	{
+		SkinTone = UMaterialInstanceDynamic::Create(SkinBase, Col);
+		SkinTone->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.12f, 0.06f, 0.035f));   // = TakeCoworker.cpp
+	}
 	UMaterialInterface* Red = Mat(TEXT("/Game/Props/Meshes/M_RedPaint.M_RedPaint"));
 	TArray<UMeshComponent*> Meshes;
 	Col->GetComponents<UMeshComponent>(Meshes);
@@ -263,6 +270,7 @@ void UTakeGrabComponent::SpawnCollector()
 		{
 			const FName SlotName = MC->GetMaterialSlotNames().IsValidIndex(S) ? MC->GetMaterialSlotNames()[S] : NAME_None;
 			if (SlotName.ToString().Contains(TEXT("Face"))) { continue; }
+			if (SlotName.ToString().Contains(TEXT("Skin")) && SkinTone) { MC->SetMaterial(S, SkinTone); continue; }   // head, neck, hands
 			if (Black) { MC->SetMaterial(S, Black); }
 		}
 	}
