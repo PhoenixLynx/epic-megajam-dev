@@ -59,37 +59,41 @@ namespace
 		return LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), Name, Name));
 	}
 
-	// Cake in hand (playtest: "employees should have cake in hands", "stalker should be allowed a slice of cake"):
-	// a small white plate with a slice on it, attached to a character's root (the capsule centre), held in front at
-	// hand height (HandZ cm above the floor) and a little to the right. No collision, no shadow. Same pattern as the
-	// Collector's hat (SpawnCollector's Wear). bBitten = a corner already eaten (the slice is shorter).
-	void GivePlateOfCake(ACharacter* Who, float HandZ, bool bBitten)
+	// Cake in hand (playtest: "employees should have cake in hands", "they should hold the cake and take bites too,
+	// cake should be wedged sliced here also"): a real wedge of the cake (TakeCake) on a small white plate, one actor,
+	// attached to the character's root (the capsule centre), held in front at hand height (HandZ cm above the floor)
+	// and a little to the right. No collision, no shadow. bBitten = someone already started on it (a shorter wedge).
+	ATakeCake* GivePlateOfCake(ACharacter* Who, float HandZ, bool bBitten)
 	{
-		if (!Who || !Who->GetRootComponent() || Who->ActorHasTag(TEXT("HasCake"))) { return; }
+		if (!Who || !Who->GetRootComponent() || !Who->GetWorld() || Who->ActorHasTag(TEXT("HasCake"))) { return nullptr; }
 		UStaticMesh* PlateCyl = Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-		UStaticMesh* PlateCube = Mesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
-		if (!PlateCyl || !PlateCube) { return; }
 		const float HalfH = Who->GetCapsuleComponent() ? Who->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 90.f;
 		const FVector Hand(32.f, 14.f, HandZ - HalfH);   // relative to the capsule centre: front (+X), right (+Y)
-		auto Hold = [Who](UStaticMesh* M, const FVector& Rel, const FRotator& Rot, const FVector& Scale, UMaterialInterface* Mtl)
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		ATakeCake* Slice = Who->GetWorld()->SpawnActor<ATakeCake>(Who->GetActorLocation(), Who->GetActorRotation(), Params);
+		if (!Slice) { return nullptr; }
+		Slice->BuildSlice(bBitten ? 15.f : 19.f, bBitten ? 9.f : 11.f, 8, FMath::RandRange(0, 7));
+		Slice->Cake->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Slice->Cake->SetCastShadow(false);
+		if (PlateCyl)
 		{
-			UStaticMeshComponent* Piece = NewObject<UStaticMeshComponent>(Who);
-			Piece->SetStaticMesh(M);
-			Piece->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			Piece->SetCastShadow(false);
-			Piece->SetupAttachment(Who->GetRootComponent());
-			Piece->SetRelativeLocationAndRotation(Rel, Rot);
-			Piece->SetRelativeScale3D(Scale);
-			if (Mtl) { Piece->SetMaterial(0, Mtl); }
-			Piece->RegisterComponent();
-		};
-		const float SliceH = bBitten ? 5.f : 7.f;
-		Hold(PlateCyl, Hand, FRotator::ZeroRotator, FVector(0.18f, 0.18f, 0.01f), Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite")));
-		Hold(PlateCube, Hand + FVector(0.f, 0.f, 0.5f + SliceH * 0.5f), FRotator(0.f, 25.f, 0.f), FVector(0.08f, 0.05f, SliceH / 100.f),
-			Mat(TEXT("/Game/Props/Meshes/M_Bread.M_Bread")));   // the slice
-		Hold(PlateCube, Hand + FVector(0.f, 0.f, 0.5f + SliceH + 0.4f), FRotator(0.f, 25.f, 0.f), FVector(0.085f, 0.055f, 0.008f),
-			Mat(TEXT("/Game/Props/Meshes/M_Frosting.M_Frosting")));   // its frosting
+			UStaticMeshComponent* Plate = NewObject<UStaticMeshComponent>(Slice, TEXT("Plate"));
+			Plate->SetStaticMesh(PlateCyl);
+			Plate->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			Plate->SetCastShadow(false);
+			Plate->SetupAttachment(Slice->GetRootComponent());
+			Plate->SetRelativeLocation(FVector(0.f, 0.f, -0.6f));
+			Plate->SetRelativeScale3D(FVector(0.18f, 0.18f, 0.01f));
+			if (UMaterialInterface* White = Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite"))) { Plate->SetMaterial(0, White); }
+			Plate->RegisterComponent();
+		}
+		Slice->AttachToComponent(Who->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		Slice->SetActorRelativeLocation(Hand + FVector(0.f, 0.f, 0.6f));
+		Slice->SetActorRelativeRotation(FRotator(0.f, 25.f, 0.f));
+		Slice->Tags.Add(TEXT("DirectorsFloor"));
 		Who->Tags.AddUnique(TEXT("HasCake"));
+		return Slice;
 	}
 }
 
@@ -305,10 +309,60 @@ void UTakeGrabComponent::CutTheCake(AActor* Cake)
 	{
 		if (!CakeIt->bAtParty || CakeIt->ActorHasTag(TEXT("Collector")) || CakeIt->IsHidden()) { continue; }
 		if ((Seen++ % 2) != 0) { continue; }
-		GivePlateOfCake(*CakeIt, 102.f, Plates % 3 == 1);   // some have had a bite
+		if (ATakeCake* Held = GivePlateOfCake(*CakeIt, 102.f, Plates % 3 == 1))   // some have had a bite
+		{
+			FHeldCake H;
+			H.Slice = Held;
+			H.Rel = Held->GetRootComponent()->GetRelativeLocation();
+			H.Next = FMath::FRandRange(2.f, 9.f);
+			HeldCakes.Add(H);
+		}
 		++Plates;
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Cake cut: %d coworker(s) holding a plate"), Plates);
+}
+
+// People at the party eat their cake: now and then the plate comes up to the face, a bite, back down. Four bites and it's gone.
+void UTakeGrabComponent::TickHeldCakes(float DeltaTime)
+{
+	if (bRefused) { return; }   // (nobody eats while they're staring at you)
+	for (FHeldCake& H : HeldCakes)
+	{
+		ATakeCake* S = Cast<ATakeCake>(H.Slice.Get());
+		if (!S || H.Bites >= 4) { continue; }
+		if (H.Lift < 0.f)
+		{
+			if ((H.Next -= DeltaTime) <= 0.f) { H.Lift = 0.f; H.bBit = false; }
+			continue;
+		}
+		H.Lift += DeltaTime;
+		const float T = FMath::Clamp(H.Lift / 1.6f, 0.f, 1.f);
+		const float Up = FMath::Sin(PI * T);
+		S->SetActorRelativeLocation(H.Rel + FVector(-18.f * Up, -10.f * Up, 54.f * Up));   // hand to mouth
+		if (!H.bBit && T >= 0.5f)
+		{
+			H.bBit = true;
+			++H.Bites;
+			const float Left = 1.f - 0.2f * H.Bites;   // the wedge gets smaller (the plate doesn't)
+			S->Cake->SetRelativeScale3D(FVector(Left, Left, FMath::Max(0.5f, Left)));
+			if (UStaticMeshComponent* Plate = S->FindComponentByClass<UStaticMeshComponent>())
+			{
+				Plate->SetRelativeScale3D(FVector(0.18f / Left, 0.18f / Left, 0.01f / FMath::Max(0.5f, Left)));
+				Plate->SetRelativeLocation(FVector(0.f, 0.f, -0.6f / FMath::Max(0.5f, Left)));
+			}
+			if (H.Bites >= 4) { S->Cake->SetVisibility(false); }   // just the plate (and crumbs)
+			if (const AActor* Me = GetOwner())
+			{
+				if (FVector::DistSquared(Me->GetActorLocation(), S->GetActorLocation()) < 400.f * 400.f) { PlaySfx(TEXT("sfx_eat_crunch"), S->GetActorLocation(), 0.25f); }
+			}
+		}
+		if (T >= 1.f)
+		{
+			H.Lift = -1.f;
+			H.Next = FMath::FRandRange(5.f, 12.f);
+			S->SetActorRelativeLocation(H.Rel);
+		}
+	}
 }
 
 // ------------------------------------------------------------------ the cake you can cut (TakeCake)
@@ -474,10 +528,39 @@ void UTakeGrabComponent::BuildPenthouse()
 	Box(P + FVector(-PW * 0.5f, 0.f, 55.f), FVector(8.f, PD, 110.f), Mat(TEXT("/Game/Props/Meshes/M_Glass.M_Glass")));
 	Box(P + FVector(-PW * 0.5f, 0.f, 112.f), FVector(10.f, PD, 6.f), Steel);
 	Box(P + FVector(PW * 0.15f, 0.f, PH + 5.f), FVector(PW * 0.7f, PD, 10.f), Mat(TEXT("/Game/Fear/M_CeilingPanel.M_CeilingPanel")), false);
-	// Past the open west side: the city at dusk (Sol's ART-014), a big flat plate far enough out that it reads as distance
+	// The city at dusk (house-style ART-014) as a framed print on the east wall (playtest: "artwork can go on this blank
+	// wall"), away from the elevator; outside, past the open west side, the city is built from simple blocks instead
 	if (UMaterialInterface* Sky = Mat(TEXT("/Game/Ending/MI_PenthouseSkyline.MI_PenthouseSkyline")))
 	{
-		SpawnSetPiece(Cube, P + FVector(-PW * 0.5f - 2600.f, 0.f, 350.f), FRotator(0.f, -90.f, 0.f), FVector(64.f, 0.1f, 16.f), Sky, false);   // (its +Y face, the unmirrored one, toward you)
+		const FVector Print(P.X + PW * 0.5f - 12.f, P.Y - 170.f, PH * 0.5f + P.Z + 10.f);
+		SpawnSetPiece(Cube, Print + FVector(2.f, 0.f, 0.f), FRotator(0.f, 90.f, 0.f), FVector(5.4f, 0.03f, 1.5f), Mat(TEXT("/Game/Props/Meshes/M_MetalDark.M_MetalDark")), false);   // the frame
+		UMaterialInstanceDynamic* Lit = UMaterialInstanceDynamic::Create(Sky, this);
+		Lit->SetScalarParameterValue(TEXT("Glow"), 0.35f);   // a print, not a screen
+		SpawnSetPiece(Cube, Print - FVector(0.5f, 0.f, 0.f), FRotator(0.f, 90.f, 0.f), FVector(5.f, 0.03f, 1.25f), Lit, false);   // (+Y face, unmirrored, into the room)
+	}
+	{
+		FRandomStream City(2214);
+		auto Shade = [&](const FLinearColor& C) -> UMaterialInterface*
+		{
+			UMaterialInterface* Base = Mat(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+			if (!Base) { return nullptr; }
+			UMaterialInstanceDynamic* M = UMaterialInstanceDynamic::Create(Base, this);
+			M->SetVectorParameterValue(TEXT("Color"), C);
+			return M;
+		};
+		UMaterialInterface* Blocks[] = { Shade(FLinearColor(0.10f, 0.15f, 0.18f)), Shade(FLinearColor(0.16f, 0.22f, 0.26f)), Shade(FLinearColor(0.24f, 0.31f, 0.35f)) };
+		for (int32 I = 0; I < 26; ++I)
+		{
+			const float Dist = City.FRandRange(2600.f, 7000.f);   // (well clear of the office building, which ends at x 0)
+			const float W = City.FRandRange(300.f, 900.f), D = City.FRandRange(300.f, 900.f);
+			const float Top = City.FRandRange(1600.f, 4300.f) * (Dist > 4500.f ? 1.15f : 0.9f);
+			const FVector At(P.X - PW * 0.5f - Dist, P.Y + City.FRandRange(-4500.f, 4500.f), (Top - 300.f) * 0.5f);
+			SpawnSetPiece(Cube, At, FRotator(0.f, City.FRandRange(-8.f, 8.f), 0.f), FVector(W, D, Top + 300.f) / 100.f, Blocks[(I + (Dist > 4500.f ? 2 : 0)) % 3], false);
+		}
+		// HALCYON HQ: the tallest, a mint band at the top
+		const FVector HQ(P.X - PW * 0.5f - 3800.f, P.Y + 900.f, 0.f);
+		SpawnSetPiece(Cube, HQ + FVector(0.f, 0.f, 2600.f), FRotator::ZeroRotator, FVector(7.f, 7.f, 52.f), Blocks[0], false);
+		SpawnSetPiece(Cube, HQ + FVector(0.f, 0.f, 5150.f), FRotator::ZeroRotator, FVector(7.1f, 7.1f, 0.6f), Shade(FLinearColor(0.32f, 0.78f, 0.64f)), false);
 	}
 	// A rug under the chair
 	Box(P + FVector(0.f, 40.f, 1.f), FVector(520.f, 380.f, 2.f), Mat(TEXT("/Game/Props/Materials/MI_Rug.MI_Rug")), false);

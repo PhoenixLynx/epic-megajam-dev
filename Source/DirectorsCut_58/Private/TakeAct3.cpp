@@ -461,6 +461,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 	EndT += DeltaTime;
 	TickRefusal(DeltaTime);
 	if (bPenthouseBuilt) { TickDailies(DeltaTime); }
+	TickHeldCakes(DeltaTime);
 	// The party stays calm... unless you spent the day throwing things at these people
 	if (EndStep >= 1 && !bRefused)
 	{

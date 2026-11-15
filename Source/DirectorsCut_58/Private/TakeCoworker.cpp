@@ -129,8 +129,8 @@ void ATakeCoworker::SetupSkeletal()
 		if (UMaterialInterface* Neutral = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Neutral.MI_Face_Neutral"))) { FaceCalm = Neutral; }
 	}
 	FaceFrown = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Frown.MI_Face_Frown"));
-	// About one in five of the office are Black: brown skin (the M_Skin slots), same suits as everyone
-	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && GetTypeHash(GetName()) % 5 == 1)
+	// About three in ten of the office are Black (playtest: "30% if possible"): brown skin (the M_Skin slots), same suits as everyone
+	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && (GetTypeHash(GetName()) % 10) < 3)
 	{
 		// M_SkinTone (import_jam_assets.py) is flagged "Used with Skeletal Mesh". The engine's BasicShapeMaterial isn't, and
 		// Unreal silently draws the grey grid instead on a rigged mesh (that was the "texture map" faces in playtest).

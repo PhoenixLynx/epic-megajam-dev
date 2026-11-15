@@ -26,6 +26,17 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTakeActorEvent, AActor*, Actor);
 UENUM()
 enum class ETakeLookKind : uint8 { None, Coworker, Terminal, Openable, Coffee, Phone, Inspect, Prop, TooHeavy, Wisp, Call, Vending, LockPanel, Use };
 
+/** A slice someone is holding at the wrap party (TakeDirector.cpp): it goes up to their face now and then. */
+struct FHeldCake
+{
+	TWeakObjectPtr<AActor> Slice;
+	FVector Rel = FVector::ZeroVector;
+	float Next = 5.f;
+	float Lift = -1.f;
+	int32 Bites = 0;
+	bool bBit = false;
+};
+
 UCLASS(ClassGroup = (Take), meta = (BlueprintSpawnableComponent, DisplayName = "Take Grab"))
 class DIRECTORSCUT_58_API UTakeGrabComponent : public UActorComponent
 {
@@ -421,6 +432,8 @@ private:
 	int32 CakeLaterTries = 0;
 	int32 SlicesEaten = 0;
 	bool bPartyCakeCut = false;
+	TArray<struct FHeldCake> HeldCakes;   // slices in people's hands at the party (they take bites)
+	void TickHeldCakes(float DeltaTime);
 	bool bMusicLoop = false;         // the party and the director's floor: the happy cue keeps playing
 	float MusicDuration = 0.f;
 public:
