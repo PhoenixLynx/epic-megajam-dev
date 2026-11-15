@@ -169,11 +169,11 @@ void UTakeGrabComponent::BuildLobbyParty()
 	(void)Frosting; (void)FabricMint;
 	for (int32 I = 0; I < 6; ++I)   // cups and cans, a little everywhere
 	{
-		const FVector At = Table + FVector(-70.f + I * 28.f, (I % 2 == 0) ? -28.f : 30.f, 76.f);
+		const FVector At = Table + FVector(-80.f + I * 32.f, 37.f, 76.f);   // a row along the back edge, clear of the cake and its plate
 		// real props (playtest: "coffee should still be slurpable at party"): pick a mug up, F to sip; cans too
 		SpawnProp(I % 3 == 2 ? TEXT("SM_SodaCan") : TEXT("SM_Mug"), At + FVector(0.f, 0.f, 1.f), FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f));
 	}
-	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(75.f, 0.f, 76.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
+	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(-78.f, -30.f, 76.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 
 	// The banner: over the elevator doors, on the lobby side
 	if (UMaterialInterface* BannerArt = Mat(TEXT("/Game/Ending/MI_WrapBanner.MI_WrapBanner")))   // Sol's banner (ART-010), 4:1
@@ -321,13 +321,21 @@ void UTakeGrabComponent::CutTheCake(AActor* Cake)
 // People at the party eat their cake: now and then the plate comes up to the face, a bite, back down. Four bites and it's gone.
 void UTakeGrabComponent::TickHeldCakes(float DeltaTime)
 {
-	if (bRefused) { return; }   // (nobody eats while they're staring at you)
+	if (bRefused)   // nobody eats while they're staring at you: plates back down
+	{
+		for (FHeldCake& Down : HeldCakes)
+		{
+			if (AActor* Slice = Down.Slice.Get()) { if (Down.Lift >= 0.f) { Slice->SetActorRelativeLocation(Down.Rel); Down.Lift = -1.f; } }
+		}
+		return;
+	}
 	for (FHeldCake& H : HeldCakes)
 	{
 		ATakeCake* S = Cast<ATakeCake>(H.Slice.Get());
-		if (!S || H.Bites >= 4) { continue; }
+		if (!S) { continue; }
 		if (H.Lift < 0.f)
 		{
+			if (H.Bites >= 3) { continue; }   // they never quite finish it (a last bite stays on the plate)
 			if ((H.Next -= DeltaTime) <= 0.f) { H.Lift = 0.f; H.bBit = false; }
 			continue;
 		}
@@ -346,7 +354,6 @@ void UTakeGrabComponent::TickHeldCakes(float DeltaTime)
 				Plate->SetRelativeScale3D(FVector(0.18f / Left, 0.18f / Left, 0.01f / FMath::Max(0.5f, Left)));
 				Plate->SetRelativeLocation(FVector(0.f, 0.f, -0.6f / FMath::Max(0.5f, Left)));
 			}
-			if (H.Bites >= 4) { S->Cake->SetVisibility(false); }   // just the plate (and crumbs)
 			if (const AActor* Me = GetOwner())
 			{
 				if (FVector::DistSquared(Me->GetActorLocation(), S->GetActorLocation()) < 400.f * 400.f) { PlaySfx(TEXT("sfx_eat_crunch"), S->GetActorLocation(), 0.25f); }
@@ -400,10 +407,9 @@ void UTakeGrabComponent::UseCake(ATakeCake* Cake, int32 N)
 	if (const AActor* Plate = Cake->ServePlate.Get()) { PlateAt = Plate->GetActorLocation() - FVector(0.f, 0.f, 0.5f); }
 	else
 	{
-		FVector ToMe = FVector::ForwardVector;
-		if (const AActor* Me = GetOwner()) { ToMe = (Me->GetActorLocation() - C).GetSafeNormal2D(); }
-		if (ToMe.IsNearlyZero()) { ToMe = FVector::ForwardVector; }
-		PlateAt = C + ToMe * (Cake->Radius + 14.f);
+		// along the table's length (both tables run along X), on the end nearer you: never hanging off an edge
+		const float Side = (GetOwner() && GetOwner()->GetActorLocation().X < C.X) ? -1.f : 1.f;
+		PlateAt = C + FVector(Side * (Cake->Radius + 16.f), 0.f, 0.f);
 		UMaterialInterface* White = Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite"));
 		Cake->ServePlate = SpawnSetPiece(Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder")), PlateAt + FVector(0.f, 0.f, 0.5f), FRotator::ZeroRotator, FVector(0.2f, 0.2f, 0.01f), White, false);
 	}

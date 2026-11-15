@@ -138,6 +138,7 @@ private:
 	FRotator SeatReturnRotation = FRotator::ZeroRotator;
 	bool IsHoldingMug() const;
 	bool IsHoldingSnack() const;
+	bool IsHoldingDrink() const;   // cans, bottles, milk: F says Drink
 	void Eat();
 	int32 Eaten = 0;
 	bool bMailChimed = false;

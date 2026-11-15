@@ -320,6 +320,13 @@ BOXES += [
     # the blank north wall of the open office (behind your desk's row): a corporate print, framed
     ("OfficeArt_Frame", 1100, 1711.5, 175, 420, 3, 115, "/Game/Props/Meshes/M_MetalDark", []),
     ("OfficeArt", 1100, 1713.5, 175, 400, 1, 100, "/Game/Ending/MI_OfficeArt", ["Inspectable"]),
+    # a window in the open office (playtest: "add a window in the office"): on the east wall, a perfect day outside, always
+    ("OfficeWindow_Frame", 3388.5, 2950, 172, 3, 530, 170, "/Game/Props/Meshes/M_MetalLight", []),
+    ("OfficeWindow_View", 3386.5, 2950, 172, 1, 500, 150, "/Game/Ending/MI_WindowView", []),
+    ("OfficeWindow_Mullion1", 3385.5, 2825, 172, 2, 5, 150, "/Game/Props/Meshes/M_MetalLight", []),
+    ("OfficeWindow_Mullion2", 3385.5, 2950, 172, 2, 5, 150, "/Game/Props/Meshes/M_MetalLight", []),
+    ("OfficeWindow_Mullion3", 3385.5, 3075, 172, 2, 5, 150, "/Game/Props/Meshes/M_MetalLight", []),
+    ("OfficeWindow_Sill", 3382, 2950, 95, 10, 530, 4, "/Game/Props/Meshes/M_MetalLight", []),
     ("Poster_Smile_Kitchen", 3600, 1488, 165, 60, 1, 85, PM + "MI_Poster_Smile", ["Inspectable"]),
     ("Poster_Energy_Kitchen", 2812, 700, 165, 1, 60, 85, PM + "MI_Poster_Energy", ["Inspectable"]),
     # Lobby: rug, magazine, promo screen on the west wall
@@ -463,7 +470,8 @@ def main():
                 comp.set_material(idx, asset_lib.load_asset(path))
         if "DeskFixed" in tags:   # your desk stays tidy (Fear can still throw it around; it puts itself back)
             comp.set_mobility(unreal.ComponentMobility.MOVABLE)
-        elif mesh in THROWABLE and "Terminal" not in tags and "CoffeeMachine" not in tags:
+        elif mesh in THROWABLE and "Terminal" not in tags and "CoffeeMachine" not in tags and "FixedScreen" not in tags \
+                and not any(str(t).startswith("KeyLockPanel") for t in tags):   # lock terminals are bolted down (playtest: knocking the ward's away could make it unsolvable)
             comp.set_mobility(unreal.ComponentMobility.MOVABLE)
             comp.set_simulate_physics(True)
             comp.set_notify_rigid_body_collision(True)

@@ -1259,6 +1259,10 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			TEXT("The tall one's a stunt double. Nobody knows whose."),
 			TEXT("...shh. Rolling. We're rolling."),
 			TEXT("Craft services says there's cake later. Don't tell the lead."),
+			TEXT("Have you seen the cake in the kitchen? It says FOR LATER. It's been later for a while."),
+			TEXT("I licked the frosting. Don't tell anyone. It tastes like mint and paperwork."),
+			TEXT("Somebody counted the slices. Eight. There's always eight. Even after someone cuts one."),
+			TEXT("The cake has your number on it. Did you know that? Of course you knew."),
 			TEXT("My agent says this is a 'limited series'. It's been limited for years."),
 			TEXT("If the lights go red, hit your mark and don't look at the corridor."),
 		};

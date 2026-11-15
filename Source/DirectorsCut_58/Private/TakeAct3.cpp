@@ -59,7 +59,7 @@ void UTakeGrabComponent::StartOvertime()
 	GI->Beat = ETakeBeat::Overtime;
 	GI->bDevAct3Now = false;
 	OvertimeIn = -1.f;
-	if (!bForeshadowDone) { ForeshadowIn = 35.f; }   // a while into overtime, something walks through the office
+	if (!bForeshadowDone) { ForeshadowIn = 15.f; }   // soon into overtime, something walks through the office (playtest: 35 s was easy to miss)
 	ShowTimeCard(TEXT("2:14 PM"), TEXT("SCENE 4  \u00B7  OVERTIME"));
 	PlaySfx2D(TEXT("sfx_pa_chime"), 0.7f);
 	QueueSubtitle(TEXT("PA"), TEXT("Mandatory team building in the Wellness Center. Attendance is mandatory."));
@@ -278,6 +278,8 @@ void UTakeGrabComponent::ExitWard()
 {
 	if (ExitT >= 0.f) { return; }
 	ExitT = 0.f;
+	bMusicLoop = false;   // the ward's music stops with the ward
+	StopMusic(3.f);
 	PlaySfx2D(TEXT("sfx_badge_ok"), 0.7f);
 	ShowTimeCard(TEXT("2:14 PM"), TEXT("SCENE 6  \u00B7  C"));
 }
@@ -401,13 +403,13 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 				FearDir->StartCreep(FMath::Max(FearDir->Fear, 0.82f), 3.5f);
 			}
 			PlaySfx2D(TEXT("sfx_fear_hit"), 0.9f);
-			if (!bTensionWardDone) { bTensionWardDone = true; PlayMusicCue(TEXT("the ward: it's coming"), TEXT("mus_halcyon_tension"), true); }
+			if (!bTensionWardDone) { bTensionWardDone = true; PlayMusicCue(TEXT("the ward: it's coming"), TEXT("mus_halcyon_tension"), true); bMusicLoop = true; }   // loops until you get out
 			ShowSubtitle(TEXT(""), TEXT("(The lights stutter. Somewhere past the last bed, something heavy starts walking.)"), 3.5f);
 		}
 		if (StalkerIn > 0.f && (StalkerIn -= DeltaTime) <= 0.f)
 		{
 			PlaySfx2D(TEXT("sfx_impact_heavy"), 0.8f);   // it's here
-			if (!bFearWardDone) { bFearWardDone = true; PlayMusicCue(TEXT("the stalker is in the ward"), TEXT("mus_halcyon_fear1"), true); }
+			if (!bFearWardDone) { bFearWardDone = true; PlayMusicCue(TEXT("the stalker is in the ward"), TEXT("mus_halcyon_fear1"), true); bMusicLoop = true; }
 			for (TActorIterator<ATakeStalker> It(GetWorld()); It; ++It)
 			{
 				// Never start inside furniture: nudge to the nearest spot where its capsule fits
@@ -763,7 +765,7 @@ void UTakeGrabComponent::OnTitleChoice(int32 Choice)
 		else if (LoadedBeat == ETakeBeat::Overtime)
 		{
 			ShowTimeCard(TEXT("2:14 PM"), TEXT("SCENE 4  \u00B7  OVERTIME"));
-			if (!bForeshadowDone) { ForeshadowIn = 35.f; }   // the footsteps through the office, as in StartOvertime
+			if (!bForeshadowDone) { ForeshadowIn = 15.f; }   // the footsteps through the office, as in StartOvertime
 		}
 		else if (LoadedBeat == ETakeBeat::Ward)
 		{

@@ -632,6 +632,14 @@ bool UTakeGrabComponent::IsHoldingMug() const
 	return C && C->GetStaticMesh() && C->GetStaticMesh()->GetName().Contains(TEXT("Mug"));
 }
 
+bool UTakeGrabComponent::IsHoldingDrink() const
+{
+	const UStaticMeshComponent* C = IsHolding() ? Cast<UStaticMeshComponent>(Handle->GetGrabbedComponent()) : nullptr;
+	if (!C || !C->GetStaticMesh()) { return false; }
+	const FString N = C->GetStaticMesh()->GetName();
+	return N.Contains(TEXT("SodaCan")) || N.Contains(TEXT("WaterBottle")) || N.Contains(TEXT("MilkCarton"));
+}
+
 bool UTakeGrabComponent::IsHoldingSnack() const
 {
 	const UStaticMeshComponent* C = IsHolding() ? Cast<UStaticMeshComponent>(Handle->GetGrabbedComponent()) : nullptr;
@@ -1484,6 +1492,7 @@ void UTakeGrabComponent::UpdatePrompt()
 			return;
 		}
 		Prompt->SetPrompt(IsHoldingMug() ? TEXT("F  Sip        E  Drop        Click  Throw")
+			: IsHoldingDrink() ? TEXT("F  Drink        E  Drop        Click  Throw")
 			: IsHoldingSnack() ? TEXT("F  Eat        E  Drop        Click  Throw") : TEXT("E  Drop        Click  Throw"));
 		return;
 	}
@@ -1676,9 +1685,15 @@ void UTakeGrabComponent::TickChats(float DeltaTime)
 				{ TEXT("Someone was in Corridor B."), TEXT("There is no Corridor B."), TEXT("Right. Sorry. Right.") },
 				{ TEXT("Are you going to the party?"), TEXT("Is anyone not going?"), TEXT("4470 didn't go.") },
 			};
-			const bool bLate = GI->CurrentAct() >= 2;
+			static const TCHAR* Overtime[][3] = {   // Act 3: the cake in the kitchen (playtest: "npcs talk about cake during act 3")
+				{ TEXT("Did you see the cake?"), TEXT("It says FOR LATER."), TEXT("It's always later. That's the point of later.") },
+				{ TEXT("Who's the cake for?"), TEXT("4471. It's always for 4471."), TEXT("Lucky. ...Is it lucky?") },
+				{ TEXT("I'm only staying for the cake."), TEXT("Nobody's only staying for the cake."), TEXT("...I'm staying for the cake.") },
+				{ TEXT("Is the party still on?"), TEXT("The party is always on."), TEXT("Then why does it feel like waiting?") },
+				{ TEXT("Mint frosting again."), TEXT("Mint is the house colour."), TEXT("Everything is the house colour.") },
+			};
 			const int32 Pick = (ChatsHeard + FMath::RandRange(0, 4)) % 5;
-			const TCHAR* const* Exchange = bLate ? Afternoon[Pick] : Morning[Pick];
+			const TCHAR* const* Exchange = GI->CurrentAct() >= 3 ? Overtime[Pick] : GI->CurrentAct() >= 2 ? Afternoon[Pick] : Morning[Pick];
 			ChatLines.Reset();
 			for (int32 L = 0; L < 3; ++L) { ChatLines.Add(FString(Exchange[L])); }
 			ChatA = Idle[I];

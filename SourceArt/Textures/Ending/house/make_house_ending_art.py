@@ -349,7 +349,37 @@ def callwaiting():
       <div style="position:absolute;left:312px;width:400px;top:420px;height:58px;border-radius:29px;background:{MINT};font:600 24px/58px Poppins;color:{INK};text-align:center">Use the conference phone</div></div>''')
 
 
+# ------------------------------------------------------------------ the office window: a perfect day, always
+def windowview():
+    import random
+    rnd = random.Random(900)
+    W, H = 1600, 480
+    g = ['<defs><linearGradient id="day" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc9e3"/><stop offset="0.75" stop-color="#d9eef0"/>'
+         '<stop offset="1" stop-color="#eef7f3"/></linearGradient><filter id="cl"><feGaussianBlur stdDeviation="6"/></filter></defs>',
+         f'<rect width="{W}" height="{H}" fill="url(#day)"/>']
+    for _ in range(7):   # soft clouds
+        cx, cy = rnd.uniform(0, W), rnd.uniform(40, 200)
+        for k in range(4):
+            g.append(f'<ellipse cx="{cx + k * 38:.0f}" cy="{cy + (k % 2) * 10:.0f}" rx="{rnd.uniform(40, 70):.0f}" ry="{rnd.uniform(18, 28):.0f}" fill="#ffffff" opacity="0.85" filter="url(#cl)"/>')
+    for col, base, hmin, hmax in (("#b9cfd8", 380, 60, 170), ("#9db6c2", 420, 90, 230)):
+        x = -30
+        while x < W:
+            w = rnd.randint(70, 170)
+            h = rnd.randint(hmin, hmax)
+            g.append(f'<rect x="{x}" y="{base - h}" width="{w}" height="{H - base + h}" fill="{col}"/>')
+            for wy in range(base - h + 16, H - 20, 26):
+                for wx in range(x + 10, x + w - 12, 22):
+                    if rnd.random() < 0.35:
+                        g.append(f'<rect x="{wx}" y="{wy}" width="9" height="12" fill="#e8f4f6" opacity="0.8"/>')
+            x += w + rnd.randint(-10, 20)
+    g.append(f'<rect x="{W / 2 - 80}" y="120" width="160" height="{H}" fill="#86a7b5"/>')   # HALCYON HQ, dead centre
+    g.append(mark(MINT, 110).replace("<svg ", f'<svg x="{W / 2 - 55}" y="40" ', 1))
+    g.append(f'<rect x="0" y="{H - 40}" width="{W}" height="40" fill="#cfe3e0"/>')
+    return (W, H, svg_page(W, H, "".join(g)))
+
+
 PAGES = {
+    "T_WindowView": windowview,
     "T_Screen_CallWaiting": callwaiting,
     "T_PartyFlier": flier,
     "T_OfficeArt": officeart,

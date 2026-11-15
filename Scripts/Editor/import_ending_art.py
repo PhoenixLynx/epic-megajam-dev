@@ -10,6 +10,7 @@ import_ending_art.py: TAKE 4471. Sol's ending signage into the game.
   T_CakeTop             the top of the cake you can cut (ART-011; the missing wedge filled in, the game cuts its own)
                         -> MI_CakeTop is a child of M_FaceTexture (masked, not glowing)
   T_Dailies_*           the director's floor monitors (ART-012a-d)
+  T_WindowView          the office window: a perfect day, always (no lettering, so it can't read mirrored)
   T_PenthouseSkyline    the dusk skyline past the open side of the director's floor (ART-014)
 
 The game looks for the MI_ versions at play (TakeDirector.cpp, TakeStory.cpp) and falls back to its 3D text if they're missing.
