@@ -44,7 +44,20 @@ At the end of every take, someone will ask for your keys. **Director's cut, or t
 | Left or right mouse (holding something) | Throw |
 | F | Sip your coffee / eat what you're holding |
 | P or Esc | Pause (settings, save, quit) |
-| F8 | Stuck? Skip the current task list |
+| F8 | Stuck? Skip the current task list (also in the pause menu) |
+| Z / middle mouse (hold) | Zoom |
+| N | Your to-do list (write notes; they're saved with the time and place) |
+| F9 | Screenshot |
+
+### For judges and anyone short on time (director's tools, left on on purpose)
+
+| Key | Action |
+|-----|--------|
+| F8 | Skip the current tasks |
+| F5 / F6 | Jump to the party and straight to the YES / NO ending |
+| F7 | Call the stalker |
+| Ctrl+1 to Ctrl+4 | Set the Fear level (Ctrl+0 calm) |
+| Console: `TakeEnding 1` / `TakeEnding 0` | Same as F5 / F6 |
 
 ## How it was made
 
