@@ -1,0 +1,10 @@
+# Unreal
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+.vs/
+*.sln
+# Blender backups
+*.blend1
+*.blend2
