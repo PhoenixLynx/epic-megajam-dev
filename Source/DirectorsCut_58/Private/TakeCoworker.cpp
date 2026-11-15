@@ -132,7 +132,9 @@ void ATakeCoworker::SetupSkeletal()
 	// About one in five of the office are Black: brown skin (the M_Skin slots), same suits as everyone
 	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && GetTypeHash(GetName()) % 5 == 1)
 	{
-		if (UMaterialInterface* Shape = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial")))
+		// M_SkinTone (import_jam_assets.py) is flagged "Used with Skeletal Mesh". The engine's BasicShapeMaterial isn't, and
+		// Unreal silently draws the grey grid instead on a rigged mesh (that was the "texture map" faces in playtest).
+		if (UMaterialInterface* Shape = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/M_SkinTone.M_SkinTone")))
 		{
 			UMaterialInstanceDynamic* Skin = UMaterialInstanceDynamic::Create(Shape, this);
 			Skin->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.12f, 0.06f, 0.035f));   // the director: the face reads fine at the Collector's tone

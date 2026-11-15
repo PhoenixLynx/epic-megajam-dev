@@ -117,6 +117,20 @@ mel.connect_material_property(f_rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
 mel.recompile_material(face_base)
 unreal.EditorAssetLibrary.save_loaded_asset(face_base)
 
+# Skin tone for rigged coworkers (C++ makes a dynamic instance and sets "Color"): must be usable on skeletal meshes
+skin = get_or_create("M_SkinTone", MAT_DIR, unreal.Material, unreal.MaterialFactoryNew())
+mel.delete_all_material_expressions(skin)
+sk_col = mel.create_material_expression(skin, unreal.MaterialExpressionVectorParameter, -400, 0)
+sk_col.set_editor_property("parameter_name", "Color")
+sk_col.set_editor_property("default_value", unreal.LinearColor(0.12, 0.06, 0.035, 1.0))
+mel.connect_material_property(sk_col, "", unreal.MaterialProperty.MP_BASE_COLOR)
+sk_rough = mel.create_material_expression(skin, unreal.MaterialExpressionConstant, -400, 200)
+sk_rough.set_editor_property("r", 0.55)
+mel.connect_material_property(sk_rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+skin.set_editor_property("used_with_skeletal_mesh", True)
+mel.recompile_material(skin)
+unreal.EditorAssetLibrary.save_loaded_asset(skin)
+
 # Brushed steel (elevator car): metallic, fairly smooth, so Lumen gives it soft reflections
 steel = get_or_create("M_BrushedSteel", MAT_DIR, unreal.Material, unreal.MaterialFactoryNew())
 mel.delete_all_material_expressions(steel)
