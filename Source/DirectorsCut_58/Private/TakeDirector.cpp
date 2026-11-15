@@ -19,6 +19,8 @@
 #include "TakeWidgets.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "GameFramework/Character.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/TextRenderActor.h"
@@ -48,6 +50,39 @@ namespace
 	UStaticMesh* Mesh(const TCHAR* Path) { return LoadObject<UStaticMesh>(nullptr, Path); }
 	UStaticMesh* Prop(const TCHAR* Name) { return LoadObject<UStaticMesh>(nullptr, *FString::Printf(TEXT("/Game/Props/Meshes/%s.%s"), Name, Name)); }
 	UMaterialInterface* Mat(const TCHAR* Path) { return LoadObject<UMaterialInterface>(nullptr, Path); }
+
+	// Cake in hand (playtest: "employees should have cake in hands", "stalker should be allowed a slice of cake"):
+	// a small white plate with a slice on it, attached to a character's root (the capsule centre), held in front at
+	// hand height (HandZ cm above the floor) and a little to the right. No collision, no shadow. Same pattern as the
+	// Collector's hat (SpawnCollector's Wear). bBitten = a corner already eaten (the slice is shorter).
+	void GivePlateOfCake(ACharacter* Who, float HandZ, bool bBitten)
+	{
+		if (!Who || !Who->GetRootComponent() || Who->ActorHasTag(TEXT("HasCake"))) { return; }
+		UStaticMesh* PlateCyl = Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+		UStaticMesh* PlateCube = Mesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
+		if (!PlateCyl || !PlateCube) { return; }
+		const float HalfH = Who->GetCapsuleComponent() ? Who->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 90.f;
+		const FVector Hand(32.f, 14.f, HandZ - HalfH);   // relative to the capsule centre: front (+X), right (+Y)
+		auto Hold = [Who](UStaticMesh* M, const FVector& Rel, const FRotator& Rot, const FVector& Scale, UMaterialInterface* Mtl)
+		{
+			UStaticMeshComponent* Piece = NewObject<UStaticMeshComponent>(Who);
+			Piece->SetStaticMesh(M);
+			Piece->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			Piece->SetCastShadow(false);
+			Piece->SetupAttachment(Who->GetRootComponent());
+			Piece->SetRelativeLocationAndRotation(Rel, Rot);
+			Piece->SetRelativeScale3D(Scale);
+			if (Mtl) { Piece->SetMaterial(0, Mtl); }
+			Piece->RegisterComponent();
+		};
+		const float SliceH = bBitten ? 5.f : 7.f;
+		Hold(PlateCyl, Hand, FRotator::ZeroRotator, FVector(0.18f, 0.18f, 0.01f), Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite")));
+		Hold(PlateCube, Hand + FVector(0.f, 0.f, 0.5f + SliceH * 0.5f), FRotator(0.f, 25.f, 0.f), FVector(0.08f, 0.05f, SliceH / 100.f),
+			Mat(TEXT("/Game/Props/Meshes/M_Bread.M_Bread")));   // the slice
+		Hold(PlateCube, Hand + FVector(0.f, 0.f, 0.5f + SliceH + 0.4f), FRotator(0.f, 25.f, 0.f), FVector(0.085f, 0.055f, 0.008f),
+			Mat(TEXT("/Game/Props/Meshes/M_Frosting.M_Frosting")));   // its frosting
+		Who->Tags.AddUnique(TEXT("HasCake"));
+	}
 }
 
 AStaticMeshActor* UTakeGrabComponent::SpawnSetPiece(UStaticMesh* M, const FVector& At, const FRotator& Rot, const FVector& Scale, UMaterialInterface* Material, bool bCollide)
@@ -259,6 +294,16 @@ void UTakeGrabComponent::CutTheCake(AActor* Cake)
 	SpawnSetPiece(Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder")), Plate, FRotator::ZeroRotator, FVector(0.18f, 0.18f, 0.01f), White, false);
 	SpawnSetPiece(Cube, Plate + FVector(0.f, 0.f, 8.f), FRotator(0.f, 25.f, 0.f), FVector(0.12f, 0.06f, 0.16f), Sponge, false);   // the slice
 	SpawnSetPiece(Cube, Plate + FVector(0.f, 0.f, 16.5f), FRotator(0.f, 25.f, 0.f), FVector(0.125f, 0.065f, 0.01f), Frost, false);   // its frosting
+	// Now that it's cut, about half the people mingling are holding a plate (every other one, so it looks the same each take)
+	int32 Plates = 0, Seen = 0;
+	for (TActorIterator<ATakeCoworker> CakeIt(GetWorld()); CakeIt; ++CakeIt)
+	{
+		if (!CakeIt->bAtParty || CakeIt->ActorHasTag(TEXT("Collector")) || CakeIt->IsHidden()) { continue; }
+		if ((Seen++ % 2) != 0) { continue; }
+		GivePlateOfCake(*CakeIt, 102.f, Plates % 3 == 1);   // some have had a bite
+		++Plates;
+	}
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Cake cut: %d coworker(s) holding a plate"), Plates);
 }
 
 void UTakeGrabComponent::ShowScreenPeek(UTexture2D* Tex, const FString& Title, const FString& Caption)
@@ -585,6 +630,7 @@ void UTakeGrabComponent::StartRefusal()
 		It->SetActorRotation(FRotator(0.f, (Me - Lurk).Rotation().Yaw, 0.f));
 		It->SetActorHiddenInGame(false);
 		It->SetActorEnableCollision(false);
+		GivePlateOfCake(*It, 125.f, false);   // it was allowed a slice. It hasn't touched it.
 		break;
 	}
 	QueueSubtitle(TEXT(""), TEXT("(By the reception desk, in the dark: something tall. Watching. It doesn't come closer.)"));
