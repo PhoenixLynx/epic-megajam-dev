@@ -129,9 +129,10 @@ FString UTakeGameInstance::ObjectiveForBeat() const
 	case ETakeBeat::Corridor:     return FString(TEXT("Something is at the end of Corridor B."));
 	case ETakeBeat::ReturnToDesk: return FString(TEXT("Return to your desk."));
 	case ETakeBeat::Lunch:
+		// (playtest: the two calls were back to back; the check-ins now sit between them)
 		if (!bJoinedCall)            { return FString(TEXT("Join the 12:30 call (Conference Room)")); }
-		if (!bAttendedMeeting)       { return FString(TEXT("Attend the 1:00 meeting (Conference Room)")); }
 		if (CoworkersCheckedIn < 3)  { return FString(TEXT("Check in with Reception, Security and the Custodian (look for the !)")); }
+		if (!bAttendedMeeting)       { return FString(TEXT("Attend the 1:00 meeting (Conference Room)")); }
 		if (!bRepliedChairman)       { return FString(TEXT("Reply to the Chairman (your terminal)")); }
 		return FString(TEXT("Wait for further direction."));
 	case ETakeBeat::Overtime:

@@ -453,8 +453,8 @@ FString ATakeCoworker::TaskHint(const UTakeGameInstance* GI) const
 	}
 	if (GI->bClocksFrozen) { return TEXT("Is it just me or has it been 2:14 for a while?"); }
 	if (!GI->bJoinedCall) { return TEXT("Twelve thirty, conference room. The Chairman's calling in. Camera off, as usual."); }
-	if (!GI->bAttendedMeeting) { return TEXT("One o'clock, same room. Same meeting. You'll see."); }
 	if (GI->CoworkersCheckedIn < 3) { return TEXT("Have you said hi to everyone? Say hi to everyone."); }
+	if (!GI->bAttendedMeeting) { return TEXT("One o'clock, same room. Same meeting. You'll see."); }
 	if (!GI->bRepliedChairman) { return TEXT("Did you answer the Chairman's email? He reads every reply. He writes some of them too."); }
 	return FString();
 }

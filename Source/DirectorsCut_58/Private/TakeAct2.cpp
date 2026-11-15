@@ -336,7 +336,8 @@ namespace
 bool UTakeGrabComponent::CanJoinCall() const
 {
 	const UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
-	return GI && GI->CurrentAct() >= 2 && CallLeft < 0.f && !(GI->bJoinedCall && GI->bAttendedMeeting);
+	return GI && GI->CurrentAct() >= 2 && CallLeft < 0.f && !(GI->bJoinedCall && GI->bAttendedMeeting)
+		&& !(GI->bJoinedCall && GI->CoworkersCheckedIn < 3);   // the 1:00 meeting comes after the check-ins
 }
 
 void UTakeGrabComponent::JoinCall()
@@ -421,7 +422,7 @@ bool UTakeGrabComponent::TickReminders()
 	if (NextRingIn > 0.f && bCallBackMine) { return false; }   // a missed reminder waits for its call-back time
 	int32 Which = 0;
 	if (!GI->bJoinedCall && !bCallReminded && GI->WorkdayMinutes >= 12.f * 60.f + 20.f) { Which = 1; }
-	else if (GI->bJoinedCall && !GI->bAttendedMeeting && !bMeetingReminded && GI->WorkdayMinutes >= 12.f * 60.f + 55.f) { Which = 2; }
+	else if (GI->bJoinedCall && GI->CoworkersCheckedIn >= 3 && !GI->bAttendedMeeting && !bMeetingReminded && GI->WorkdayMinutes >= 12.f * 60.f + 55.f) { Which = 2; }
 	if (Which == 0) { return false; }
 	bCallBackMine = false;
 	RingPhone(MyPhone.Get());
