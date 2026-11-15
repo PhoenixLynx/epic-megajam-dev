@@ -5,10 +5,14 @@
 
 ## Required
 
-- [ ] Windows development build packaged (zipped, tested by launching it on a clean run)
+- [x] Windows development build packaged and tested (zip still to make)
   - Fri Nov 13, 21:47: first test package OK (`Builds/FridayNight`, 1.1 GB, Development, exit code 0). Still to do: the final build Sunday, zip it, test on a clean run.
   - Sun 14:45: feature freeze. All critical playtest fixes verified in the editor. Engine debug view-mode keys cleared in `Config/DefaultInput.ini` (F5 was shader complexity). Final package started.
   - Always-cook folders: `/Game/Ending`, `/Game/Memorial` and `/Engine/BasicShapes` were added at 8:45 AM. `/Game/FirstPerson` and `/Game/Input` are optional extras. See [PACKAGING.md](PACKAGING.md) for the steps and the .exe test.
+- [x] Save/Continue checked in the .exe (Sun 15:12): checkpoints at the start of each act, so a save after noon continues at 12:00. Fine for the jam.
+- [ ] **Zip named `TeamName_GameName`** (Epic's final-day email), e.g. `PhoenixLynx_Take4471.zip`, uploaded to my itch account, then submitted to the jam
+- [ ] **Submission form:** team name, each member's name + Epic Games account email (I type this myself, it's not kept in this repo), game name, **30–60 s gameplay video LINK** (e.g. unlisted YouTube)
+- [ ] Optional fields: devlog link (Glass Box), "Tools you used" (Hyper3D pool), NVIDIA questions (RTX award), OpenAI question
 - [ ] **Gameplay video, 30–60 s, 1920×1080 or higher** (rules sections 1 and 7(c)): shot list in [VIDEO_SHOTLIST.md](VIDEO_SHOTLIST.md)
 - [ ] itch.io game page set to **public**
 - [ ] Devlog linked from the itch page (GitHub repo starts **private**: switch it to **public** before linking, or post the devlog on itch instead)
@@ -35,6 +39,7 @@
 |------------|--------|
 | 2026-11-12 19:17 | Checklist created. Nothing ticked yet. |
 | 2026-11-12 19:40 | Added rule items found while checking the asset rules: pre-jam declaration, human submits, rating/IP, Glass Box dev log. |
+| 2026-11-15 15:12 | FinalBuild packaged OK (1.1 GB, exit 0) and tested: both endings, save/continue by act. Epic's final-day email: zip as TeamName_GameName, video as a link, devlog link optional (Glass Box). Itch art made from in-game screenshots (Builds/ItchArt). |
 | 2026-11-15 14:45 | Playtest verification done (critical: NO-ending fall, penthouse edge, YES-ending dialogue, blank inbox rows, F5 shader view): all fixed and checked. Feature freeze. Packaging. Next: .exe test, video, itch page, submit. |
 | 2026-11-15 04:20 | Moved the gameplay video into Required. Packaging review → PACKAGING.md. itch page + video shot list drafted. Plan for today: playtest pass, my title background, feature freeze ~noon, package + .exe test, video, itch page, submit by ~5 PM. |
 
