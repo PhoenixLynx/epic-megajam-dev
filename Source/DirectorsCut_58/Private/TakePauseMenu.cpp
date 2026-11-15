@@ -192,9 +192,9 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 			{
 				List.ParseIntoArrayLines(ChecklistLines, false);
 				UScrollBox* ListScroll = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass());
-				for (int32 L = 0; L < ChecklistLines.Num(); ++L)
+				for (int32 LineIdx = 0; LineIdx < ChecklistLines.Num(); ++LineIdx)
 				{
-					const FString Line = ChecklistLines[L].TrimStartAndEnd();
+					const FString Line = ChecklistLines[LineIdx].TrimStartAndEnd();
 					if (Line.IsEmpty()) { continue; }
 					const bool bItem = Line.StartsWith(TEXT("[ ]")) || Line.StartsWith(TEXT("[x]")) || Line.StartsWith(TEXT("[X]"));
 					if (!bItem)
@@ -202,16 +202,16 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 						ListScroll->AddChild(MakeText(Line, 14, PInk, true));
 						continue;
 					}
-					UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+					UHorizontalBox* CheckRow = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
 					UCheckBox* Box = WidgetTree->ConstructWidget<UCheckBox>(UCheckBox::StaticClass());
 					Box->SetIsChecked(!Line.StartsWith(TEXT("[ ]")));
 					Box->OnCheckStateChanged.AddDynamic(this, &UTakePauseMenu::OnChecklistChanged);
-					Row->AddChildToHorizontalBox(Box)->SetPadding(FMargin(0.f, 0.f, 8.f, 0.f));
-					UHorizontalBoxSlot* TextSlot = Row->AddChildToHorizontalBox(MakeText(Line.RightChop(3).TrimStart(), 14, PInk));
+					CheckRow->AddChildToHorizontalBox(Box)->SetPadding(FMargin(0.f, 0.f, 8.f, 0.f));
+					UHorizontalBoxSlot* TextSlot = CheckRow->AddChildToHorizontalBox(MakeText(Line.RightChop(3).TrimStart(), 14, PInk));
 					TextSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-					ListScroll->AddChild(Row);
+					ListScroll->AddChild(CheckRow);
 					CheckBoxes.Add(Box);
-					CheckLineIndex.Add(L);
+					CheckLineIndex.Add(LineIdx);
 				}
 				UVerticalBoxSlot* ListSlot = NotesPage->AddChildToVerticalBox(ListScroll);
 				ListSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
