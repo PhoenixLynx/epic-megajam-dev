@@ -3,6 +3,7 @@
 A starting folder for the next game: Blender (and DAZ) for the art, Unreal for the game, scripts in between.
 
 - **How it works, and where you drop in:** [docs/PIPELINE.md](docs/PIPELINE.md)
+- **What to save in each folder (and how the export finds your assets):** [docs/FOLDER_GUIDE.md](docs/FOLDER_GUIDE.md)
 - **Blender → FBX:** `Scripts/blender/export_all.py` (run in Blender)
 - **The one button in Unreal:** `Scripts/unreal/update_level.py`
 - **Quick check:** `python Scripts/validate/check_art.py`
