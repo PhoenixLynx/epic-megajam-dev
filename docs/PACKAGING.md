@@ -44,3 +44,15 @@ The game loads a lot of assets by name from C++ (`LoadObject`). The cooker can't
 5. Zip the `Windows` folder (right-click > Compress), named for example `TAKE4471_Windows.zip`, for itch.io.
 
 The playtest keys (F5–F8, Ctrl+number Fear, N notes) are still in the Development build. That's fine for the jam: they're not mentioned on the page, and F8 doubles as a skip for anyone stuck.
+
+## Config change on the PC (14:40, Sun): engine debug view-mode keys off
+`Config/DefaultInput.ini` (not in git) now ends with:
+```
+[/Script/Engine.PlayerInput]
+!DebugExecBindings=ClearArray
+
+[/Script/EnhancedInput.EnhancedPlayerInput]
+!DebugExecBindings=ClearArray
+```
+The engine binds F1–F5 to view modes in Development builds (F5 = shader complexity, the "green screen"), which clashed with
+the game's F5/F6 ending shortcuts. Backup: `Config/DefaultInput.ini.bak-2026-11-15`. Needs an editor restart to take effect.
