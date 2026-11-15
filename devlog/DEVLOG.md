@@ -1085,3 +1085,17 @@ A running record of every AI tool used and what it did.
 - **Left for after the jam:** party hats and favors, cups on the party table, something to do during the call.
 - **AI tools used:** Claude (reading notes, logs and screenshots on my PC; C++; Unreal Python; text tables; config review; the in-game checklist).
 - 📸 **Screenshot reminder:** grab the party cake, the director's chair and the NO ending from the packaged .exe for the itch page.
+
+### Session 67: Sun Nov 15, 2026, 14:45–16:48 MST: Packaged, shipped, submitted 🎬
+
+- **Packaged:** `FinalBuild` (Windows, Development), BUILD SUCCESSFUL, 1.1 GB. I tested the .exe: both endings work, and Continue picks up from the start of the act you saved in.
+- **A PC crash at 15:28.** Nothing was lost. The build, the art and the itch draft were all on disk, and the code was on GitHub.
+- **Art from the game itself:** the itch cover and the YouTube thumbnail use the reception-desk shot ("TAKE 4471 / EVERY TAKE. AGAIN."), plus a 10-shot gallery. Claude composed them from my in-game screenshots with Python (PIL).
+- **Gameplay video:** 57 s at 1080p, cut by Claude with ffmpeg from my two Game Bar recordings. The first cut was off because the game only filled the top-left two-thirds of the capture (a Windows scaling quirk). The re-cut uses exactly the game's frame.
+- **Shipped:**
+  - itch page: https://phoenixlynx999.itch.io/take-4471
+  - jam entry: https://itch.io/jam/2026-epic-ai-megajam/rate/5375494
+  - video on my new channel: https://www.youtube.com/@PhoenixLynxDev
+  - entered in Solo Driver and Glass Box (this devlog)
+- **AI tools used:** Claude (packaging-log review, art compositing, video editing with ffmpeg on my PC, itch and submission copy, a privacy check of the repo before making it public). This session's disclosure on itch: Graphics, Sounds, Text & Dialog and Code are all AI-assisted. The music is mine.
+- **That's a wrap.** 72 hours, solo, from an empty folder to a submitted game.
