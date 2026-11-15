@@ -16,6 +16,7 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
 #include "Materials/MaterialInterface.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Animation/AnimSequence.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/TargetPoint.h"
@@ -128,6 +129,22 @@ void ATakeCoworker::SetupSkeletal()
 		if (UMaterialInterface* Neutral = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Neutral.MI_Face_Neutral"))) { FaceCalm = Neutral; }
 	}
 	FaceFrown = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Frown.MI_Face_Frown"));
+	// Some of the office wear charcoal suits (so the Collector's black isn't the only dark suit in the building)
+	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && GetTypeHash(GetName()) % 4 == 1)
+	{
+		if (UMaterialInterface* Shape = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial")))
+		{
+			UMaterialInstanceDynamic* Suit = UMaterialInstanceDynamic::Create(Shape, this);
+			Suit->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.035f, 0.037f, 0.042f));
+			const TArray<FName> Slots = M->GetMaterialSlotNames();
+			for (int32 S = 0; S < M->GetNumMaterials(); ++S)
+			{
+				const FString SlotName = Slots.IsValidIndex(S) ? Slots[S].ToString() : FString();
+				if (SlotName.Contains(TEXT("Face")) || SlotName.Contains(TEXT("Skin")) || SlotName.Contains(TEXT("Head")) || SlotName.Contains(TEXT("Hand"))) { continue; }
+				M->SetMaterial(S, Suit);
+			}
+		}
+	}
 	FaceMode = -1;
 	SetFace(false);
 	PlayAnim(bSitsAtDesk && AnimSit ? AnimSit.Get() : AnimIdle.Get());
@@ -271,6 +288,16 @@ void ATakeCoworker::HitByProp(float Speed)
 	}
 	CooldownLeft = 0.f;   // they always answer this
 	FrownHold = 4.f;      // a frown, for a moment
+	if (ActorHasTag(TEXT("Collector")))
+	{
+		static const TCHAR* Unruffled[] = {
+			TEXT("Careful. The hat is a rental."), TEXT("I've been hit by better. By you, actually. Take 4470."),
+			TEXT("Noted. Everything is noted."), TEXT("Violence is a choice. So is the hat. I chose the hat."),
+			TEXT("You can throw things at me all night, {EMP}. I'll still need your keys."),
+		};
+		SayLine(Unruffled[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Unruffled)) - 1)]);
+		return;
+	}
 	if (GetFear() >= 0.4f) { FaceFearHold = 2.5f; }   // uneasy already: for a moment, the other face
 	if (HitLines.Num() > 0) { SayLine(HitLines[FMath::RandRange(0, HitLines.Num() - 1)]); return; }
 	if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { SayLine(TEXT("That's going in my report.")); }
@@ -298,6 +325,14 @@ void ATakeCoworker::SplashedByCoffee()
 
 FString ATakeCoworker::NextLine()
 {
+	if (bAtParty && State == ETakeCoworkerState::Watching)   // Fear at the party: the smiles stay, the words don't
+	{
+		static const TCHAR* Wrong[] = {
+			TEXT("Great wor- ..."), TEXT("..."), TEXT("{EMP}. {EMP}. {EMP}."), TEXT("(They just look at you. The smile stays exactly where it was.)"),
+			TEXT("Places."), TEXT("Again."), TEXT("We were so proud of 4470 too."),
+		};
+		return Wrong[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Wrong)) - 1)];
+	}
 	if (bAtParty)   // the wrap party: nobody talks shop (no supply closets, no passes)
 	{
 		static const TCHAR* Party[] = {
@@ -693,6 +728,11 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 		if (TheftHold <= 0.f && State == ETakeCoworkerState::Working) { SetActorRotation(HomeRot); }   // fine. back to work.
 	}
 	if (bSkeletal) { GetMesh()->bPauseAnims = TheftHold > 0.f && State != ETakeCoworkerState::Watching; }   // hands off the keyboard
+	if (State == ETakeCoworkerState::Working && !bWanders && !bAtParty && TheftHold <= 0.f && FrownHold <= 0.f && SpeechLeft <= 0.f
+	    && !GetActorRotation().Equals(HomeRot, 1.f))
+	{
+		SetActorRotation(FMath::RInterpTo(GetActorRotation(), HomeRot, DeltaSeconds, 2.f));   // back to the desk, back to work
+	}
 	SetFace(State == ETakeCoworkerState::Watching || FaceFearHold > 0.f);
 
 	AAIController* AI = Cast<AAIController>(GetController());
@@ -838,6 +878,8 @@ void ATakeCoworker::StartMingling()
 	Move->SetMovementMode(MOVE_Walking);
 	Move->GravityScale = 1.f;
 	Move->MaxWalkSpeed = WalkSpeed * 0.8f;
+	Move->bUseRVOAvoidance = true;   // they bumped into each other a lot
+	Move->AvoidanceConsiderationRadius = 160.f;
 	Spots.Reset();
 	bWanders = true;
 	State = ETakeCoworkerState::Working;

@@ -13,6 +13,8 @@
 //   check in (2.2)        : finishing a story NPC's "Lunch" conversation = one coworker checked in (3 needed)
 //   frozen clocks (2.6)   : the clock reaches 2:14 and stops; PA, a shiver of Fear that never quite leaves
 #include "TakeGrabComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInterface.h"
 #include "Components/AudioComponent.h"
 #include "Sound/SoundBase.h"
 #include "DirectorsCut_58.h"
@@ -348,6 +350,7 @@ void UTakeGrabComponent::PlayMusicCue(const TCHAR* Why, const TCHAR* Track, bool
 	if (!MusicAudio) { return; }
 	MusicAudio->FadeIn(4.f, 0.55f);   // slow swell under the ambience
 	MusicLeft = Music->Duration > 0.f ? Music->Duration : 90.f;
+	MusicTrack = Track;
 	MusicAge = 0.f;
 	bMusicFading = false;
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Music: %s (%s)"), Track, Why);
@@ -368,11 +371,14 @@ void UTakeGrabComponent::TickMusic(float DeltaTime)
 	MusicLeft -= DeltaTime;
 	MusicAge += DeltaTime;
 	const ATakeFearDirector* FearDir = FindFearDirector();
-	const bool bFearBack = EndT < 0.f && MusicAge > 5.f && FearDir && FearDir->TargetFear > 0.4f;   // (the sphere's own calm-down takes a few seconds)
-	if (MusicLeft <= 7.f || bFearBack)
+	const bool bTension = MusicTrack.Contains(TEXT("tension"));
+	// The happy cue steps aside when Fear comes back; the tension cue steps aside when Fear is gone
+	const bool bFearBack = !bTension && EndT < 0.f && MusicAge > 5.f && FearDir && FearDir->TargetFear > 0.4f;   // (the sphere's own calm-down takes a few seconds)
+	const bool bCalmAgain = bTension && EndT < 0.f && MusicAge > 20.f && FearDir && FearDir->Fear < 0.1f && FearDir->TargetFear < 0.1f;
+	if (MusicLeft <= 7.f || bFearBack || bCalmAgain)
 	{
 		bMusicFading = true;
-		MusicAudio->FadeOut(bFearBack ? 2.5f : 7.f, 0.f);   // a scare cuts it short; otherwise it ends on its own, gently
+		MusicAudio->FadeOut(bFearBack ? 2.5f : (bCalmAgain ? 6.f : 7.f), 0.f);   // a scare cuts it short; otherwise it ends on its own, gently
 	}
 }
 
@@ -466,7 +472,19 @@ void UTakeGrabComponent::TickAct2(float DeltaTime)
 			A->SetActorEnableCollision(false);
 			++Gone;
 		};
-		for (const FReveal& R : Act2Things) { if (R.bPhysics) { PutAway(R.Actor.Get()); } }
+		if (ATakeFearDirector* NightFear = FindFearDirector())   // overtime: the open office is after hours
+		{
+			NightFear->DimBox = FBox(FVector(1600.f, 1850.f, -100.f), FVector(3200.f, 3600.f, 600.f));
+			NightFear->DimScale = 0.3f;
+		}
+		for (const FReveal& R : Act2Things)
+		{
+			AActor* A = R.Actor.Get();
+			const UStaticMeshComponent* RSM = A ? Cast<UStaticMeshComponent>(A->GetRootComponent()) : nullptr;
+			const UMaterialInterface* RM = RSM ? RSM->GetMaterial(0) : nullptr;
+			const bool bMenu = RM && RM->GetName().Contains(TEXT("LunchSpecials"));   // the lunch board goes too
+			if (R.bPhysics || bMenu) { PutAway(A); }
+		}
 		for (FFood& F : Foods) { PutAway(F.Actor.Get()); F.Back = -1.f; }
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Act 3: lunch put away (%d item(s))"), Gone);
 	}

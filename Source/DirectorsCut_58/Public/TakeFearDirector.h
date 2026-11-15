@@ -101,6 +101,8 @@ private:
 public:
 	bool bForceRed = false;   // the refusal ending: red without a stalker
 	float LightScale = 1.f;   // house lights (the wrap party dims them)
+	FBox DimBox = FBox(ForceInit);   // lights inside this box get DimScale on top (the open office after hours)
+	float DimScale = 1.f;
 private:
 	float FlickerClock = 0.f;
 	float BurstLeft = 0.f;

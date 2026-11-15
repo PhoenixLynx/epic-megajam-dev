@@ -1,5 +1,6 @@
 // TAKE 4471 - interact / grab / throw / telekinesis / desk login / doors
 #include "TakeGrabComponent.h"
+#include "Framework/Application/SlateApplication.h"
 #include "DirectorsCut_58.h"
 #include "TakeGameInstance.h"
 #include "TakeCoworker.h"
@@ -115,6 +116,17 @@ void UTakeGrabComponent::BindKeys()
 {
 	APawn* Pawn = Cast<APawn>(GetOwner());
 	if (!Pawn || !Pawn->InputComponent) { return; }
+	{
+		const UTakeGameInstance* KeysGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		APlayerController* KeysPC = Cast<APlayerController>(Pawn->GetController());
+		if (KeysGI && KeysGI->bTitleDone && KeysPC && !TitleW && !PauseMenu && !Terminal && !LockPanel && !Inspecting)
+		{
+			// (after PLAY AGAIN the click on the button left keyboard focus nowhere: no Esc, no console)
+			KeysPC->SetInputMode(FInputModeGameOnly());
+			KeysPC->SetShowMouseCursor(false);
+			if (FSlateApplication::IsInitialized()) { FSlateApplication::Get().SetAllUserFocusToGameViewport(); }
+		}
+	}
 	static const FName Bound(TEXT("TakeGrabBound"));
 	if (Pawn->Tags.Contains(Bound)) { return; }
 	Pawn->Tags.Add(Bound);
@@ -768,6 +780,7 @@ void UTakeGrabComponent::BindPropImpacts()
 				Scr.Next = FMath::FRandRange(0.f, 2.f);
 				Scr.bMine = It->ActorHasTag(TEXT("Monitor4471"));
 				Screens.Add(Scr);
+				if (!Scr.bMine && !It->ActorHasTag(TEXT("Terminal"))) { It->Tags.AddUnique(TEXT("Use=Screen")); }   // E: a look at someone else's screen
 			}
 		}
 		if (It->ActorHasTag(TEXT("DeskItem")))
@@ -1343,7 +1356,8 @@ void UTakeGrabComponent::UpdatePrompt()
 			: K == TEXT("Toilet") ? TEXT("E  Flush") : K == TEXT("Printer") ? TEXT("E  Print") : K == TEXT("Cooler") ? TEXT("E  Get some water")
 			: K == TEXT("Elevator") ? TEXT("E  Press a button") : K == TEXT("TrustFall") ? TEXT("E  Fall backward")
 			: K == TEXT("ServiceElevator") ? TEXT("E  Call the service elevator")
-			: K == TEXT("DirectorsChair") ? TEXT("E  Sit in the director's chair") : K == TEXT("Cake") ? TEXT("E  Have a slice") : TEXT("E  Use"));
+			: K == TEXT("DirectorsChair") ? TEXT("E  Sit in the director's chair") : K == TEXT("Cake") ? TEXT("E  Have a slice")
+			: K == TEXT("Screen") ? TEXT("E  Look at their screen") : TEXT("E  Use"));
 		break;
 	}
 	case ETakeLookKind::Wisp:     Prompt->SetPrompt(TEXT("E  Reach for the light")); break;

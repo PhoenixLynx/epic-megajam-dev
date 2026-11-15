@@ -11,6 +11,7 @@
 #include "TakeGameInstance.h"
 #include "TakeFearDirector.h"
 #include "TakeStalker.h"
+#include "TakeTypes.h"
 #include "TakeCoworker.h"
 #include "TakeWidgets.h"
 #include "TakeAct3Widgets.h"
@@ -103,6 +104,8 @@ void UTakeGrabComponent::TickForeshadow(float DeltaTime)
 		ForeshadowT = 0.f;
 		if (ATakeFearDirector* FearDir = FindFearDirector()) { FearDir->FlickerBurst(2.5f); FearDir->StartCreep(FMath::Max(FearDir->Fear, 0.8f), 3.f); }
 		PlaySfx2D(TEXT("sfx_fear_hit"), 0.9f);
+		bTensionFirstDone = true;
+		PlayMusicCue(TEXT("the first footsteps"), TEXT("mus_halcyon_tension"), true);
 		ShowSubtitle(TEXT(""), TEXT("(Footsteps. Heavy. Not yours. Coming this way.)"), 3.5f);
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Foreshadow: the stalker walks the office (from %s)"), *Start.ToCompactString());
 		return;
@@ -370,6 +373,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 				FearDir->StartCreep(FMath::Max(FearDir->Fear, 0.82f), 3.5f);
 			}
 			PlaySfx2D(TEXT("sfx_fear_hit"), 0.9f);
+			if (!bTensionWardDone) { bTensionWardDone = true; PlayMusicCue(TEXT("the ward: it's coming"), TEXT("mus_halcyon_tension"), true); }
 			ShowSubtitle(TEXT(""), TEXT("(The lights stutter. Somewhere past the last bed, something heavy starts walking.)"), 3.5f);
 		}
 		if (StalkerIn > 0.f && (StalkerIn -= DeltaTime) <= 0.f)
@@ -590,7 +594,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		if (Prompt)
 		{
 			const FString Card = EndCardT < 4.f ? (bEndingYes ? FString(TEXT("THE THEATRICAL CUT")) : FString(TEXT("THE DIRECTOR'S CUT")))
-				: (bEndingYes ? FString(TEXT("DIRECTED BY\nEMPLOYEE 4471")) : FString(TEXT("RESET.\nFROM THE TOP.")));
+				: (bEndingYes ? TakeText::Fill(this, TEXT("DIRECTED BY\nEMPLOYEE {EMP}")) : FString(TEXT("RESET.\nFROM THE TOP.")));
 			Prompt->SetSlate(FMath::Clamp(EndCardT / 0.4f, 0.f, 1.f), Card, EndCardT < 4.f ? FMath::Clamp(EndCardT / 0.6f, 0.f, 1.f)
 				: FMath::Clamp(1.f - (EndCardT - 7.f) / 0.3f, 0.f, 1.f));
 		}
@@ -604,7 +608,7 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			if (CreditsW)
 			{
 				if (const UTakeGameInstance* NextGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { CreditsW->NextTake = NextGI->TakeNumber + 1; }
-				CreditsW->DirectedBy = bEndingYes ? TEXT("Employee 4471") : TEXT("________________");
+				CreditsW->DirectedBy = bEndingYes ? TakeText::Fill(this, TEXT("Employee {EMP}")) : FString(TEXT("________________"));
 				CreditsW->SetIsFocusable(true);
 				CreditsW->OnChoice.AddDynamic(this, &UTakeGrabComponent::OnCreditsDone);
 				CreditsW->AddToViewport(60);
@@ -661,7 +665,7 @@ void UTakeGrabComponent::OnCreditsDone(int32 Choice)
 	// 0 = PLAY AGAIN: a new take from the morning, straight into the slate. 1 = back to the title (Continue still loads your save).
 	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
 	{
-		if (Choice == 0) { GI->ResetRun(); GI->bTitleDone = true; }
+		if (Choice == 0) { GI->ResetRun(); GI->bTitleDone = true; GI->EmployeeNumber += 1; }   // you're the next one now
 		else { GI->bTitleDone = false; }
 	}
 	if (APawn* Pawn = Cast<APawn>(GetOwner()))

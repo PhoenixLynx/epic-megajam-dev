@@ -153,6 +153,9 @@ private:
 	float MusicLeft = 0.f;
 	float MusicAge = 0.f;
 	bool bMusicFading = false;
+	FString MusicTrack;              // which cue is playing (positive fades when Fear returns; tension fades when it's gone)
+	bool bTensionFirstDone = false;  // the first time Fear rises: the tension cue
+	bool bTensionWardDone = false;
 	bool bMusicCoffeeDone = false;
 	bool bMusicWispDone = false;
 	void PlayMusicCue(const TCHAR* Why, const TCHAR* Track = TEXT("mus_halcyon_positive"), bool bForce = false);
@@ -379,6 +382,8 @@ private:
 	bool bAteCake = false;
 	bool bCollectorReady = false;
 	void SpawnCollector();
+	void CutTheCake(AActor* Cake);
+	void ShowScreenPeek(class UTexture2D* Tex, const FString& Title, const FString& Caption);
 	void StartMingle();
 public:
 	void OnPartyChat();                       // a coworker you hadn't talked to yet at the party

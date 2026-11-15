@@ -15,6 +15,8 @@
 #include "TakeCoworker.h"
 #include "TakeFearDirector.h"
 #include "TakeStalker.h"
+#include "TakeTypes.h"
+#include "TakeWidgets.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Engine/StaticMesh.h"
@@ -114,8 +116,8 @@ void UTakeGrabComponent::BuildLobbyParty()
 	}
 	SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 28.f), FRotator::ZeroRotator, FVector(0.36f, 0.36f, 0.16f), FabricMint, false);
 	SpawnSetPiece(Cyl, Table + FVector(0.f, 0.f, 76.f + 41.f), FRotator::ZeroRotator, FVector(0.02f, 0.02f, 0.1f), White, false);       // one candle
-	SpawnLabel(World, TEXT("THAT'S A WRAP, 4471"), Table + FVector(0.f, -29.f, 76.f + 12.f), FRotator(0.f, -90.f, 0.f), 4.5f, FColor(40, 140, 115));
-	SpawnLabel(World, TEXT("THAT'S A WRAP, 4471"), Table + FVector(0.f, 29.f, 76.f + 12.f), FRotator(0.f, 90.f, 0.f), 4.5f, FColor(40, 140, 115));
+	SpawnLabel(World, TakeText::Fill(this, TEXT("THAT'S A WRAP, {EMP}")), Table + FVector(0.f, -29.f, 76.f + 12.f), FRotator(0.f, -90.f, 0.f), 4.5f, FColor(40, 140, 115));
+	SpawnLabel(World, TakeText::Fill(this, TEXT("THAT'S A WRAP, {EMP}")), Table + FVector(0.f, 29.f, 76.f + 12.f), FRotator(0.f, 90.f, 0.f), 4.5f, FColor(40, 140, 115));
 	for (int32 I = 0; I < 6; ++I)   // cups and cans, a little everywhere
 	{
 		const FVector At = Table + FVector(-70.f + I * 28.f, (I % 2 == 0) ? -28.f : 30.f, 76.f);
@@ -124,7 +126,7 @@ void UTakeGrabComponent::BuildLobbyParty()
 	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(75.f, 0.f, 76.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 
 	// The banner: over the elevator doors, on the lobby side
-	SpawnLabel(World, TEXT("THAT'S A WRAP, 4471!"), FVector(2000.f, 518.f, 272.f), FRotator(0.f, 90.f, 0.f), 34.f, FColor(70, 190, 160));
+	SpawnLabel(World, TakeText::Fill(this, TEXT("THAT'S A WRAP, {EMP}!")), FVector(2000.f, 518.f, 272.f), FRotator(0.f, 90.f, 0.f), 34.f, FColor(70, 190, 160));
 	SpawnSetPiece(Cube, FVector(2000.f, 512.f, 272.f), FRotator::ZeroRotator, FVector(4.2f, 0.02f, 0.5f), White, false);
 
 	// Bunting: two strings of little flags across the lobby, mint / white / gold
@@ -231,6 +233,43 @@ void UTakeGrabComponent::SpawnCollector()
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] The Collector is at the party (top hat, red tie)"));
 }
 
+void UTakeGrabComponent::CutTheCake(AActor* Cake)
+{
+	// A wedge out of the bottom tier: the sponge shows, and the slice sits on a plate beside it
+	if (!Cake) { return; }
+	UStaticMesh* Cube = Mesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
+	UMaterialInterface* Sponge = Mat(TEXT("/Game/Props/Meshes/M_Bread.M_Bread"));
+	UMaterialInterface* White = Mat(TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite"));
+	UMaterialInterface* Frost = Mat(TEXT("/Game/Props/Meshes/M_Frosting.M_Frosting"));
+	const FVector C = Cake->GetActorLocation();
+	SpawnSetPiece(Cube, C + FVector(-22.f, -10.f, 0.f), FRotator(0.f, 30.f, 0.f), FVector(0.14f, 0.005f, 0.2f), Sponge, false);   // the cut faces
+	SpawnSetPiece(Cube, C + FVector(-22.f, 6.f, 0.f), FRotator(0.f, -30.f, 0.f), FVector(0.14f, 0.005f, 0.2f), Sponge, false);
+	const FVector Plate = C + FVector(-50.f, -38.f, -9.f);
+	SpawnSetPiece(Mesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder")), Plate, FRotator::ZeroRotator, FVector(0.18f, 0.18f, 0.01f), White, false);
+	SpawnSetPiece(Cube, Plate + FVector(0.f, 0.f, 8.f), FRotator(0.f, 25.f, 0.f), FVector(0.12f, 0.06f, 0.16f), Sponge, false);   // the slice
+	SpawnSetPiece(Cube, Plate + FVector(0.f, 0.f, 16.5f), FRotator(0.f, 25.f, 0.f), FVector(0.125f, 0.065f, 0.01f), Frost, false);   // its frosting
+}
+
+void UTakeGrabComponent::ShowScreenPeek(UTexture2D* Tex, const FString& Title, const FString& Caption)
+{
+	APawn* Pawn = Cast<APawn>(GetOwner());
+	APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+	if (!PC || Inspecting) { return; }
+	Inspecting = CreateWidget<UTakeInspectWidget>(PC, UTakeInspectWidget::StaticClass());
+	if (!Inspecting) { return; }
+	Drop();
+	Inspecting->Setup(Tex, Title, Caption);
+	Inspecting->SetIsFocusable(true);
+	Inspecting->OnCloseRequested.AddDynamic(this, &UTakeGrabComponent::CloseInspect);
+	Inspecting->AddToViewport(30);
+	if (Prompt) { Prompt->SetVisibility(ESlateVisibility::Collapsed); }
+	FInputModeUIOnly Mode;
+	Mode.SetWidgetToFocus(Inspecting->TakeWidget());
+	PC->SetInputMode(Mode);
+	PC->SetIgnoreLookInput(true);
+	PC->SetIgnoreMoveInput(true);
+}
+
 void UTakeGrabComponent::StartMingle()
 {
 	EndStep = 30;
@@ -320,7 +359,7 @@ void UTakeGrabComponent::BuildPenthouse()
 		Daily.Next = FMath::FRandRange(1.f, 3.f);
 		Dailies.Add(Daily);
 	}
-	SpawnLabel(World, TEXT("DAILIES  ·  TAKES 1 - 4471"), P + FVector(0.f, -PD * 0.5f + 14.f, PH - 40.f), FRotator(0.f, 90.f, 0.f), 22.f, FColor(150, 225, 205));
+	SpawnLabel(World, TakeText::Fill(this, TEXT("DAILIES  \u00B7  TAKES 1 - {EMP}")), P + FVector(0.f, -PD * 0.5f + 14.f, PH - 40.f), FRotator(0.f, 90.f, 0.f), 22.f, FColor(150, 225, 205));
 
 	// The chair: empty, facing the monitors. Its name card is blank until you sit.
 	if (AStaticMeshActor* Chair = SpawnSetPiece(Prop(TEXT("SM_DirectorsChair")), P + FVector(0.f, 60.f, 0.f), FRotator(0.f, 180.f, 0.f), FVector(1.f), nullptr, true))
@@ -339,7 +378,7 @@ void UTakeGrabComponent::BuildPenthouse()
 	SpawnSetPiece(Cyl, Table + FVector(-20.f, 0.f, 74.f + 9.f), FRotator::ZeroRotator, FVector(0.5f, 0.5f, 0.18f), Frosting, false);    // bottom tier
 	SpawnSetPiece(Cyl, Table + FVector(-20.f, 0.f, 74.f + 25.f), FRotator::ZeroRotator, FVector(0.32f, 0.32f, 0.14f), Fabric, false);  // top tier (mint)
 	Box(Table + FVector(26.f, 0.f, 74.f + 9.f), FVector(10.f, 30.f, 16.f), Mat(TEXT("/Game/Props/Meshes/M_Bread.M_Bread")), false);  // the cut: you can see the sponge
-	SpawnLabel(World, TEXT("THAT'S A WRAP, 4471"), Table + FVector(-20.f, -27.f, 74.f + 12.f), FRotator(0.f, -90.f, 0.f), 4.f, FColor(40, 140, 115));
+	SpawnLabel(World, TakeText::Fill(this, TEXT("THAT'S A WRAP, {EMP}")), Table + FVector(-20.f, -27.f, 74.f + 12.f), FRotator(0.f, -90.f, 0.f), 4.f, FColor(40, 140, 115));
 	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(55.f, -25.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 	SpawnSetPiece(Prop(TEXT("SM_SodaCan")), Table + FVector(60.f, 25.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 	SpawnSetPiece(Prop(TEXT("SM_LobbySofa")), P + FVector(430.f, -250.f, 0.f), FRotator(0.f, -90.f, 0.f), FVector(1.f), nullptr, true);
@@ -386,7 +425,7 @@ void UTakeGrabComponent::BuildPenthouse()
 		{
 			New->SetActorHiddenInGame(true);   // they arrive when you sit down
 			Employee4472 = New;
-			if (ATextRenderActor* Badge = SpawnLabel(World, TEXT("4472"), Stand + FVector(0.f, 0.f, 210.f), FRotator(0.f, Face.Rotation().Yaw + 180.f, 0.f), 26.f, FColor(110, 215, 185)))
+			if (ATextRenderActor* Badge = SpawnLabel(World, TakeText::Fill(this, TEXT("{NEXT}")), Stand + FVector(0.f, 0.f, 210.f), FRotator(0.f, Face.Rotation().Yaw + 180.f, 0.f), 26.f, FColor(110, 215, 185)))
 			{
 				Badge->SetActorHiddenInGame(true);
 				Badge4472 = Badge;
@@ -437,8 +476,11 @@ void UTakeGrabComponent::GoToPenthouse()
 			if (PC->PlayerCameraManager) { PC->PlayerCameraManager->StartCameraFade(1.f, 0.f, 2.f, FLinearColor::Black, false, false); }
 		}
 	}
+	SubQueue.Reset();   // whatever was still being said downstairs stays downstairs
+	SubQueueWho.Reset();
+	SubtitleLeft = 0.f;
 	TeleportPlayer(PenthouseArrival, -160.f);
-	ShowTimeCard(TEXT("??:??"), TEXT("SCENE 7  ·  C"));
+	ShowTimeCard(TEXT("??:??"), TEXT("SCENE 7  \u00B7  C"));
 	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { GI->SetObjective(TEXT("The director's chair.")); }
 	QueueSubtitle(TEXT(""), TEXT("(The doors open on the top floor. The party happened up here too. Everyone's gone.)"));
 	QueueSubtitle(TEXT(""), TEXT("(A wall of screens. All of them are you.)"));
@@ -457,7 +499,7 @@ void UTakeGrabComponent::SitDirector()
 	{
 		if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController())) { PC->SetIgnoreMoveInput(true); }
 	}
-	if (UTextRenderComponent* Name = ChairName.Get()) { Name->SetText(FText::FromString(TEXT("DIRECTOR: 4471"))); }
+	if (UTextRenderComponent* Name = ChairName.Get()) { Name->SetText(FText::FromString(TakeText::Fill(this, TEXT("DIRECTOR: {EMP}")))); }
 	// The live monitor: your desk, now
 	if (AActor* New = Employee4472.Get()) { New->SetActorHiddenInGame(false); }
 	if (AActor* Badge = Badge4472.Get()) { Badge->SetActorHiddenInGame(false); }
@@ -473,8 +515,8 @@ void UTakeGrabComponent::SitDirector()
 		}
 	}
 	PlaySfx2D(TEXT("sfx_pickup"), 0.5f);
-	ShowSubtitle(TEXT(""), TEXT("(You sit. The name card says DIRECTOR: 4471. It always did.)"), 4.f);
-	QueueSubtitle(TEXT(""), TEXT("(The centre screen: your desk, downstairs. Someone new walks up to it. Their badge says 4472.)"));
+	ShowSubtitle(TEXT(""), TakeText::Fill(this, TEXT("(You sit. The name card says DIRECTOR: {EMP}. It always did.)")), 4.f);
+	QueueSubtitle(TEXT(""), TakeText::Fill(this, TEXT("(The centre screen: your desk, downstairs. Someone new walks up to it. Their badge says {NEXT}.)")));
 	QueueSubtitle(TEXT("PA"), TEXT("Ready when you are, Director."));
 	QueueSubtitle(TEXT(""), TEXT("(E: call it.)"));
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Ending: in the director's chair"));
@@ -485,7 +527,7 @@ void UTakeGrabComponent::CallAction()
 	if (EndStep != 13) { return; }
 	PlaySfx2D(TEXT("sfx_clapper_snap"), 1.f);
 	ShowSubtitle(TEXT("You"), TEXT("ACTION."), 2.5f);
-	QueueSubtitle(TEXT(""), TEXT("(Downstairs, 4472 sits down at your desk. The coffee is exactly the right temperature.)"));
+	QueueSubtitle(TEXT(""), TakeText::Fill(this, TEXT("(Downstairs, {NEXT} sits down at your desk, reaches for the mug, and smiles at nobody.)")));
 	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { GI->LastEnding = 1; }
 	bEndingYes = true;
 	EndStep = 4;   // the end card when the lines are done, then the credits
@@ -504,6 +546,7 @@ void UTakeGrabComponent::StartRefusal()
 		FearDir->bForceRed = true;
 	}
 	PlaySfx2D(TEXT("sfx_fear_hit"), 1.f);
+	PlayMusicCue(TEXT("refusal"), TEXT("mus_halcyon_tension"), true);
 	ShowSubtitle(TEXT(""), TEXT("(The applause stops. Mid-clap. Every face turns to you.)"), 4.f);
 	// And in the corner by the reception desk, where the light doesn't reach: it's back. It doesn't come closer. It doesn't have to.
 	for (TActorIterator<ATakeStalker> It(GetWorld()); It; ++It)

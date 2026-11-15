@@ -31,6 +31,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "CollisionQueryParams.h"
 #include "Materials/MaterialInterface.h"
+#include "Engine/Texture2D.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "TakeStalker.h"
 #include "TakeTypes.h"
@@ -812,6 +813,31 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 	auto Pick = [N](std::initializer_list<const TCHAR*> L) { return FString(*(L.begin() + FMath::Min<int32>(N, int32(L.size()) - 1))); };
 	if (Key == TEXT("Elevator") && EndStep == 11) { GoToPenthouse(); return; }   // YES: up to C
 	if (Key == TEXT("DirectorsChair")) { if (EndStep == 12) { SitDirector(); } return; }
+	if (Key == TEXT("Screen"))   // someone else's monitor: never what you'd expect
+	{
+		struct FPeek { const TCHAR* Mi; const TCHAR* Title; const TCHAR* Caption; };
+		static const FPeek Peeks[] = {
+			{ TEXT("MI_Screen_CCTV"), TEXT("SECURITY FEED 07"), TEXT("A camera in the ceiling. It's pointed at this desk. At you, looking at this screen.") },
+			{ TEXT("MI_Screen_Saver"), TEXT("404"), TEXT("EMPLOYEE NOT FOUND.
+The request for this person could not be completed. Please try again tomorrow.") },
+			{ TEXT("MI_Screen_Fear"), TEXT(":("), TEXT("Your workday ran into a problem and needs to restart.
+We're just collecting some error info, and then we'll restart for you. (0% complete)") },
+			{ TEXT("MI_Screen_Glyphs"), TEXT("UNTITLED.DOC"), TEXT("Rows of little squares. Some filled, some empty. The cursor is still blinking at the end.") },
+			{ TEXT("MI_Screen_Code"), TEXT("SCENE_REPLAY.LOG"), TEXT("take 4469 ... ok
+take 4470 ... ok
+take 4471 ... RUNNING") },
+			{ TEXT("MI_Screen_Promo"), TEXT("WE'RE HIRING"), TEXT("Join the HALCYON family. Same desk. Same mug. Starting tomorrow.") },
+		};
+		const FPeek& Pk = Peeks[N % int32(UE_ARRAY_COUNT(Peeks))];
+		UTexture2D* PeekTex = nullptr;
+		if (UMaterialInterface* M = LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("/Game/Props/Materials/%s.%s"), Pk.Mi, Pk.Mi)))
+		{
+			UTexture* T = nullptr;
+			if (M->GetTextureParameterValue(FHashedMaterialParameterInfo(FName(TEXT("Tex"))), T)) { PeekTex = Cast<UTexture2D>(T); }
+		}
+		ShowScreenPeek(PeekTex, Pk.Title, TakeText::Fill(this, Pk.Caption));
+		return;
+	}
 	if (Key == TEXT("Cake"))
 	{
 		PlaySfx(TEXT("sfx_eat_crunch"), Where, 0.7f);
@@ -822,6 +848,7 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 			TEXT("You've had three slices of a cake that hasn't been cut."),
 		};
 		ShowSubtitle(TEXT(""), Slices[FMath::Min(N, int32(UE_ARRAY_COUNT(Slices)) - 1)], 3.5f);
+		if (N == 0) { CutTheCake(Thing); }
 		bAteCake = true;
 		return;
 	}
@@ -973,7 +1000,11 @@ void UTakeGrabComponent::TickEnergy(float DeltaTime)
 	// Full to empty in about 15 minutes; Fear burns it three times as fast
 	GI->Energy = FMath::Max(0.f, GI->Energy - DeltaTime * (100.f / 900.f) * (FearNow >= 0.5f ? 3.f : 1.f));
 	// Fear stinger: the moment the office turns (crossing 0.6, where coworkers start to stare)
-	if (FearNow >= 0.35f && LastFear < 0.35f) { PlaySfx2D(TEXT("sfx_fear_hit"), 0.9f); }
+	if (FearNow >= 0.35f && LastFear < 0.35f)
+	{
+		PlaySfx2D(TEXT("sfx_fear_hit"), 0.9f);
+		if (!bTensionFirstDone) { bTensionFirstDone = true; PlayMusicCue(TEXT("Fear rises for the first time"), TEXT("mus_halcyon_tension"), true); }
+	}
 	LastFear = FearNow;
 	const bool bLow = GI->Energy < 25.f;
 	Me->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * (bLow ? 0.8f : 1.f);

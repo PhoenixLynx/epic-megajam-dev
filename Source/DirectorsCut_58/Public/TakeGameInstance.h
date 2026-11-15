@@ -63,9 +63,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bGotCoffee = false;
 	/** Things you threw at people (Security and HR keep count). */
 	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 CoworkersHit = 0;
-	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 HotBeverageIncidents = 0;
+	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 HotBeverageIncidents = 0;   // a full mug, thrown at a coworker
 	/** How the last run ended (0 none yet, 1 handed over the keys, 2 kept them). Survives PLAY AGAIN: the next take remembers. */
-	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 LastEnding = 0;   // a full mug, thrown at a coworker
+	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 LastEnding = 0;
+	/** Your employee number ({EMP} in every line). PLAY AGAIN after an ending makes you the next one: 4472, 4473... */
+	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 EmployeeNumber = 4471;
 	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 GuardComplaints = 0;
 	UFUNCTION(BlueprintPure, Category = "Take") bool MorningTasksDone() const { return bReadEmail && bGotCoffee && bTrainingComplete; }
 
