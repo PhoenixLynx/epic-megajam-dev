@@ -101,6 +101,9 @@ private:
 	float SpeechLeft = 0.f;
 	float CooldownLeft = 0.f;
 	float NearCooldownLeft = 0.f;
+	float BumpCheckIn = 0.f;        // coworker-into-coworker bumps: checked a few times a second
+	float BumpCooldown = 0.f;
+	void TickBumps(float DeltaSeconds, const APawn* Player);
 	FString SpokenLine;
 	static double NextAnyoneMayTalk;   // only one NPC talks at a time
 	static FString WrapLine(const FString& In, int32 Width);

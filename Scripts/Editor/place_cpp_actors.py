@@ -244,4 +244,4 @@ unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
 unreal.log(f"[TAKE 4471] Seated {seated} coworker(s) at their desks.")
 unreal.log(f"[TAKE 4471] Act 1 story actors: {', '.join(story_placed) or 'none'}")
 unreal.log(f"[TAKE 4471] Placed Fear Director, fog, loop trigger, stalker, {made} coworker(s), {len(WORKSPOTS)} work spots, "
-           f"{tables}/3 DataTables. Press Play: E talks / opens / picks up; E at your monitor logs in; 1-4 / 0 = Fear.")
+           f"{tables}/3 DataTables. Press Play: E talks / opens / picks up; E at your monitor logs in; Ctrl+1-4 / Ctrl+0 = Fear.")

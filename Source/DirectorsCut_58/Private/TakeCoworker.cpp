@@ -743,6 +743,8 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 		}
 	}
 
+	TickBumps(DeltaSeconds, Player);
+
 	// Security keeps count. Enough incidents and the guard tells you (once) what it's going to cost you
 	if (!bPayWarned && Player && NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase) && State != ETakeCoworkerState::Watching && !bAtParty)
 	{
@@ -965,4 +967,34 @@ void ATakeCoworker::JoinParty(const FVector& Where, const FVector& LookAt)
 	if (UMaterialInterface* Smile = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Calm.MI_Face_Calm"))) { FaceCalm = Smile; }
 	FaceMode = -1;
 	SetFace(false);
+}
+
+// Two coworkers walk into each other: one of them says something (only when you're close enough to hear it)
+void ATakeCoworker::TickBumps(float DeltaSeconds, const APawn* Player)
+{
+	BumpCooldown = FMath::Max(0.f, BumpCooldown - DeltaSeconds);
+	BumpCheckIn -= DeltaSeconds;
+	if (BumpCheckIn > 0.f) { return; }
+	BumpCheckIn = 0.25f;
+	if (!Player || BumpCooldown > 0.f || IsHidden() || bVanished || State == ETakeCoworkerState::Watching) { return; }
+	if (GetVelocity().SizeSquared2D() < 25.f * 25.f) { return; }   // the one walking says it
+	if (FVector::DistSquared2D(Player->GetActorLocation(), GetActorLocation()) > 900.f * 900.f) { return; }
+	if (GetWorld()->GetTimeSeconds() < NextAnyoneMayTalk) { return; }
+	for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
+	{
+		ATakeCoworker* Other = *It;
+		if (Other == this || Other->IsHidden() || Other->bVanished) { continue; }
+		if (FVector::DistSquared2D(Other->GetActorLocation(), GetActorLocation()) > 75.f * 75.f) { continue; }
+		static const TCHAR* Bumps[] = {
+			TEXT("Sorry. Sorry. After you."), TEXT("Same corridor, same time, every day."), TEXT("We have to stop meeting like this. We won't."),
+			TEXT("Excuse me. ...Excuse me."), TEXT("Pardon. We rehearsed this part."), TEXT("Your left. No, your other left."),
+			TEXT("Oh! I thought you were 4470."), TEXT("Careful, that's my mark."),
+		};
+		const FRotator Face = (Other->GetActorLocation() - GetActorLocation()).Rotation();
+		SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));
+		SayLine(bAtParty ? FString(TEXT("Oops. Cake.")) : FString(Bumps[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Bumps)) - 1)]));
+		BumpCooldown = FMath::FRandRange(25.f, 45.f);
+		Other->BumpCooldown = FMath::Max(Other->BumpCooldown, 15.f);   // (not both of them at once)
+		return;
+	}
 }

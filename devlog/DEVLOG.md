@@ -1033,3 +1033,11 @@ A running record of every AI tool used and what it did.
 - **The Collector's skin:** that note was written at 3:20 in Act 2. The build with the fix had been compiled at 3:17, and the party (with the Collector) loaded at 3:20:38, after the note. The code applies the same `M_SkinTone` brown to his `M_Skin` slot as the coworkers', so it needs a look at the party.
 - **AI tools used:** Claude (C++, HTML/SVG art via Playwright + Chrome, screenshot and log review). Sol / ChatGPT (the original ending art, used as reference).
 - **Decision (03:59), representation:** the office is about 30% Black, spread across the desks and in the same uniform as everyone. That tone is the Collector's original dark grey (`M_MetalDark`), so it sits naturally next to the white mannequins. We talked about whether the two menacing figures being dark could read badly. The stalker stays as it is (clearly a monster), and the Collector stays dark grey, *"not quite a person... an entity like the stalker"*. I may revisit it later today. The two-line change if so: give him the light mannequin skin, or a tone of his own.
+
+### Session 64: Sun Nov 15, 2026, 04:08–04:30 MST: Early-morning batch (while I slept)
+
+- On the branch `early/2026-11-15`, reviewed and merged at the morning debrief. Full list: `docs/EARLY_BATCH_2026-11-15.md`.
+- **Packaging:** 5 folders that code loads by name weren't on the always-cook list (the ending art among them), so the packaged build would have been missing them. The fix is written up in `docs/PACKAGING.md`, with the .exe test.
+- **Coworkers bump into each other** and say so. **A second restroom stall** (this one opens).
+- **Drafted** the itch.io page and the gameplay video shot list. The video is now under Required on the checklist.
+- **AI tools used:** Claude (config review on my PC, C++, Unreal Python with the mock test, writing the docs).

@@ -126,7 +126,10 @@ put("SM_HandDryer", 3200, 2108, 110, 0, ["Use=Dryer"])
 put("SM_TrashBin", 3120, 2085)
 put("SM_PaperBall", 3150, 2060, 0)
 put("SM_WetFloorSign", 3210, 1965, 0, 40)
-put("SM_MeetingChair", 3130, 1760, 0, 180)     # the inexplicable restroom chair
+put("SM_MeetingChair", 3275, 2065, 0, 0)       # the inexplicable restroom chair (moved out of the new stall)
+# The second stall (playtest note): west of the first, a mirror of it, and this one opens. Nobody's in it. Probably.
+put("SM_Toilet", 3160, 1765, 0, 180, ["Use=Toilet"])
+put("SM_StallDoor", 3130, 1880, 0, 180, ["Openable", "OpenYaw=-90"])                  # hinge at x 3130, swings in
 put("SM_PlantDesk", 3375, 2085, 85)
 
 # --- Lobby: bright, calm, too clean --------------------------------------------
@@ -338,7 +341,11 @@ BOXES += [("RestroomWall_W1", 3050, 1825, 150, 20, 250, 300, "/Game/Fear/MI_Grey
           ("RestroomWall_S", 3225, 2120, 150, 370, 20, 300, "/Game/Fear/MI_Greybox_Walls", []),
           ("StallWall_W", 3240, 1790, 100, 4, 180, 180, "/Game/Fear/MI_Greybox_Walls", []),
           ("StallFront_L", 3265, 1880, 100, 50, 4, 180, "/Game/Fear/MI_Greybox_Walls", []),
-          ("StallFront_R", 3371, 1880, 100, 38, 4, 180, "/Game/Fear/MI_Greybox_Walls", [])]
+          ("StallFront_R", 3371, 1880, 100, 38, 4, 180, "/Game/Fear/MI_Greybox_Walls", []),
+          # the second stall: its west wall, and the front either side of its door (3130-3192)
+          ("Stall2Wall_W", 3080, 1790, 100, 4, 180, 180, "/Game/Fear/MI_Greybox_Walls", []),
+          ("Stall2Front_L", 3105, 1880, 100, 50, 4, 180, "/Game/Fear/MI_Greybox_Walls", []),
+          ("Stall2Front_R", 3216, 1880, 100, 48, 4, 180, "/Game/Fear/MI_Greybox_Walls", [])]
 WALL_MAT = "/Game/Fear/MI_Greybox_Walls"
 BOXES += [("JanitorWall_N", 950, 3350, 150, 320, 20, 300, WALL_MAT, []),
           ("JanitorWall_E1", 1100, 3415, 150, 20, 130, 300, WALL_MAT, []),
