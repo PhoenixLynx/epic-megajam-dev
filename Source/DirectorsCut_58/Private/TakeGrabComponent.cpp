@@ -1249,9 +1249,121 @@ void UTakeGrabComponent::TickDesk()
 	}
 }
 
+// The wall clocks (SM_WallClock). Playtest: "weird clock hands" / "the hands and second hands".
+// Nothing drove them: the hands are baked into the mesh (make_office_props.py, wall_clock), and the bake is wrong:
+//   - the hour hand box was turned -67 degrees about Y, which lays it along the 4-to-10 o'clock line, while its centre
+//     was pushed up and right (toward 1 o'clock): it crosses the centre at an odd angle and points at nothing;
+//   - the minute hand was turned for 16 minutes (96 degrees, not 84) and its centre sits ~1.7 cm below the axis, so it
+//     doesn't start at the pin; and there is no second hand at all (the 2:14 line says "the second hand isn't moving").
+// Until the mesh is re-exported (the Blender script is fixed too), each clock gets a fresh face over the baked hands and
+// three hands of its own that turn about the face centre, in the face plane: hour and minute from the game clock
+// (2:14 once the clocks stop), and a red second hand that ticks once a real second and stops dead at 2:14.
+// Which side is the front: the side away from the wall (a short trace each way); +Y local if neither finds a wall.
+namespace TakeWallClockHands
+{
+	struct FClockHands
+	{
+		TWeakObjectPtr<AActor> Clock;
+		TWeakObjectPtr<UStaticMeshComponent> Hour, Minute, Second;
+		float Front = 1.f;   // +1: the face looks along the clock's local +Y
+	};
+	static TWeakObjectPtr<UWorld> ForWorld;
+	static TArray<FClockHands> Clocks;
+	static float SecondTicks = 0.f;      // real seconds while the clocks run
+	static int32 SecondShown = -1;
+
+	static UStaticMeshComponent* AddPart(AActor* Clock, UStaticMesh* Mesh, UMaterialInterface* Mat, const FVector& Scale)
+	{
+		UStaticMeshComponent* C = NewObject<UStaticMeshComponent>(Clock);
+		C->SetupAttachment(Clock->GetRootComponent());
+		C->SetMobility(EComponentMobility::Movable);
+		C->SetStaticMesh(Mesh);
+		if (Mat) { C->SetMaterial(0, Mat); }
+		C->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		C->SetCastShadow(false);
+		C->SetRelativeScale3D(Scale);
+		C->RegisterComponent();
+		return C;
+	}
+
+	// A hand Length cm long, starting at the centre and pointing at Angle (degrees clockwise from 12, seen from the front),
+	// Depth cm in front of the clock's front plane
+	static void PoseHand(UStaticMeshComponent* Hand, float Front, float Angle, float Length, float Depth)
+	{
+		if (!Hand) { return; }
+		const float A = FMath::DegreesToRadians(Angle);
+		// Seen from the front: up is local +Z; right is local +X when the face looks along +Y, -X when it looks along -Y
+		const FVector Dir(Front * FMath::Sin(A), 0.f, FMath::Cos(A));
+		const FRotator Rot = FRotationMatrix::MakeFromZY(Dir, FVector(0.f, 1.f, 0.f)).Rotator();   // the cube's long (Z) side along the hand
+		Hand->SetRelativeLocationAndRotation(Dir * (Length * 0.5f) + FVector(0.f, Front * Depth, 0.f), Rot);
+	}
+
+	static void Build(UWorld* World)
+	{
+		Clocks.Reset();
+		SecondShown = -1;
+		UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+		UStaticMesh* Cyl = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+		if (!World || !Cube || !Cyl) { return; }
+		UMaterialInterface* FaceMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_ClockFace.M_ClockFace"));
+		if (!FaceMat) { FaceMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_PlasticWhite.M_PlasticWhite")); }
+		UMaterialInterface* Black = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_PlasticBlack.M_PlasticBlack"));
+		UMaterialInterface* Red = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_RedPaint.M_RedPaint"));
+		for (TActorIterator<AStaticMeshActor> It(World); It; ++It)
+		{
+			const UStaticMeshComponent* SM = It->GetStaticMeshComponent();
+			if (!SM || !SM->GetStaticMesh() || SM->GetStaticMesh()->GetName() != TEXT("SM_WallClock")) { continue; }
+			AActor* Clock = *It;
+			FClockHands H;
+			H.Clock = Clock;
+			// The back is the side with a wall right behind it
+			FCollisionQueryParams Q(TEXT("TakeClockWall"), false, Clock);
+			const FVector From = Clock->GetActorLocation();
+			const FVector Side = Clock->GetActorRightVector();
+			FHitResult WallHit;
+			const bool bWallPlus = World->LineTraceSingleByChannel(WallHit, From, From + Side * 40.f, ECC_Visibility, Q);
+			const bool bWallMinus = World->LineTraceSingleByChannel(WallHit, From, From - Side * 40.f, ECC_Visibility, Q);
+			H.Front = (bWallPlus && !bWallMinus) ? -1.f : 1.f;
+			// A clean face over the baked hands (the engine cylinder is 100 cm across and 100 cm tall, along Z: lie it along Y)
+			UStaticMeshComponent* Face = AddPart(Clock, Cyl, FaceMat, FVector(0.30f, 0.30f, 0.004f));
+			Face->SetRelativeLocationAndRotation(FVector(0.f, H.Front * 1.8f, 0.f), FRotator(0.f, 0.f, 90.f));
+			H.Hour = AddPart(Clock, Cube, Black, FVector(0.013f, 0.004f, 0.075f));
+			H.Minute = AddPart(Clock, Cube, Black, FVector(0.008f, 0.004f, 0.115f));
+			H.Second = AddPart(Clock, Cube, Red ? Red : Black, FVector(0.003f, 0.003f, 0.125f));
+			UStaticMeshComponent* Pin = AddPart(Clock, Cyl, Red ? Red : Black, FVector(0.014f, 0.014f, 0.012f));
+			Pin->SetRelativeLocationAndRotation(FVector(0.f, H.Front * 3.4f, 0.f), FRotator(0.f, 0.f, 90.f));
+			Clocks.Add(H);
+			UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Wall clock %s: new hands (face looks along %s local Y)"), *Clock->GetName(), H.Front > 0.f ? TEXT("+") : TEXT("-"));
+		}
+	}
+
+	static void Tick(UWorld* World, float WorkdayMinutes, bool bFrozen, float DeltaTime)
+	{
+		if (!World) { return; }
+		if (ForWorld.Get() != World) { ForWorld = World; SecondTicks = 0.f; Build(World); }
+		if (Clocks.Num() == 0) { return; }
+		if (!bFrozen) { SecondTicks += DeltaTime; }   // stopped means stopped: the second hand too
+		const int32 Sec = FMath::FloorToInt32(SecondTicks) % 60;
+		const int32 Shown = FMath::FloorToInt32(WorkdayMinutes) * 60 + Sec;   // only re-pose when something moved
+		if (Shown == SecondShown) { return; }
+		SecondShown = Shown;
+		const float Mins = FMath::FloorToFloat(WorkdayMinutes);   // whole minutes, like an office clock (2:14 when frozen)
+		const float HourAngle = FMath::Fmod(Mins / 60.f, 12.f) * 30.f;   // 2:14 -> 67 degrees
+		const float MinuteAngle = FMath::Fmod(Mins, 60.f) * 6.f;           // 14 -> 84 degrees
+		const float SecondAngle = Sec * 6.f;
+		for (const FClockHands& H : Clocks)
+		{
+			PoseHand(H.Hour.Get(), H.Front, HourAngle, 7.5f, 2.3f);
+			PoseHand(H.Minute.Get(), H.Front, MinuteAngle, 11.5f, 2.7f);
+			PoseHand(H.Second.Get(), H.Front, SecondAngle, 12.5f, 3.1f);
+		}
+	}
+}
+
 void UTakeGrabComponent::TickClock(float DeltaTime)
 {
 	UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (GI) { TakeWallClockHands::Tick(GetWorld(), GI->WorkdayMinutes, GI->bClocksFrozen, DeltaTime); }
 	if (!GI || !Prompt) { return; }
 	// 1 game minute every 3 s. The morning stops at 11:59 until your tasks are done: it's always almost noon.
 	// Act 2 starts at 12:00 (beat 1.10) and every clock stops at 2:14 (beat 2.6, FreezeClocks).

@@ -443,9 +443,15 @@ def wall_clock():
     p = Prop("SM_WallClock")   # pivot at its back centre; hang on walls. Hands frozen at 2:14.
     p.cyl(0.16, 0.04, (0, 0.02, 0), "M_PlasticWhite", segs=32, axis="Y")
     p.cyl(0.145, 0.002, (0, -0.001, 0), "M_ClockFace", segs=32, axis="Y")
-    p.box((0.012, 0.004, 0.08), (0.02, -0.005, 0.03), "M_PlasticBlack", rot_y=-math.radians(67))   # hour ~2:14
-    p.box((0.008, 0.004, 0.12), (0.055, -0.006, -0.01), "M_PlasticBlack", rot_y=-math.radians(96)) # minute 14
-    p.cyl(0.01, 0.01, (0, -0.008, 0), "M_RedPaint", segs=8, axis="Y")
+    # Hands start at the centre and point at the hour: a box's long (Z) side turned by +a about Y points at
+    # (sin a, cos a) in (X, Z), i.e. a degrees clockwise from 12 seen from the front (-Y); its centre goes half a length out.
+    def hand(length, width, depth_y, angle_deg, mat):
+        a = math.radians(angle_deg)
+        p.box((width, 0.004, length), (math.sin(a) * length / 2, depth_y, math.cos(a) * length / 2), mat, rot_y=a)
+    hand(0.075, 0.013, -0.005, 67, "M_PlasticBlack")     # hour: 2:14 = 2 * 30 + 14 * 0.5 = 67 degrees
+    hand(0.115, 0.008, -0.009, 84, "M_PlasticBlack")     # minute: 14 * 6 = 84 degrees
+    hand(0.125, 0.003, -0.013, 0, "M_RedPaint")          # second hand, stopped at 12
+    p.cyl(0.01, 0.01, (0, -0.016, 0), "M_RedPaint", segs=8, axis="Y")
     return p.finish(0.0)
 
 
