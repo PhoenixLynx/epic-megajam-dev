@@ -522,6 +522,9 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		if (EndT >= 0.6f)
 		{
 			EndStep = 1;
+			SubQueue.Reset();   // whatever overtime was still saying (the Wellness Center PA) stays in overtime: party chatter only
+			SubQueueWho.Reset();
+			SubtitleLeft = 0.f;
 			TeleportPlayer(LobbyParty, 90.f);   // facing the party (the elevator is behind you, the way stays clear)
 			BuildLobbyParty();
 			PlayMusicCue(TEXT("the wrap party"), TEXT("mus_halcyon_positive"), true);   // playtest: "play happy music during this scene"

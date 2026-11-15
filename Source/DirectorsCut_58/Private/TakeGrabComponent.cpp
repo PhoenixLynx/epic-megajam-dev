@@ -1545,6 +1545,7 @@ void UTakeGrabComponent::ShowSubtitle(const FString& Who, const FString& Line, f
 void UTakeGrabComponent::UpdatePrompt()
 {
 	if (!Prompt) { return; }
+	if (EndStep == 13) { Prompt->SetPrompt(TEXT("E  Call ACTION")); return; }   // the director's chair: always tell them how to go on (playtest "critical")
 	if (bSeated) { Prompt->SetPrompt(TEXT("")); return; }
 	if (IsHolding())
 	{
