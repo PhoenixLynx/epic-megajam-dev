@@ -129,15 +129,16 @@ void ATakeCoworker::SetupSkeletal()
 		if (UMaterialInterface* Neutral = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Neutral.MI_Face_Neutral"))) { FaceCalm = Neutral; }
 	}
 	FaceFrown = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Frown.MI_Face_Frown"));
-	// About three in ten of the office are Black (playtest: "30% if possible"): brown skin (the M_Skin slots), same suits as everyone
+	// About three in ten of the office are Black (playtest: "30% if possible"): dark skin (the M_Skin slots), same suits as everyone
 	if (NPCRole.Equals(TEXT("Coworker"), ESearchCase::IgnoreCase) && (GetTypeHash(GetName()) % 10) < 3)
 	{
-		// M_SkinTone (import_jam_assets.py) is flagged "Used with Skeletal Mesh". The engine's BasicShapeMaterial isn't, and
-		// Unreal silently draws the grey grid instead on a rigged mesh (that was the "texture map" faces in playtest).
-		if (UMaterialInterface* Shape = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/M_SkinTone.M_SkinTone")))
+		// Playtest: "switch black skin tone to previous collectors... the white employees are white and having brown or beige
+		// shades does not fit the aesthetic". So: the Collector's dark (M_MetalDark), the same stylised flat colour as the
+		// suits. It's already used on the guard's cap, so it's flagged for rigged meshes (no grey grid). M_SkinTone is the fallback.
+		UMaterialInterface* Dark = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_MetalDark.M_MetalDark"));
+		if (!Dark) { Dark = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/M_SkinTone.M_SkinTone")); }
+		if (UMaterialInterface* Skin = Dark)
 		{
-			UMaterialInstanceDynamic* Skin = UMaterialInstanceDynamic::Create(Shape, this);
-			Skin->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.12f, 0.06f, 0.035f));   // the director: the face reads fine at the Collector's tone
 			const TArray<FName> Slots = M->GetMaterialSlotNames();
 			int32 Toned = 0;
 			FString AllSlots;
@@ -332,8 +333,21 @@ void ATakeCoworker::SplashedByCoffee()
 	SayLine(SplashLines[FMath::RandRange(0, int32(UE_ARRAY_COUNT(SplashLines)) - 1)]);
 }
 
+FString ATakeCoworker::RefusalLine()
+{
+	static const TCHAR* Haunt[] = {
+		TEXT("You were supposed to say yes."), TEXT("4470 said no too. Ask 4470 how that went."), TEXT("We clapped for you."),
+		TEXT("Nobody leaves the take, {EMP}."), TEXT("Cut. Cut. Cut."), TEXT("You'll be back at nine. You're always back at nine."),
+		TEXT("Your desk is already warm for 4472."), TEXT("The cake was for you."), TEXT("We remember every stapler."),
+		TEXT("Smile. Every day is a performance review."), TEXT("There is no outside, {EMP}."), TEXT("Places, everyone. Places."),
+		TEXT("We were so proud of you. Were."), TEXT("Who do you think you're keeping them for?"),
+	};
+	return Haunt[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Haunt)) - 1)];
+}
+
 FString ATakeCoworker::NextLine()
 {
+	if (bAtParty && FearDirector.IsValid() && FearDirector->bForceRed) { return RefusalLine(); }   // the NO ending
 	if (bAtParty && State == ETakeCoworkerState::Watching)   // Fear at the party: the smiles stay, the words don't
 	{
 		static const TCHAR* Wrong[] = {
@@ -927,5 +941,9 @@ void ATakeCoworker::JoinParty(const FVector& Where, const FVector& LookAt)
 		bSitsAtDesk = false;
 		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Block);
 	}
+	// Everyone smiles at the party (playtest: "why is this one unhappy and the others are happy?" - security and the
+	// custodian wear the neutral face all day; not tonight)
+	if (UMaterialInterface* Smile = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/MI_Face_Calm.MI_Face_Calm"))) { FaceCalm = Smile; }
+	FaceMode = -1;
 	SetFace(false);
 }

@@ -167,7 +167,8 @@ void UTakeGrabComponent::BuildLobbyParty()
 	for (int32 I = 0; I < 6; ++I)   // cups and cans, a little everywhere
 	{
 		const FVector At = Table + FVector(-70.f + I * 28.f, (I % 2 == 0) ? -28.f : 30.f, 76.f);
-		SpawnSetPiece(Prop(I % 3 == 2 ? TEXT("SM_SodaCan") : TEXT("SM_Mug")), At, FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f), FVector(1.f), nullptr, false);
+		// real props (playtest: "coffee should still be slurpable at party"): pick a mug up, F to sip; cans too
+		SpawnProp(I % 3 == 2 ? TEXT("SM_SodaCan") : TEXT("SM_Mug"), At + FVector(0.f, 0.f, 1.f), FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f));
 	}
 	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(75.f, 0.f, 76.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 
@@ -256,15 +257,8 @@ void UTakeGrabComponent::SpawnCollector()
 	if (UStaticMesh* Body = Prop(TEXT("SM_Mannequin"))) { Col->BodyMesh = Body; }
 	Col->FinishSpawning(T);
 	Col->JoinParty(Where, FVector(2100.f, 1050.f, 92.f));
-	// A black suit, a top hat, a red tie. His skin is the same brown as the Black coworkers' (TakeCoworker.cpp, M_SkinTone):
-	// two skin tones in the whole game, kept simple.
+	// A black suit, a top hat, a red tie; his skin the same dark as the suit (the Black coworkers use it too: TakeCoworker.cpp)
 	UMaterialInterface* Black = Mat(TEXT("/Game/Props/Meshes/M_MetalDark.M_MetalDark"));
-	UMaterialInstanceDynamic* SkinTone = nullptr;
-	if (UMaterialInterface* SkinBase = Mat(TEXT("/Game/Props/Materials/M_SkinTone.M_SkinTone")))
-	{
-		SkinTone = UMaterialInstanceDynamic::Create(SkinBase, Col);
-		SkinTone->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.12f, 0.06f, 0.035f));   // = TakeCoworker.cpp
-	}
 	UMaterialInterface* Red = Mat(TEXT("/Game/Props/Meshes/M_RedPaint.M_RedPaint"));
 	TArray<UMeshComponent*> Meshes;
 	Col->GetComponents<UMeshComponent>(Meshes);
@@ -274,7 +268,6 @@ void UTakeGrabComponent::SpawnCollector()
 		{
 			const FName SlotName = MC->GetMaterialSlotNames().IsValidIndex(S) ? MC->GetMaterialSlotNames()[S] : NAME_None;
 			if (SlotName.ToString().Contains(TEXT("Face"))) { continue; }
-			if (SlotName.ToString().Contains(TEXT("Skin")) && SkinTone) { MC->SetMaterial(S, SkinTone); continue; }   // head, neck, hands
 			if (Black) { MC->SetMaterial(S, Black); }
 		}
 	}
@@ -381,6 +374,14 @@ ATakeCake* UTakeGrabComponent::SpawnCake(const FVector& Base, float Yaw, float R
 void UTakeGrabComponent::UseCake(ATakeCake* Cake, int32 N)
 {
 	if (!Cake) { return; }
+	if (ATakeCake* Waiting = PlatedSlice.Get())   // playtest: "can't take a new slice until you eat the previous one"
+	{
+		if (!Waiting->IsHidden())
+		{
+			ShowSubtitle(TEXT(""), TEXT("(Your slice is right there on the plate. Finish it first.)"), 2.5f);
+			return;
+		}
+	}
 	const FVector C = Cake->GetActorLocation();
 	int32 Wedge = 0;
 	FVector Dir = FVector::ForwardVector;
@@ -406,6 +407,7 @@ void UTakeGrabComponent::UseCake(ATakeCake* Cake, int32 N)
 	{
 		Slice->BuildSlice(Cake->Radius, Cake->Height, Cake->Slices, Wedge);
 		Slice->Tags.Add(TEXT("Use=CakeSlice"));
+		PlatedSlice = Slice;
 		Slice->Tags.Add(TEXT("DirectorsFloor"));
 	}
 	const bool bPenthouse = bPenthouseBuilt && C.Z > 2000.f;
@@ -806,7 +808,7 @@ void UTakeGrabComponent::StartRefusal()
 	// And in the corner by the reception desk, where the light doesn't reach: it's back. It doesn't come closer. It doesn't have to.
 	for (TActorIterator<ATakeStalker> It(GetWorld()); It; ++It)
 	{
-		FVector Lurk(1620.f, 1400.f, 100.f);
+		FVector Lurk(1620.f, 1400.f, 119.f);   // capsule half height 117 (at 100 its feet were in the floor: no collision, so nothing lifted it)
 		GetWorld()->FindTeleportSpot(*It, Lurk, It->GetActorRotation());
 		It->SetActorLocation(Lurk, false, nullptr, ETeleportType::TeleportPhysics);
 		const FVector Me = GetOwner()->GetActorLocation();
@@ -831,6 +833,17 @@ void UTakeGrabComponent::TickRefusal(float DeltaTime)
 	const float Before = RefuseT;
 	RefuseT += DeltaTime;
 	auto Crossed = [Before, this](float T) { return Before < T && RefuseT >= T; };
+	// Playtest: "in No ending, coworkers make meaner comments... or haunting remarks". Every few seconds someone near you says one.
+	if (RefuseT > 2.5f && SubQueue.Num() == 0 && SubtitleLeft <= 0.f && FMath::FloorToInt(Before / 1.5f) != FMath::FloorToInt(RefuseT / 1.5f))   // (between the story's own lines)
+	{
+		TArray<ATakeCoworker*> Near;
+		const FVector Me = GetOwner() ? GetOwner()->GetActorLocation() : FVector::ZeroVector;
+		for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
+		{
+			if (It->bAtParty && !It->IsHidden() && !It->ActorHasTag(TEXT("Collector")) && FVector::Dist2D(It->GetActorLocation(), Me) < 1100.f) { Near.Add(*It); }
+		}
+		if (Near.Num() > 0) { Near[FMath::RandRange(0, Near.Num() - 1)]->SayLine(ATakeCoworker::RefusalLine()); }
+	}
 	if (Crossed(4.f))
 	{
 		PlaySfx2D(TEXT("sfx_pa_chime"), 0.8f);

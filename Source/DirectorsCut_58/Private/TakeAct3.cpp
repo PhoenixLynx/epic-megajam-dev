@@ -475,27 +475,17 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			}
 		}
 	}
-	// The wrap party: walk around among them, but stay at the party (about 3.5 m from the middle)
-	if (EndStep >= 1 && EndStep != 12 && EndStep != 13 && !(EndStep == 4 && bPenthouseBuilt))
+	// The wrap party: go anywhere (playtest: "I still should be able to enter places even in fear or at the party",
+	// "having trouble accessing my desk at party"). Only the elevator stays shut until you've answered.
+	if (EndStep >= 1 && EndStep < 10)
 	{
 		if (APawn* Pawn = Cast<APawn>(GetOwner()))
 		{
-			// The lobby and the kitchen (refreshments); the office, the conference room and the corridors are closed
 			const FVector P = Pawn->GetActorLocation();
-			// The lobby + kitchen box, and (to the west) the conference room; clamp to whichever is nearer
-			const FVector InLobby(FMath::Clamp(P.X, 1550.f, 3650.f), FMath::Clamp(P.Y, EndStep == 11 ? 0.f : 560.f, 1450.f), P.Z);
-			const FVector InConf(FMath::Clamp(P.X, 500.f, 1600.f), FMath::Clamp(P.Y, 800.f, 1400.f), P.Z);
-			const FVector InOffice(FMath::Clamp(P.X, 1600.f, 3200.f), FMath::Clamp(P.Y, 1400.f, 3500.f), P.Z);   // the open office (after hours)
-			FVector Leash = FVector::DistSquared2D(InLobby, P) <= FVector::DistSquared2D(InConf, P) ? InLobby : InConf;
-			if (FVector::DistSquared2D(InOffice, P) < FVector::DistSquared2D(Leash, P)) { Leash = InOffice; }
-			if (!Leash.Equals(P, 1.f))
+			if (P.X > 1800.f && P.X < 2400.f && P.Y < 560.f && P.Z < 300.f)   // the elevator lobby, ground floor
 			{
-				Pawn->SetActorLocation(Leash, false, nullptr, ETeleportType::None);
-				if (P.Y < 600.f && EndStep < 10)
-				{
-					if (!bPartyLiftSaid) { bPartyLiftSaid = true; ShowSubtitle(TEXT(""), TEXT("(The elevator doesn't open for you. Not yet. Not until you answer.)"), 3.f); }
-				}
-				else if (!bPartyLeashSaid) { bPartyLeashSaid = true; ShowSubtitle(TEXT("PA"), TEXT("The party is in the lobby. Corridor B has gone home."), 3.f); }
+				Pawn->SetActorLocation(FVector(P.X, 560.f, P.Z), false, nullptr, ETeleportType::None);
+				if (!bPartyLiftSaid) { bPartyLiftSaid = true; ShowSubtitle(TEXT(""), TEXT("(The elevator doesn't open for you. Not yet. Not until you answer.)"), 3.f); }
 			}
 		}
 	}
@@ -614,8 +604,9 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 			if (UTakeGameInstance* LiftGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { LiftGI->SetObjective(TEXT("Take the elevator. C is lit.")); }
 		}
 		break;
-	case 4:   // the answer's lines, then the end card
-		if (SubQueue.Num() == 0 && SubtitleLeft <= 0.f)
+	case 4:   // the answer's lines, then the end card (never more than 10 s: chatter at the party kept the NO ending waiting)
+		Step4T += DeltaTime;
+		if ((SubQueue.Num() == 0 && SubtitleLeft <= 0.f) || Step4T > 10.f)
 		{
 			EndStep = 5;
 			EndCardT = 0.f;

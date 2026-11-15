@@ -65,3 +65,16 @@ for f in files:
     mel.set_material_instance_texture_parameter_value(mi, "Tex", tex)
     lib.save_loaded_asset(mi)
     unreal.log(f"[TAKE 4471] Ending art: {mi_name} ready")
+
+# The Black coworkers' and the Collector's skin is M_MetalDark (TakeCoworker.cpp / TakeDirector.cpp). It goes on the rigged
+# mannequins, so it must be flagged "Used with Skeletal Mesh" or a packaged build draws the grey grid instead.
+for path in ("/Game/Props/Meshes/M_MetalDark", "/Game/Props/Materials/M_SkinTone"):
+    m = lib.load_asset(path) if lib.does_asset_exist(path) else None
+    while isinstance(m, unreal.MaterialInstance):
+        m = m.get_editor_property("parent")
+    if isinstance(m, unreal.Material):
+        if not m.get_editor_property("used_with_skeletal_mesh"):
+            m.set_editor_property("used_with_skeletal_mesh", True)
+            mel.recompile_material(m)
+        lib.save_loaded_asset(m)
+        unreal.log(f"[TAKE 4471] {m.get_name()}: used with skeletal mesh")

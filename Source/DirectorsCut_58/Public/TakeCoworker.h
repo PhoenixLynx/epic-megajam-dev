@@ -64,6 +64,8 @@ public:
 	/** Say a random line (bump, E, or scripted). Returns false while on cooldown. */
 	UFUNCTION(BlueprintCallable, Category = "Coworker") bool Speak(const FString& Context = TEXT(""));
 	UFUNCTION(BlueprintCallable, Category = "Coworker") void SayLine(const FString& Line);
+	/** The NO ending: what they say to you after you refuse (haunting, a little mean). */
+	static FString RefusalLine();
 	/** Something you threw hit them. */
 	void HitByProp(float Speed);
 	/** After HitByProp, when the thing was a full mug: they get coffee on them, and HR counts it twice. */

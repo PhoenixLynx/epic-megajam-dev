@@ -408,6 +408,7 @@ private:
 	float MonitorSwapIn = 0.f;   // the director's floor: the dailies change
 	int32 EndStep = 0;
 	float EndCardT = -1.f;
+	float Step4T = 0.f;   // time spent waiting for the answer's lines before the end card
 	bool bEndingYes = false;
 	FString EndCardText;
 	float LastFear = 0.f;   // for the Fear stinger (crossing into watched territory)
@@ -432,6 +433,7 @@ private:
 	int32 CakeLaterTries = 0;
 	int32 SlicesEaten = 0;
 	bool bPartyCakeCut = false;
+	TWeakObjectPtr<class ATakeCake> PlatedSlice;   // the slice you cut and haven't eaten yet
 	TArray<struct FHeldCake> HeldCakes;   // slices in people's hands at the party (they take bites)
 	void TickHeldCakes(float DeltaTime);
 	bool bMusicLoop = false;         // the party and the director's floor: the happy cue keeps playing
