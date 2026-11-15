@@ -13,6 +13,7 @@
 #include "TakeStalker.h"
 #include "TakeTypes.h"
 #include "TakeCake.h"
+#include "NavigationSystem.h"
 #include "Materials/MaterialInterface.h"
 #include "TakeCoworker.h"
 #include "TakeWidgets.h"
@@ -97,6 +98,23 @@ void UTakeGrabComponent::TickForeshadow(float DeltaTime)
 		{
 			const float D = FVector::Dist2D(FVector(S.X, S.Y, 0.f), Me);
 			if (D >= 900.f && D <= 2600.f && D > Best) { Best = D; Start = FVector(S.X, S.Y, Me.Z); }
+		}
+		// Wherever you are (playtest: it started in the office while I was down Corridor B, and I never saw it): a
+		// walkable point 8-16 m from you, preferably behind you, so you hear it first and it can reach you
+		if (Best < 0.f || Best > 1800.f)
+		{
+			const FVector Back = -GetOwner()->GetActorForwardVector();
+			float BestScore = -1e9f;
+			for (int32 Try = 0; Try < 24; ++Try)
+			{
+				FVector P;
+				if (!UNavigationSystemV1::K2_GetRandomReachablePointInRadius(this, Me, P, 1600.f)) { continue; }
+				const float D = FVector::Dist2D(P, Me);
+				if (D < 800.f) { continue; }
+				const float Score = FVector::DotProduct((P - Me).GetSafeNormal2D(), Back) * 500.f - FMath::Abs(D - 1100.f) * 0.3f;
+				if (Score > BestScore) { BestScore = Score; Start = FVector(P.X, P.Y, Me.Z); }
+			}
+			if (BestScore > -1e9f) { Best = 1.f; }
 		}
 		GetWorld()->FindTeleportSpot(Stalker, Start, Stalker->GetActorRotation());
 		Stalker->SetActorLocation(Start, false, nullptr, ETeleportType::TeleportPhysics);

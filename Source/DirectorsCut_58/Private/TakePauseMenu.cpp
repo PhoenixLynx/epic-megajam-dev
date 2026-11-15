@@ -101,7 +101,7 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 		UVerticalBox* Menu = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
 		Row->AddChildToHorizontalBox(Menu)->SetPadding(FMargin(0.f, 0.f, 30.f, 0.f));
 		struct FItem { int32 Id; const TCHAR* Label; };
-		const FItem Items[] = { { Resume, TEXT("Resume") }, { Tasks, TEXT("Tasks") }, { Notes, TEXT("Playtest notes") }, { Settings, TEXT("Settings") },
+		const FItem Items[] = { { Resume, TEXT("Resume") }, { Tasks, TEXT("Tasks") }, { Notes, TEXT("To-do list") }, { Settings, TEXT("Settings") },
 		                        { Save, TEXT("Save") }, { Load, TEXT("Load") }, { Quit, TEXT("Quit to desktop") } };
 		for (const FItem& It : Items)
 		{
@@ -180,7 +180,7 @@ TSharedRef<SWidget> UTakePauseMenu::RebuildWidget()
 
 		// Page 2: playtest notes (saved to Saved/PlaytestNotes.txt with the time, take and place) + skip
 		UVerticalBox* NotesPage = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-		NotesPage->AddChildToVerticalBox(MakeText(TEXT("PLAYTEST NOTES"), 13, PMuted, true));
+		NotesPage->AddChildToVerticalBox(MakeText(TEXT("TO-DO LIST"), 13, PMuted, true));
 		NotesPage->AddChildToVerticalBox(MakeText(TEXT("Type a note, then Save note. It's stamped with the game clock, act and where you're standing."), 14, PMuted))->SetPadding(FMargin(0.f, 4.f, 0.f, 8.f));
 		NotesBox = WidgetTree->ConstructWidget<UMultiLineEditableTextBox>(UMultiLineEditableTextBox::StaticClass());
 		UVerticalBoxSlot* NoteSlot = NotesPage->AddChildToVerticalBox(NotesBox);

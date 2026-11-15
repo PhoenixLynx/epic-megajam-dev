@@ -86,7 +86,7 @@ cabinet(1760, 3500, 0, 2)
 put("SM_Printer", 3300, 2300, 0, -90, ["Use=Printer"])   # (moved out of the restroom corner) E = print
 put("SM_PlantTall", 860, 1780)
 put("SM_PlantTall", 3330, 3620)
-put("SM_WallClock", 1100, 1712, 240, 180)
+put("SM_WallClock", 870, 1712, 240, 180)    # (moved along: it overlapped the office print)
 
 # --- 12 cubicles (seeded so the layout is stable; the RUN seed varies clues, not furniture)
 rnd = random.Random(4471)
@@ -152,8 +152,8 @@ put("SM_MeetingChair", 1830, 1590, 0, 0)
 put("SM_PlantDesk", 1742, 1432, 44)
 for i, (yaw, dz) in enumerate(((15, 0.0), (-8, 1.2), (28, 2.4))):   # a little stack on the table, clear of the plant (they slid off)
     put("SM_Brochure", 1780, 1436, 46 + dz, yaw, [f"SlotMI=M_SignFace:{'MI_Brochure' if i < 2 else 'MI_Magazine'}"])
-put("SM_Monitor", 2235, 1290, 109, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])   # reception sees everything (faces the receptionist)
-put("SM_Keyboard", 2210, 1328, 109, 180, ["DeskFixed"])
+put("SM_Monitor", 2160, 1292, 109, 180, ["FixedScreen", "SlotMI=M_Screen:MI_Screen_CCTV"])   # reception sees everything (faces the receptionist, in reach, on the desk)
+put("SM_Keyboard", 2150, 1328, 109, 180, ["DeskFixed"])
 put("SM_PlantDesk", 2280, 1300, 109)
 put("SM_PlantTall", 1440, 1650)
 put("SM_WaterCooler", 2740, 1260, 0, -90, ["Use=Cooler"])
@@ -227,7 +227,7 @@ for (x, y, yaw) in ((600, 1030, 0), (800, 1030, 0), (1000, 1170, 180)):   # scre
     put("SM_Laptop", x, y, TABLE_Z, yaw, ["CallScreen"])          # E = join the 12:30 call / 1:00 meeting (Act 2)
 # the conference phone in the middle of the table: E here joins the call too (playtest: "we should start the call with
 # the conference room phone the way they do in corporate offices")
-put("SM_DeskPhone", 850, 1100, TABLE_Z, 90, ["CallScreen"])
+put("SM_DeskPhone", 850, 1100, TABLE_Z, 90, ["CallScreen", "DeskFixed"])   # bolted down
 for (x, y) in ((660, 1060), (950, 1080), (720, 1150), (1060, 1130)):
     put("SM_Mug", x, y, TABLE_Z, rnd.uniform(0, 360))
 for (x, y) in ((880, 1090), (900, 1110), (520, 1100)):
@@ -311,7 +311,7 @@ BOXES += [
     # Lunch board on the island (Act 2)
     ("LunchSpecials", 3245, 860, 115, 34, 2, 48, PM + "MI_LunchSpecials", ["Act2Reveal", "Inspectable"]),
     # Reception: the sign-in clipboard, and a sign
-    ("SignInSheet", 1985, 1285, 109.6, 23, 32, 0.4, PM + "MI_SignInSheet", ["Inspectable"]),
+    ("SignInSheet", 1985, 1285, 109.6, 23, 32, 0.4, PM + "MI_SignInSheet", ["Inspectable", "Yaw=180"]),   # reads from the visitor's side
     ("Sign_Wait", 2045, 1268, 124, 30, 2, 30, PM + "MI_Sign_Wait", []),   # standing on the desk
     ("ScriptNotes", 2120, 1290, 109.6, 22, 30, 0.4, PM + "MI_ScriptNotes", ["Inspectable"]),
     # Kitchen: a bulletin board (west wall) and morale posters
@@ -326,7 +326,20 @@ BOXES += [
     ("OfficeWindow_Mullion1", 3385.5, 2825, 172, 2, 5, 150, "/Game/Props/Meshes/M_MetalLight", []),
     ("OfficeWindow_Mullion2", 3385.5, 2950, 172, 2, 5, 150, "/Game/Props/Meshes/M_MetalLight", []),
     ("OfficeWindow_Mullion3", 3385.5, 3075, 172, 2, 5, 150, "/Game/Props/Meshes/M_MetalLight", []),
-    ("OfficeWindow_Sill", 3382, 2950, 95, 10, 530, 4, "/Game/Props/Meshes/M_MetalLight", []),
+    ("OfficeWindow_Sill", 3380, 2950, 95, 20, 550, 4, "/Game/Props/Meshes/M_MetalLight", []),
+    # (playtest: "looks like artwork, not an outside setting") a deep casing and half-drawn blinds make it read as a window
+    ("OfficeWindow_Head", 3382, 2950, 250, 16, 550, 6, "/Game/Props/Meshes/M_MetalLight", []),
+    ("OfficeWindow_JambL", 3382, 2678, 172, 16, 6, 160, "/Game/Props/Meshes/M_MetalLight", []),
+    ("OfficeWindow_JambR", 3382, 3222, 172, 16, 6, 160, "/Game/Props/Meshes/M_MetalLight", []),
+    ("OfficeWindow_BlindRail", 3380, 2950, 244, 6, 520, 6, "/Game/Props/Meshes/M_PlasticWhite", []),
+    ("OfficeWindow_Slat0", 3381, 2950, 238, 3, 500, 1.2, "/Game/Props/Meshes/M_PlasticWhite", []),
+    ("OfficeWindow_Slat1", 3381, 2950, 233, 3, 500, 1.2, "/Game/Props/Meshes/M_PlasticWhite", []),
+    ("OfficeWindow_Slat2", 3381, 2950, 228, 3, 500, 1.2, "/Game/Props/Meshes/M_PlasticWhite", []),
+    ("OfficeWindow_Slat3", 3381, 2950, 223, 3, 500, 1.2, "/Game/Props/Meshes/M_PlasticWhite", []),
+    ("OfficeWindow_Slat4", 3381, 2950, 218, 3, 500, 1.2, "/Game/Props/Meshes/M_PlasticWhite", []),
+    ("OfficeWindow_Slat5", 3381, 2950, 213, 3, 500, 1.2, "/Game/Props/Meshes/M_PlasticWhite", []),
+    ("OfficeWindow_Slat6", 3381, 2950, 208, 3, 500, 1.2, "/Game/Props/Meshes/M_PlasticWhite", []),
+    ("OfficeWindow_Slat7", 3381, 2950, 203, 3, 500, 1.2, "/Game/Props/Meshes/M_PlasticWhite", []),
     ("Poster_Smile_Kitchen", 3600, 1488, 165, 60, 1, 85, PM + "MI_Poster_Smile", ["Inspectable"]),
     ("Poster_Energy_Kitchen", 2812, 700, 165, 1, 60, 85, PM + "MI_Poster_Energy", ["Inspectable"]),
     # Lobby: rug, magazine, promo screen on the west wall
@@ -415,7 +428,8 @@ BOXES += [("FridgeNote_Yogurt", nx, ny, 140, 20, 0.5, 20, PROPMAT + "MI_FridgeNo
 # (playtest: "top shelf of fridge should be accessible, it's blocked": the freezer lip covers the top shelf from
 #  1.15 m up, so what was on it, water and snacks, now sits on the middle shelf and the bottom)
 for (lx, ly, z, mesh) in ((-14, 5, 46, "SM_MilkCarton"), (10, 5, 46, "SM_SodaCan"), (16, -5, 46, "SM_SodaCan"),
-                          (-8, 2, 86, "SM_LunchBox"), (16, 0, 86, "SM_WaterBottle"), (-6, 0, 5, "SM_SnackBox")):
+                          (-8, 2, 86, "SM_LunchBox"), (16, 0, 86, "SM_WaterBottle"), (-6, 0, 5, "SM_SnackBox"),
+                          (10, 0, 126, "SM_SodaCan"), (-12, 2, 126, "SM_MilkCarton")):   # the top shelf, reachable now (SM_FridgeBody re-exported with a short lip)
     ix, iy = local_to_world(fx, fy, fyaw, lx, ly)
     put(mesh, ix, iy, z, fyaw)
 
@@ -495,11 +509,14 @@ def main():
         b = actor_sys.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(x, y, z), unreal.Rotator(0, 0, 0))
         b.static_mesh_component.set_static_mesh(cube)
         b.set_actor_scale3d(unreal.Vector(sx / 100.0, sy / 100.0, sz / 100.0))
+        for t in tags:   # "Yaw=180": turn the board (the sign-in sheet reads from the visitor's side)
+            if str(t).startswith("Yaw="):
+                b.set_actor_rotation(unreal.Rotator(0, 0, float(str(t)[4:])), False)
         if asset_lib.does_asset_exist(mat_path):
             b.static_mesh_component.set_material(0, asset_lib.load_asset(mat_path))
         b.set_actor_label(f"{PREFIX}{label}_{k:02d}")
         b.set_folder_path("Dressing/Campus/Boards")
-        box_tags = [t for t in tags if t != "AttachToFridgeDoor"] + (["Inspectable"] if label.startswith("FridgeNote") else [])
+        box_tags = [t for t in tags if t != "AttachToFridgeDoor" and not str(t).startswith("Yaw=")] + (["Inspectable"] if label.startswith("FridgeNote") else [])
         if box_tags:
             b.set_editor_property("tags", [unreal.Name(t) for t in sorted(set(box_tags))])   # Inspectable: E = look closer
         if "AttachToFridgeDoor" in tags and fridge_door:

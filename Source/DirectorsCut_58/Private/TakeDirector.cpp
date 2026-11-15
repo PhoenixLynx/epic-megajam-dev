@@ -260,8 +260,10 @@ void UTakeGrabComponent::SpawnCollector()
 	if (UStaticMesh* Body = Prop(TEXT("SM_Mannequin"))) { Col->BodyMesh = Body; }
 	Col->FinishSpawning(T);
 	Col->JoinParty(Where, FVector(2100.f, 1050.f, 92.f));
-	// A black suit, a top hat, a red tie; his skin the same dark as the suit (the Black coworkers use it too: TakeCoworker.cpp)
+	// A black suit, a top hat, a red tie; grey skin, like the stalker (playtest: "make collector gray skinned like the
+	// stalker": not quite a person, an entity)
 	UMaterialInterface* Black = Mat(TEXT("/Game/Props/Meshes/M_MetalDark.M_MetalDark"));
+	UMaterialInterface* Grey = Mat(TEXT("/Game/Characters/Mannequin/M_StalkerSkin.M_StalkerSkin"));   // (from the rig: fine on skeletal meshes)
 	UMaterialInterface* Red = Mat(TEXT("/Game/Props/Meshes/M_RedPaint.M_RedPaint"));
 	TArray<UMeshComponent*> Meshes;
 	Col->GetComponents<UMeshComponent>(Meshes);
@@ -271,6 +273,7 @@ void UTakeGrabComponent::SpawnCollector()
 		{
 			const FName SlotName = MC->GetMaterialSlotNames().IsValidIndex(S) ? MC->GetMaterialSlotNames()[S] : NAME_None;
 			if (SlotName.ToString().Contains(TEXT("Face"))) { continue; }
+			if (SlotName.ToString().Contains(TEXT("Skin")) && Grey) { MC->SetMaterial(S, Grey); continue; }
 			if (Black) { MC->SetMaterial(S, Black); }
 		}
 	}
@@ -303,8 +306,10 @@ void UTakeGrabComponent::CutTheCake(AActor* Cake)
 	int32 Plates = 0, Seen = 0;
 	for (TActorIterator<ATakeCoworker> CakeIt(GetWorld()); CakeIt; ++CakeIt)
 	{
-		if (!CakeIt->bAtParty || CakeIt->ActorHasTag(TEXT("Collector")) || CakeIt->IsHidden()) { continue; }
-		if ((Seen++ % 2) != 0) { continue; }
+		if (!CakeIt->bAtParty || CakeIt->IsHidden()) { continue; }
+		const bool bCollector = CakeIt->ActorHasTag(TEXT("Collector"));   // he gets a slice too (he never eats it)
+		if (!bCollector && (Seen++ % 2) != 0) { continue; }
+		if (bCollector) { GivePlateOfCake(*CakeIt, 102.f, false); continue; }
 		if (ATakeCake* Held = GivePlateOfCake(*CakeIt, 102.f, Plates % 3 == 1))   // some have had a bite
 		{
 			FHeldCake H;
@@ -639,6 +644,13 @@ void UTakeGrabComponent::BuildPenthouse()
 	(void)Frosting; (void)Fabric;
 	SpawnSetPiece(Prop(TEXT("SM_CupStack")), Table + FVector(-68.f, -30.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
 	SpawnSetPiece(Prop(TEXT("SM_SodaCan")), Table + FVector(-68.f, 30.f, 74.f), FRotator::ZeroRotator, FVector(1.f), nullptr, false);
+	SpawnProp(TEXT("SM_Mug"), Table + FVector(55.f, -28.f, 75.f), FRotator(0.f, 30.f, 0.f));   // coffee (F to sip)
+	SpawnProp(TEXT("SM_Mug"), Table + FVector(60.f, 26.f, 75.f), FRotator(0.f, -50.f, 0.f));
+	// The open side: the glass rail is waist height; an invisible wall above it so nobody goes over (playtest: "I can fall off the edge")
+	if (AStaticMeshActor* Guard = SpawnSetPiece(Cube, P + FVector(-PW * 0.5f - 6.f, 0.f, 250.f), FRotator::ZeroRotator, FVector(0.1f, PD / 100.f, 5.f), nullptr, true))
+	{
+		Guard->SetActorHiddenInGame(true);
+	}
 	SpawnSetPiece(Prop(TEXT("SM_LobbySofa")), P + FVector(430.f, -250.f, 0.f), FRotator(0.f, -90.f, 0.f), FVector(1.f), nullptr, true);
 	SpawnSetPiece(Prop(TEXT("SM_PlantTall")), P + FVector(640.f, -440.f, 0.f), FRotator::ZeroRotator, FVector(1.f), nullptr, true);
 	SpawnSetPiece(Prop(TEXT("SM_PlantTall")), P + FVector(640.f, 440.f, 0.f), FRotator::ZeroRotator, FVector(1.f), nullptr, true);
@@ -709,6 +721,8 @@ void UTakeGrabComponent::BuildPenthouse()
 
 void UTakeGrabComponent::TickDailies(float DeltaTime)
 {
+	// (and a safety net: anyone who still finds a way off the director's floor is put back by the elevator)
+	if ((EndStep == 12 || EndStep == 13) && GetOwner() && GetOwner()->GetActorLocation().Z < Penthouse.Z - 400.f) { TeleportPlayer(PenthouseArrival, -160.f); }
 	static const TCHAR* Feeds[] = { TEXT("MI_Dailies_Desk"), TEXT("MI_Dailies_Conference"), TEXT("MI_Dailies_CorridorB"), TEXT("MI_Dailies_Ward"),
 	                                TEXT("MI_Dailies_Desk"), TEXT("MI_Dailies_CorridorB"),   // (Sol's takes come up most)
 	                                TEXT("MI_Screen_CCTV"), TEXT("MI_Screen_Call"), TEXT("MI_Screen_Fear"), TEXT("MI_Screen_Glyphs"), TEXT("MI_Screen_Code") };
