@@ -397,8 +397,10 @@ nx, ny = local_to_world(fx, fy, fyaw, -12, 41)
 mx, my = local_to_world(fx, fy, fyaw, 14, 41)
 BOXES += [("FridgeNote_Yogurt", nx, ny, 140, 20, 0.5, 20, PROPMAT + "MI_FridgeNote_Yogurt", ["AttachToFridgeDoor"]),
           ("FridgeNote_Memo", mx, my, 112, 18, 0.5, 24, PROPMAT + "MI_FridgeNote_Memo", ["AttachToFridgeDoor"])]
+# (playtest: "top shelf of fridge should be accessible, it's blocked": the freezer lip covers the top shelf from
+#  1.15 m up, so what was on it, water and snacks, now sits on the middle shelf and the bottom)
 for (lx, ly, z, mesh) in ((-14, 5, 46, "SM_MilkCarton"), (10, 5, 46, "SM_SodaCan"), (16, -5, 46, "SM_SodaCan"),
-                          (-8, 2, 86, "SM_LunchBox"), (12, 0, 126, "SM_WaterBottle"), (-14, 0, 126, "SM_SnackBox")):
+                          (-8, 2, 86, "SM_LunchBox"), (16, 0, 86, "SM_WaterBottle"), (-6, 0, 5, "SM_SnackBox")):
     ix, iy = local_to_world(fx, fy, fyaw, lx, ly)
     put(mesh, ix, iy, z, fyaw)
 

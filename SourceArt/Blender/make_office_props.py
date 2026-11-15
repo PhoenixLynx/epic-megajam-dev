@@ -733,7 +733,7 @@ def fridge_body():
         p.box((0.01, d - 0.08, h - 0.1), (x, 0, h / 2), "M_PlasticWhite")            # sides
     for z in (0.45, 0.85, 1.25):
         p.box((w - 0.1, d - 0.12, 0.012), (0, -0.02, z), "M_Glass")              # glass shelves
-    p.box((w - 0.08, 0.01, 0.6), (0, -d / 2 + 0.06, 1.45), "M_PlasticWhite")    # freezer divider lip
+    p.box((w - 0.08, 0.01, 0.14), (0, -d / 2 + 0.06, 1.68), "M_PlasticWhite")   # freezer divider lip (top only: it used to hide the top shelf)
     return p.finish(0.004)
 
 
