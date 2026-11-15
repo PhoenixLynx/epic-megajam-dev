@@ -1041,3 +1041,23 @@ A running record of every AI tool used and what it did.
 - **Coworkers bump into each other** and say so. **A second restroom stall** (this one opens).
 - **Drafted** the itch.io page and the gameplay video shot list. The video is now under Required on the checklist.
 - **AI tools used:** Claude (config review on my PC, C++, Unreal Python with the mock test, writing the docs).
+
+### Session 65: Sun Nov 15, 2026, 10:53–12:45 MST: Final playtest rounds and the full notes audit
+
+- **How it ran:** I played and wrote notes with **N**, and Claude checked them about every 10 minutes, fixed them on a branch, and merged when I paused. That way each rebuild picked up a whole round at once. Four rounds (11:28, 11:49, 12:01, 12:12), then at 12:36 Claude read all 322 notes from the jam against the code (`docs/FINAL_AUDIT.md`).
+- **Big ones:**
+  - **The check-ins couldn't progress the game.** It turned out they could (I got 3/3), but the order was confusing. The 3 check-ins now sit between the 12:30 call and the 1:00 meeting, and the meeting waits for them.
+  - **The stalker preview never showed.** It did fire, but in the office while I was down Corridor B, seven seconds before the trust fall. It now starts at a walkable spot 8–16 m from me, behind me, wherever I am.
+  - **I could fall off the penthouse.** Now there's an invisible wall above the rail and a safety net.
+- **New details:**
+  - Coworkers chat with each other and gossip about the cake.
+  - A FOR LATER sticky with my own handwriting under it ("later is now. it was always now.").
+  - 4472 leaves a voicemail at the party.
+  - Wardrobe emails a thank-you and a t-shirt ("Sizes: One").
+  - Hold **Z** to zoom. Printouts are readable.
+  - The conference room starts the call from the table phone, with a "waiting to connect" screen.
+- **Set dressing:** the office got a window with blinds and a "SUNRISE No. 4471" print; the reception monitor faces the receptionist; the fridge top shelf is reachable again (re-exported with Blender's Python, `bpy`, from the cloud).
+- **Decision (12:33):** the Collector goes grey-skinned like the stalker, an entity rather than a person. The Black coworkers keep the dark tone.
+- **Deferred past the jam:** something to do during the conference call, a live camera of me on the security monitors, a longer Corridor B, more ward props, an actors' lounge.
+- **AI tools used:** Claude (notes and log review on my PC, C++, Unreal Python, Blender Python, house-style art rendered from HTML with Playwright + Chrome, the audit). No new Sol art this session.
+- 📸 **Screenshot reminder:** drop a few of the party cake, the office window and the FOR LATER sticky into `devlog/screenshots/` for the itch page and link them here.
