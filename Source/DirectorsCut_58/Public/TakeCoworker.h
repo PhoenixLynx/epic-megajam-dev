@@ -66,6 +66,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Coworker") void SayLine(const FString& Line);
 	/** Something you threw hit them. */
 	void HitByProp(float Speed);
+	/** After HitByProp, when the thing was a full mug: they get coffee on them, and HR counts it twice. */
+	void SplashedByCoffee();
 	/** E on a story NPC: the next line of its current conversation (DT_NPCLines Context Story1, Story2, ...;
 	 *  Pass1Story1.. once you hold pass 1, DoneStory1.. once the morning is done, SlipStory1.. after the 10:00 slip).
 	 *  Once a conversation is finished, E gives small talk. Non-story NPCs just Speak(). */
@@ -144,6 +146,8 @@ private:
 	UPROPERTY() TObjectPtr<class UMaterialInterface> FaceFrown;
 	int32 FaceMode = -1;
 	float FrownHold = 0.f;
+	float TheftHold = 0.f;
+	bool bPayWarned = false;   // security: "that's coming out of your pay"   // you took their computer: they stop typing and stare, then turn back to the desk
 	float FaceFearHold = 0.f;
 	void SetFace(bool bFear);
 	FString TaskHint(const class UTakeGameInstance* GI) const;

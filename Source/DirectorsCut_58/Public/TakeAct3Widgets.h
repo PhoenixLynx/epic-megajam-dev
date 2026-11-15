@@ -49,7 +49,12 @@ protected:
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 private:
 	UPROPERTY() TObjectPtr<class UCanvasPanelSlot> RollSlot;
+	UPROPERTY() TObjectPtr<class UVerticalBox> EndPanel;   // after the roll: PLAY AGAIN (TAKE n+1) / TITLE SCREEN
 	float T = 0.f;
 	bool bDone = false;
 	void Finish();
+	UFUNCTION() void Pick(int32 Index);
+public:
+	int32 NextTake = 2;   // what PLAY AGAIN says (the next take number)
+	FString DirectedBy = TEXT("________________");
 };

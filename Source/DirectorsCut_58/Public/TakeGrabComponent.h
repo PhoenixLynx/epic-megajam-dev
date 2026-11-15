@@ -34,7 +34,7 @@ public:
 	UTakeGrabComponent();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab") float GrabRange = 300.f;
-	/** Reach with 1+ soul bits (astral logic). */
+	/** Reach with 1+ soul bits (soul bits). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab") float TelekinesisRange = 800.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab") float HoldDistance = 150.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grab") float ThrowStrength = 1800.f;
@@ -147,6 +147,22 @@ private:
 	TWeakObjectPtr<AActor> MyPhone;
 	TWeakObjectPtr<AActor> RingingPhone;
 	UPROPERTY() TObjectPtr<class UAudioComponent> RingAudio;
+	// Music (PhoenixLynx's "Halcyon" melody): fades in the first time you get coffee and the first time an energy
+	// sphere pulls you out of Fear; fades out at the end, or early if Fear comes back
+	UPROPERTY() TObjectPtr<class UAudioComponent> MusicAudio;
+	float MusicLeft = 0.f;
+	float MusicAge = 0.f;
+	bool bMusicFading = false;
+	bool bMusicCoffeeDone = false;
+	bool bMusicWispDone = false;
+	void PlayMusicCue(const TCHAR* Why, const TCHAR* Track = TEXT("mus_halcyon_positive"), bool bForce = false);
+	void StopMusic(float FadeSeconds);
+	TSet<FString> CheckedInRoles;   // lunch check-ins: one per role (Reception, Security, Custodian), any of them
+	TSet<TWeakObjectPtr<AActor>> LunchEaten;
+	bool bChefRemarked = false;
+	int32 FearCalls = 0;
+	int32 StalkerReturns = 0;       // each time it catches you it stays away a little longer (room to solve the charts)
+	void TickMusic(float DeltaTime);
 	float RingLeft = 0.f;
 	float RingCycle = 0.f;
 	float NextRingIn = 45.f;
@@ -211,6 +227,11 @@ private:
 	UFUNCTION() void OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	int32 TasksShown = -1;          // bitmask of finished tasks last time we drew the list
 	void PourCoffee();
+	/** A mug that hits something hard enough spills: droplets, a puddle, and (on a coworker) a hot beverage incident. */
+	bool SpillCoffee(UStaticMeshComponent* Mug, const FHitResult& Hit, AActor* OtherActor, float Speed);
+	int32 CoffeeSplashes = 0;        // anywhere
+	int32 WellnessTries = 0;         // pressing the Wellness Center button before you have pass 2
+	int32 HotBeverageIncidents = 0;  // on a coworker
 	void UpdateTasks();
 	class ATakeCoworker* CoworkerInView() const;
 	void ThrowInput() { if (IsHolding()) { Throw(); } }
@@ -260,6 +281,7 @@ private:
 	TArray<FReveal> Act2Things;
 	bool bAct2Revealed = false;
 	bool bLunchPutAway = false;   // Act 3: lunch is over, the food is gone (and stops coming back)
+	float WardRingIn = -1.f;      // the nurses' station phone in the ward: seconds to its next call (-1 = no ward phone yet)
 	void RevealAct2();
 	TArray<TWeakObjectPtr<AActor>> Spawned;   // vended snacks and poured mugs (oldest recycled)
 	TArray<TWeakObjectPtr<AActor>> Bins;
@@ -267,6 +289,11 @@ private:
 	TWeakObjectPtr<class UTextRenderComponent> ElevatorClock;
 	int32 ElevatorClockShown = -1;
 	void MakeElevatorClock();
+	// Lobby elevator doors: two brushed-steel panels that slide open when you come near and close behind you
+	TWeakObjectPtr<class AStaticMeshActor> ElevDoorL, ElevDoorR;
+	float ElevDoorOpen = 0.f;   // 0 closed .. 1 open
+	bool bElevDoorWantOpen = false;
+	void TickElevatorDoors(float DeltaTime);
 	TWeakObjectPtr<UPrimitiveComponent> TossProp;
 	float TossLeft = 0.f;
 	FVector TossFrom = FVector::ZeroVector;   // where the last throw left your hands (to rescue a prop that falls through the floor)
@@ -310,6 +337,37 @@ private:
 	float StalkerIn = -1.f;
 	float ExitT = -1.f;
 	float EndT = -1.f;
+	bool bBadEmployee = false;
+	// --- The two endings (TakeDirector.cpp) ---
+	bool bPenthouseBuilt = false;
+	bool bRefused = false;
+	float RefuseT = -1.f;
+	struct FLifted { TWeakObjectPtr<AActor> Actor; FVector From = FVector::ZeroVector; float Delay = 0.f; };
+	TArray<FLifted> Lifted;
+	TWeakObjectPtr<AActor> DirectorChair;
+	TWeakObjectPtr<class UTextRenderComponent> ChairName;
+	TWeakObjectPtr<class UStaticMeshComponent> LiveMonitor;
+	int32 LiveMonitorSlot = 0;
+	TWeakObjectPtr<AActor> Employee4472;
+	TWeakObjectPtr<AActor> Badge4472;
+	TWeakObjectPtr<class USceneCaptureComponent2D> DailiesCam;
+	UPROPERTY() TObjectPtr<class UTextureRenderTarget2D> DailiesTarget;
+	class AStaticMeshActor* SpawnSetPiece(class UStaticMesh* M, const FVector& At, const FRotator& Rot, const FVector& Scale, class UMaterialInterface* Material, bool bCollide);
+	void BuildPenthouse();
+	void BuildLobbyParty();   // the wrap party, in the lobby: there in both endings
+	bool bLobbyPartyBuilt = false;
+	void GoToPenthouse();
+	void SitDirector();
+	void CallAction();
+	void StartRefusal();
+	void TickRefusal(float DeltaTime);
+	void LiftTheSet();
+	float ForeshadowIn = -1.f;     // Act 3 upstairs: the stalker's first appearance (a chase, then gone)
+	float ForeshadowT = -1.f;
+	bool bForeshadowDone = false;
+	void TickForeshadow(float DeltaTime);
+	void EndForeshadow(bool bCaught);     // threw too much at people today: the wrap party notices
+	bool bPartyLeashSaid = false;
 	int32 EndStep = 0;
 	float EndCardT = -1.f;
 	bool bEndingYes = false;

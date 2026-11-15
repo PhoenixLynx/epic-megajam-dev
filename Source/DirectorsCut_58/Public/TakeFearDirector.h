@@ -40,6 +40,12 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Fear") int32 Stage = 0;
 
+	/** Outside a scripted sequence (Corridor B, the ward, the wrap party), Fear fades back by itself: it starts
+	 *  DecayDelay seconds after the last thing that scared you and takes about 1/DecayPerSecond seconds from full. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fear") float DecayDelay = 20.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fear") float DecayPerSecond = 1.f / 90.f;
+	double LastScareTime = -100.0;
+
 	/** 0..1, how far the cinema bars have closed (starts at Fear 0.75). Read it from the letterbox widget. */
 	UPROPERTY(BlueprintReadOnly, Category = "Fear") float LetterboxAmount = 0.f;
 
@@ -90,6 +96,11 @@ public:
 
 private:
 	TMap<TObjectPtr<ALight>, float> BaseIntensity;
+	TMap<TObjectPtr<ALight>, FLinearColor> BaseColor;
+	float RedAlert = 0.f;   // 0..1: the lights go red while the stalker is out
+public:
+	bool bForceRed = false;   // the refusal ending: red without a stalker
+private:
 	float FlickerClock = 0.f;
 	float BurstLeft = 0.f;
 	bool LoopAllowed(float& OutNeed) const;

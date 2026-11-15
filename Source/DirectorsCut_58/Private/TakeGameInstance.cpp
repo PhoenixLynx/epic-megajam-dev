@@ -1,6 +1,8 @@
 // TAKE 4471 - run state + console commands
 #include "TakeGameInstance.h"
 #include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
+#include "Engine/World.h"
 #include "TakeGrabComponent.h"
 #include "GameFramework/Pawn.h"
 #include "TakeCoworker.h"
@@ -19,6 +21,12 @@
 void UTakeGameInstance::Init()
 {
 	Super::Init();
+	// Before the title screen, don't draw the world at all (the camera fade only starts at BeginPlay, so the first
+	// frames could show the office through the "loading" black). The title choice turns it back on.
+	FWorldDelegates::OnPostWorldInitialization.AddWeakLambda(this, [this](UWorld* World, const UWorld::InitializationValues)
+	{
+		if (World && World->IsGameWorld() && !bTitleDone) { HideWorldUntilTitle(true); }
+	});
 	if (DevSeedOverride >= 0)
 	{
 		RunSeed = DevSeedOverride;
@@ -29,6 +37,11 @@ void UTakeGameInstance::Init()
 		RunSeed = static_cast<int32>((Mixed ^ (Mixed >> 31)) & 0x7FFFFFFF);
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Run started. Take %d."), TakeNumber);   // seed deliberately not logged
+}
+
+void UTakeGameInstance::HideWorldUntilTitle(bool bHide)
+{
+	if (UGameViewportClient* VC = GetGameViewportClient()) { VC->bDisableWorldRendering = bHide; }
 }
 
 void UTakeGameInstance::SetSoulBits(int32 NewValue)
@@ -268,7 +281,7 @@ void UTakeGameInstance::ResetRun()
 	bTrainingComplete = bReadEmail = bGotCoffee = bMetReceptionist = bGotWisp = false;
 	bJoinedCall = bAttendedMeeting = bRepliedChairman = bClocksFrozen = bRepliedPhish = false;
 	bTrustFell = bEndingSeen = bDevLunchNow = bDevAct3Now = false;
-	CoworkersCheckedIn = CoworkersHit = GuardComplaints = CoffeesPoured = Baskets = BestTossStreak = 0;
+	CoworkersCheckedIn = CoworkersHit = HotBeverageIncidents = GuardComplaints = CoffeesPoured = Baskets = BestTossStreak = 0;
 	WorkdayMinutes = 540.f;
 	Energy = 100.f;
 	RewindPoint = FVector::ZeroVector;

@@ -74,9 +74,14 @@ void UTakeGrabComponent::BeginPlay()
 	}
 	BindStoryEvents();
 	const UTakeGameInstance* TitleGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
-	if (bPlayColdOpen && TitleGI && !TitleGI->bTitleDone) { ShowTitle(); }   // the title screen first, once per launch
-	else if (bPlayColdOpen) { StartSlate(false); }
-	else if (Prompt) { Prompt->SetSlate(0.f, FString(), 0.f); }
+	if (bPlayColdOpen && TitleGI && !TitleGI->bTitleDone) { ShowTitle(); return; }   // the title screen first, once per launch
+	if (UTakeGameInstance* ShowGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { ShowGI->HideWorldUntilTitle(false); }   // no title: draw the world
+	if (bPlayColdOpen) { StartSlate(false); }
+	else
+	{
+		if (Prompt) { Prompt->SetSlate(0.f, FString(), 0.f); }
+		SetColdOpenFade(0.f);   // no cold open: don't leave the Fear Director's "wait for the title" black up
+	}
 }
 
 void UTakeGrabComponent::EndPlay(const EEndPlayReason::Type Reason)
@@ -236,6 +241,7 @@ ETakeLookKind UTakeGrabComponent::Look(FHitResult& Hit) const
 
 void UTakeGrabComponent::Interact()
 {
+	if (EndStep == 13) { CallAction(); return; }   // in the director's chair: E calls it
 	if (bSeated) { LogOut(); return; }
 	FHitResult Hit;
 	if (IsHolding())
@@ -274,6 +280,10 @@ bool UTakeGrabComponent::TryGrabOrDrop()
 	HeldPitchRoll = FRotator(Comp->GetComponentRotation().Pitch, 0.f, Comp->GetComponentRotation().Roll);
 	Handle->GrabComponentAtLocationWithRotation(Comp, NAME_None, Comp->GetComponentLocation(), Comp->GetComponentRotation());
 	Comp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);   // a held mug can't shove you (or be shoved by you)
+	// Anything you pick up can hit someone when you throw it (desk items that weren't simulating at the start had no hit events,
+	// so a stolen monitor thrown at its owner went straight past without a word)
+	Comp->SetNotifyRigidBodyCollision(true);
+	Comp->OnComponentHit.AddUniqueDynamic(this, &UTakeGrabComponent::OnPropHit);
 	PlaySfx(TEXT("sfx_pickup"), Comp->GetComponentLocation(), 0.6f);
 	// Took someone's computer (or mug)? The nearest coworker notices
 	if (const UStaticMeshComponent* Took = Cast<UStaticMeshComponent>(Comp))
@@ -326,7 +336,27 @@ void UTakeGrabComponent::ToggleOpen(AActor* Openable)
 	if (Openable->ActorHasTag(TEXT("PassBlock=2")))   // the Wellness Center doors: they just let you through with pass 2
 	{
 		const FVector At = Openable->GetActorLocation();
-		if (GetSoulBits() < 2) { PlaySfx(TEXT("sfx_door_locked"), At); ShowSubtitle(TEXT(""), TEXT("WELLNESS CENTER. Access pass 2 required. Wellness is a privilege."), 3.f); return; }
+		if (GetSoulBits() < 2)
+		{
+			PlaySfx(TEXT("sfx_door_locked"), At);
+			static const TCHAR* NotYet[] = {
+				TEXT("WELLNESS CENTER. Access pass 2 required. Wellness is a privilege."),
+				TEXT("The panel: FEELING UNWELL? Please feel well, then try again."),
+				TEXT("You press it again. The light blinks mint, then red, like it thought about it."),
+				TEXT("The panel: YOUR WELLNESS IS IMPORTANT TO US. YOUR ESTIMATED WAIT IS: LATER."),
+				TEXT("The panel: WELLNESS IS EARNED. You have earned 0 of 2 wellness."),
+				TEXT("The panel: HAVE YOU TRIED TAKING A DEEP BREATH? (Don't. Not in Corridor B.)"),
+				TEXT("The panel: THIS DOOR HAS BEEN PRESSED 7 TIMES TODAY. 6 OF THEM WERE YOU."),
+				TEXT("The panel shows a smiley face. It doesn't open. It just smiles."),
+			};
+			const int32 N = int32(UE_ARRAY_COUNT(NotYet));
+			const int32 Pick = WellnessTries < N ? WellnessTries : FMath::RandRange(1, N - 1);
+			++WellnessTries;
+			FString Line = NotYet[Pick];
+			if (GetSoulBits() == 1 && WellnessTries > 2) { Line = TEXT("The panel: 1 OF 2 PASSES. HALF WELL. KEEP GOING."); }
+			ShowSubtitle(TEXT(""), Line, 3.5f);
+			return;
+		}
 		PlaySfx(TEXT("sfx_badge_ok"), At, 0.8f);
 		PlaySfx(TEXT("sfx_door_open"), At, 0.8f);
 		Openable->SetActorHiddenInGame(true);
@@ -544,7 +574,7 @@ void UTakeGrabComponent::PlaySfx(const TCHAR* Name, const FVector& Where, float 
 {
 	if (USoundBase* Snd = LoadObject<USoundBase>(nullptr, *FString::Printf(TEXT("/Game/Audio/Placeholder/%s.%s"), Name, Name)))
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, Snd, Where, Volume);
+		UGameplayStatics::PlaySoundAtLocation(this, Snd, Where, Volume, 1.f, 0.f, TakeAudio::World3D());
 	}
 }
 
@@ -597,6 +627,7 @@ void UTakeGrabComponent::Eat()
 	else { ShowSubtitle(TEXT(""), Bites[Eaten % int32(UE_ARRAY_COUNT(Bites))], 2.5f); }
 	++Eaten;
 	if (UTakeGameInstance* EatGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { EatGI->AddEnergy(bDrink ? 12.f : 20.f); }
+	if (ATakeFearDirector* EatFear = FindFearDirector()) { if (EatFear->Fear > 0.f) { EatFear->StartCreep(FMath::Max(0.f, EatFear->TargetFear - 0.1f), 2.f); } }   // comfort food
 	Handle->ReleaseComponent();
 	if (AActor* Food = Comp->GetOwner())
 	{
@@ -629,6 +660,7 @@ void UTakeGrabComponent::Sip()
 	ShowSubtitle(TEXT(""), Lines[Sips % int32(UE_ARRAY_COUNT(Lines))], 2.5f);
 	++Sips;
 	GI->AddEnergy(10.f);
+	if (ATakeFearDirector* SipFear = FindFearDirector()) { if (SipFear->Fear > 0.f) { SipFear->StartCreep(FMath::Max(0.f, SipFear->TargetFear - 0.08f), 2.f); } }   // a sip steadies you
 }
 
 int32 UTakeGrabComponent::PassNeeded(const AActor* Door) const
@@ -666,7 +698,7 @@ void UTakeGrabComponent::TickFootsteps(float DeltaTime)
 	if (Pick == LastStep && StepSounds.Num() > 1) { Pick = (Pick + 1) % StepSounds.Num(); }
 	LastStep = Pick;
 	const FVector Feet = C->GetActorLocation() - FVector(0.f, 0.f, C->GetSimpleCollisionHalfHeight());
-	UGameplayStatics::PlaySoundAtLocation(this, StepSounds[Pick], Feet, C->bIsCrouched ? 0.18f : 0.32f, FMath::FRandRange(0.94f, 1.06f));
+	UGameplayStatics::PlaySoundAtLocation(this, StepSounds[Pick], Feet, C->bIsCrouched ? 0.18f : 0.32f, FMath::FRandRange(0.94f, 1.06f), 0.f, TakeAudio::World3D());
 }
 
 void UTakeGrabComponent::BindPropImpacts()
@@ -680,6 +712,7 @@ void UTakeGrabComponent::BindPropImpacts()
 		for (UPrimitiveComponent* P : Prims)
 		{
 			if (!P->IsSimulatingPhysics()) { continue; }
+			P->CanCharacterStepUpOn = ECB_No;   // a knocked-over bin is not a step: coworkers were walking up onto them and floating
 			P->SetNotifyRigidBodyCollision(true);
 			P->OnComponentHit.AddUniqueDynamic(this, &UTakeGrabComponent::OnPropHit);
 			++N;
@@ -692,6 +725,9 @@ void UTakeGrabComponent::BindPropImpacts()
 		if (SM && SM->GetStaticMesh() && SM->GetStaticMesh()->GetName().Contains(TEXT("DeskPhone")))
 		{
 			Phones.Add(*It);
+			UStaticMeshComponent* PhoneSM = It->GetStaticMeshComponent();
+			if (PhoneSM->IsSimulatingPhysics()) { PhoneSM->SetSimulatePhysics(false); }   // bolted down: it rings, so it stays where you can find it
+			It->Tags.Remove(TEXT("Throwable"));
 			if (It->ActorHasTag(TEXT("Phone4471"))) { MyPhone = *It; }
 		}
 	}
@@ -755,9 +791,11 @@ void UTakeGrabComponent::OnPropHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 	const bool bHeavy = HitComp->GetMass() > 8.f;
 	const float Vol = FMath::GetMappedRangeValueClamped(FVector2D(160.f, 900.f), FVector2D(0.2f, 0.9f), Speed);
 	PlaySfx(bHeavy ? TEXT("sfx_impact_heavy") : TEXT("sfx_impact_light"), Hit.ImpactPoint, Vol);
+	const bool bSpilled = SpillCoffee(Cast<UStaticMeshComponent>(HitComp), Hit, OtherActor, Speed);
 	if (ATakeCoworker* Victim = Cast<ATakeCoworker>(OtherActor))
 	{
 		Victim->HitByProp(Speed);
+		if (bSpilled) { Victim->SplashedByCoffee(); }
 		// (the new-mail chime comes from TickMail when Security / HR write to you)
 	}
 }
@@ -812,12 +850,25 @@ void UTakeGrabComponent::TickPhones(float DeltaTime)
 			RingCycle = 3.f;
 			if (USoundBase* Ring = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/Placeholder/sfx_phone_ring.sfx_phone_ring")))
 			{
-				RingAudio = UGameplayStatics::SpawnSoundAtLocation(this, Ring, P->GetActorLocation() + FVector(0.f, 0.f, 10.f), FRotator::ZeroRotator, 0.7f);
+				RingAudio = UGameplayStatics::SpawnSoundAtLocation(this, Ring, P->GetActorLocation() + FVector(0.f, 0.f, 10.f), FRotator::ZeroRotator, 0.7f,
+					1.f, 0.f, TakeAudio::World3D());   // heard from where the phone is, not everywhere
 			}
 		}
 		return;
 	}
 	if (PauseMenu) { return; }
+	// In the ward only the nurses' station phone rings (you're 15 m under the office)
+	if (const UTakeGameInstance* PhoneGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)); PhoneGI && PhoneGI->Beat == ETakeBeat::Ward)
+	{
+		AActor* WardPhone = nullptr;
+		for (const TWeakObjectPtr<AActor>& Ph : Phones) { if (Ph.IsValid() && Ph->ActorHasTag(TEXT("WardPhone"))) { WardPhone = Ph.Get(); break; } }
+		if (WardPhone && WardRingIn >= 0.f && (WardRingIn -= DeltaTime) <= 0.f)
+		{
+			WardRingIn = FMath::FRandRange(40.f, 70.f);
+			RingPhone(WardPhone);
+		}
+		return;
+	}
 	NextRingIn -= DeltaTime;
 	if (TickReminders()) { NextRingIn = FMath::Max(NextRingIn, FMath::FRandRange(60.f, 120.f)); return; }   // the calendar calls about the 12:30 / 1:00
 	if (NextRingIn > 0.f) { return; }
@@ -848,6 +899,43 @@ void UTakeGrabComponent::AnswerPhone(AActor* Phone)
 	if (UTakeGameInstance* PhoneGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { PhoneGI->AddEnergy(-5.f); }   // calls are draining
 	PlaySfx(TEXT("sfx_phone_static"), Where, 0.5f);   // the line crackles under the voices (voices coming later)
 	TArray<FString> Lines;
+	if (Phone && Phone->ActorHasTag(TEXT("WardPhone")))   // the nurses' station, in the ward
+	{
+		switch (UseCounts.FindOrAdd(TEXT("WardPhone"))++)
+		{
+		case 0:
+			Lines = { TEXT("HALCYON Care, nurses' station. Patient 4471 is out of bed."), TEXT("Please return patient 4471 to bed."),
+			          TEXT("...Oh. It's you. *click*") };
+			break;
+		case 1:
+			Lines = { TEXT("(static) ...we're losing the light down there. Can we get this in one?"), TEXT("*click*") };
+			break;
+		case 2:
+			Lines = { TEXT("The charts. Read the charts."), TEXT("Two of them agree. The third one is lying. *click*") };
+			break;
+		default:
+			Lines = { TEXT("(hold music: the same four notes)") };
+			break;
+		}
+		ShowSubtitleSequence(TEXT("Nurses' station"), Lines);
+		return;
+	}
+	const ATakeFearDirector* CallFear = FindFearDirector();
+	if (CallFear && CallFear->Fear >= 0.45f && ReminderRinging <= 0)   // Fear: whoever answers isn't a coworker
+	{
+		static const TCHAR* const Creepy[][3] = {
+			{ TEXT("(breathing. close. like they're holding the phone to your ear from behind)"), TEXT("...turn around."), TEXT("*click*") },
+			{ TEXT("This is a recording. You are 4471. You were 4470. You will be 4472."), TEXT("Please stay on the line."), TEXT("(the line stays open. nobody says anything else)") },
+			{ TEXT("(your own voice) Hello? Hello? Is anyone there?"), TEXT("(your own voice) Why isn't anyone answering?"), TEXT("*click*") },
+			{ TEXT("Places, everyone. Places. Places. Places."), TEXT("Where is 4471? Where is 4471 supposed to be?"), TEXT("*click*") },
+			{ TEXT("(an office, very far away. typing. a printer. someone laughing at your desk)"), TEXT("...They're using your chair."), TEXT("*click*") },
+		};
+		const int32 Pick = FearCalls++ % int32(UE_ARRAY_COUNT(Creepy));
+		Lines = { Creepy[Pick][0], Creepy[Pick][1], Creepy[Pick][2] };
+		PlaySfx(TEXT("sfx_phone_static"), Where, 0.8f);
+		ShowSubtitleSequence(TEXT("???"), Lines);
+		return;
+	}
 	if (bMine && ReminderRinging > 0)
 	{
 		if (ReminderRinging == 1)
@@ -980,6 +1068,17 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 	for (const FCaption& C : Captions)
 	{
 		if (Name.Contains(C.Key)) { Title = C.Title; Caption = C.Text; GlyphKey = C.Glyphs; break; }
+	}
+	const UTakeGameInstance* CapGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (Name.Contains(TEXT("SignInSheet")) && CapGI && CapGI->LastEnding > 0)   // the next take remembers
+	{
+		Caption += CapGI->LastEnding == 1 ? TEXT("\nA new line at the bottom, in your handwriting: 4471, OUT: promoted.")
+			: TEXT("\nA new line at the bottom, in your handwriting: 4471, OUT: said no. Under it, in red: AGAIN.");
+	}
+	if (Name.Contains(TEXT("LunchSpecials")) && CapGI && CapGI->CurrentAct() >= 3)   // overtime: the board moved on too
+	{
+		Title = TEXT("OVERTIME MENU");
+		Caption = TEXT("Coffee. Cake (for later, don't touch).\nCraft services closes when the director says it closes.");
 	}
 	if (Title.IsEmpty() && Name.Contains(TEXT("Poster")))
 	{
@@ -1233,7 +1332,8 @@ void UTakeGrabComponent::UpdatePrompt()
 		Prompt->SetPrompt(K == TEXT("Sink") ? TEXT("E  Wash your hands") : K == TEXT("Dryer") ? TEXT("E  Dry your hands")
 			: K == TEXT("Toilet") ? TEXT("E  Flush") : K == TEXT("Printer") ? TEXT("E  Print") : K == TEXT("Cooler") ? TEXT("E  Get some water")
 			: K == TEXT("Elevator") ? TEXT("E  Press a button") : K == TEXT("TrustFall") ? TEXT("E  Fall backward")
-			: K == TEXT("ServiceElevator") ? TEXT("E  Call the service elevator") : TEXT("E  Use"));
+			: K == TEXT("ServiceElevator") ? TEXT("E  Call the service elevator")
+			: K == TEXT("DirectorsChair") ? TEXT("E  Sit in the director's chair") : TEXT("E  Use"));
 		break;
 	}
 	case ETakeLookKind::Wisp:     Prompt->SetPrompt(TEXT("E  Reach for the light")); break;
@@ -1258,6 +1358,7 @@ void UTakeGrabComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	TickAct2(DeltaTime);
 	TickCall(DeltaTime);
 	TickAct3(DeltaTime);
+	TickMusic(DeltaTime);
 	TickFun(DeltaTime);
 	TickMail(DeltaTime);
 	TickFearReveals();

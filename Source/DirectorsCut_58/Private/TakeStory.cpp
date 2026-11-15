@@ -13,6 +13,8 @@
 //   check in (2.2)        : finishing a story NPC's "Lunch" conversation = one coworker checked in (3 needed)
 //   frozen clocks (2.6)   : the clock reaches 2:14 and stops; PA, a shiver of Fear that never quite leaves
 #include "TakeGrabComponent.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
 #include "DirectorsCut_58.h"
 #include "TakeGameInstance.h"
 #include "TakeFearDirector.h"
@@ -125,7 +127,11 @@ void UTakeGrabComponent::HandleRewind(int32 NewTakeNumber)
 	SlateTake = NewTakeNumber;
 	if (const UTakeGameInstance* RGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
 	{
-		if (RGI->Beat == ETakeBeat::Ward) { StalkerIn = 15.f; }   // CUT. AGAIN. at the ward door: it comes back soon
+		if (RGI->Beat == ETakeBeat::Ward)   // CUT. AGAIN. at the ward door: it comes back, a little later each time
+		{
+			++StalkerReturns;
+			StalkerIn = FMath::Min(15.f + 10.f * StalkerReturns, 45.f);
+		}
 	}
 }
 
@@ -225,8 +231,9 @@ void UTakeGrabComponent::OnStoryTalkFinished(const FString& RoleName, const FStr
 		if (GI->Beat == ETakeBeat::Morning) { GI->SetObjective(GI->ObjectiveForBeat()); }
 	}
 	// Beat 2.2: "Check in with 3 coworkers" = finish a lunchtime conversation with each story NPC
-	if (SetName == TEXT("Lunch") && GI->CurrentAct() >= 2 && GI->CoworkersCheckedIn < 3)
+	if (SetName == TEXT("Lunch") && GI->CurrentAct() >= 2 && GI->CoworkersCheckedIn < 3 && !CheckedInRoles.Contains(RoleName))
 	{
+		CheckedInRoles.Add(RoleName);
 		++GI->CoworkersCheckedIn;
 		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Checked in with %s (%d/3)"), *RoleName, GI->CoworkersCheckedIn);
 		GI->SetObjective(GI->ObjectiveForBeat());
@@ -322,10 +329,58 @@ ATakeWisp* UTakeGrabComponent::WispInView() const
 	return nullptr;
 }
 
+// ------------------------------------------------------------------ music
+void UTakeGrabComponent::PlayMusicCue(const TCHAR* Why, const TCHAR* Track, bool bForce)
+{
+	if (MusicAudio && MusicAudio->IsPlaying())
+	{
+		if (!bForce) { return; }   // already playing: don't restart it
+		MusicAudio->FadeOut(2.f, 0.f);   // hand over to the new cue
+		MusicAudio = nullptr;
+	}
+	USoundBase* Music = LoadObject<USoundBase>(nullptr, *FString::Printf(TEXT("/Game/Audio/Music/%s.%s"), Track, Track));
+	if (!Music)
+	{
+		UE_LOG(LogTake, Warning, TEXT("[TAKE 4471] Music: %s not imported yet (run import_music.py)"), Track);
+		return;
+	}
+	MusicAudio = UGameplayStatics::CreateSound2D(this, Music, 1.f, 1.f, 0.f, nullptr, false, false);
+	if (!MusicAudio) { return; }
+	MusicAudio->FadeIn(4.f, 0.55f);   // slow swell under the ambience
+	MusicLeft = Music->Duration > 0.f ? Music->Duration : 90.f;
+	MusicAge = 0.f;
+	bMusicFading = false;
+	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Music: %s (%s)"), Track, Why);
+}
+
+void UTakeGrabComponent::StopMusic(float FadeSeconds)
+{
+	if (!MusicAudio || bMusicFading || !MusicAudio->IsPlaying()) { return; }
+	bMusicFading = true;
+	MusicAudio->FadeOut(FadeSeconds, 0.f);
+}
+
+void UTakeGrabComponent::TickMusic(float DeltaTime)
+{
+	if (!MusicAudio || bMusicFading) { return; }
+	if (!MusicAudio->IsPlaying()) { MusicAudio = nullptr; return; }
+	if (UGameplayStatics::IsGamePaused(this)) { return; }
+	MusicLeft -= DeltaTime;
+	MusicAge += DeltaTime;
+	const ATakeFearDirector* FearDir = FindFearDirector();
+	const bool bFearBack = EndT < 0.f && MusicAge > 5.f && FearDir && FearDir->TargetFear > 0.4f;   // (the sphere's own calm-down takes a few seconds)
+	if (MusicLeft <= 7.f || bFearBack)
+	{
+		bMusicFading = true;
+		MusicAudio->FadeOut(bFearBack ? 2.5f : 7.f, 0.f);   // a scare cuts it short; otherwise it ends on its own, gently
+	}
+}
+
 void UTakeGrabComponent::CollectWisp(ATakeWisp* Wisp)
 {
 	if (!Wisp || !Wisp->IsAvailable()) { return; }
 	Wisp->Collect();
+	if (!bMusicWispDone) { bMusicWispDone = true; PlayMusicCue(TEXT("first energy sphere")); }
 	PlaySfx2D(TEXT("sfx_lock_solved"), 0.8f);
 	if (ATakeFearDirector* FearDir = FindFearDirector()) { FearDir->Calm(2.5f); }
 	if (UTakeGameInstance* WispGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { WispGI->AddEnergy(100.f); }   // soul energy: full

@@ -89,6 +89,9 @@ void ATakeCoworker::BeginPlay()
 		Cap->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);          // you still can't walk through them
 		Cap->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Block);   // and things you throw still hit them
 	}
+	// Every guard and custodian counts for the lunchtime check-in, not only the two by the supply closet
+	// (playtest: the lobby guard and the hallway custodian looked like the obvious ones, and didn't count)
+	if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase) || NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase)) { bStoryNPC = true; }
 	if (bStoryNPC) { bTalksWhenNear = false; }   // story characters wait for you to press E
 	SetupSkeletal();
 	LoadLines();
@@ -251,8 +254,40 @@ void ATakeCoworker::HitByProp(float Speed)
 	else { SayLine(TEXT("Hey! I haven't even had my coffee yet.")); }
 }
 
+void ATakeCoworker::SplashedByCoffee()
+{
+	if (State == ETakeCoworkerState::Watching || bVanished) { return; }
+	if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { ++GI->CoworkersHit; }   // HR counts hot beverages twice
+	FrownHold = 6.f;
+	static const TCHAR* SplashLines[] = {
+		TEXT("That was a nine-dollar oat latte. Not even mine. Still."),
+		TEXT("It's in my collar. It's in my COLLAR."),
+		TEXT("I'm filing this under hot beverage incident. There's a form. There's always a form."),
+		TEXT("You know what, I was going to be nice to you today."),
+		TEXT("This is my only shirt. They gave us one shirt."),
+		TEXT("Is that... is that decaf? You threw DECAF at me?"),
+	};
+	if (NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase)) { SayLine(TEXT("Assault with a beverage. I'm writing BEVERAGE in capitals.")); return; }
+	if (NPCRole.Equals(TEXT("Custodian"), ESearchCase::IgnoreCase)) { SayLine(TEXT("On me AND the floor. Efficient. I'll give you that.")); return; }
+	SayLine(SplashLines[FMath::RandRange(0, int32(UE_ARRAY_COUNT(SplashLines)) - 1)]);
+}
+
 FString ATakeCoworker::NextLine()
 {
+	if (bAtParty)   // the wrap party: nobody talks shop (no supply closets, no passes)
+	{
+		static const TCHAR* Party[] = {
+			TEXT("Great work today, {EMP}. Really. Same time tomorrow?"),
+			TEXT("Have you tried the cake? I haven't. I'm not sure it's for eating."),
+			TEXT("I loved your scene with the coffee machine. Very natural."),
+			TEXT("Is it over? It feels over. It never feels over."),
+			TEXT("Craft services really outdid themselves. Same cake as last time."),
+			TEXT("I'm told they're keeping the take where you looked at the camera."),
+			TEXT("Cheers. To 4471. ...Sorry, I always want to say 4470."),
+			TEXT("Don't stand on your mark. We're wrapped. ...Old habits."),
+		};
+		return Party[FMath::RandRange(0, int32(UE_ARRAY_COUNT(Party)) - 1)];
+	}
 	// First meeting: a greeting
 	if (!bGreeted && Greetings.Num() > 0)
 	{
@@ -397,6 +432,7 @@ bool ATakeCoworker::CurrentStorySet(FString& OutSet) const
 
 bool ATakeCoworker::HasNewConversation() const
 {
+	if (bAtParty) { return false; }   // no "!" at the party
 	if (StorySets.Num() == 0) { return true; }   // DataTable not re-imported yet: keep the old always-on "!"
 	FString Set;
 	return CurrentStorySet(Set) && (bInConversation || !FinishedSets.Contains(Set));
@@ -405,6 +441,7 @@ bool ATakeCoworker::HasNewConversation() const
 bool ATakeCoworker::Talk()
 {
 	FString Set;
+	if (bAtParty) { SayLine(NextLine()); return true; }   // party small talk only
 	if (!bStoryNPC || !CurrentStorySet(Set)) { return Speak(TEXT("Talk")); }
 	const TArray<FString>* Convo = StorySets.Find(Set);
 	if (!Convo || Convo->Num() == 0) { return Speak(TEXT("Talk")); }
@@ -423,7 +460,19 @@ bool ATakeCoworker::Talk()
 		bGreeted = true;   // the conversation is the greeting
 	}
 	const int32 LineIndex = FMath::Clamp(StoryIndex, 0, Convo->Num() - 1);
-	SayLine((*Convo)[LineIndex]);
+	FString Say = (*Convo)[LineIndex];
+	const UTakeGameInstance* TalkGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	if (TalkGI && TalkGI->LastEnding > 0 && Set.IsEmpty() && LineIndex == 0 && NPCRole.Equals(TEXT("Receptionist"), ESearchCase::IgnoreCase))
+	{
+		Say = TalkGI->LastEnding == 1 ? TEXT("Good morning, {EMP}! Right on time. ...Welcome back. Again. The director says hello.")
+			: TEXT("Good morning, {EMP}! Right on time. ...Welcome back. Again. You said no last time. We noticed.");
+	}
+	if (TalkGI && TalkGI->bJoinedCall && Say.Contains(TEXT("12:30")))   // the call already happened
+	{
+		Say = TalkGI->bAttendedMeeting ? TEXT("How were the Chairman's meetings? Both of them? He says you were wonderful. He says that about everyone.")
+			: TEXT("How was the 12:30? There's a one o'clock too. Same room. Same Chairman. Camera still off.");
+	}
+	SayLine(Say);
 	++StoryIndex;
 	if (StoryIndex >= Convo->Num())
 	{
@@ -513,6 +562,7 @@ void ATakeCoworker::Animate(float DeltaSeconds, bool bMoving)
 	switch (State)
 	{
 	case ETakeCoworkerState::Working:   // typing, checking email: small lean and head-nod rhythm
+		if (TheftHold > 0.f) { break; }  // ...unless you just took their computer
 		R.Roll = 2.f * FMath::Sin(Phase * 7.f) * FMath::Max(0.f, FMath::Sin(Phase * 0.9f));
 		R.Yaw += 4.f * FMath::Sin(Phase * 0.35f);   // glancing between screens
 		break;
@@ -583,8 +633,33 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 		}
 	}
 
+	// Security keeps count. Enough incidents and the guard tells you (once) what it's going to cost you
+	if (!bPayWarned && Player && NPCRole.Equals(TEXT("Guard"), ESearchCase::IgnoreCase) && State != ETakeCoworkerState::Watching && !bAtParty)
+	{
+		const UTakeGameInstance* PayGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		if (PayGI && PayGI->CoworkersHit >= 5 && FVector::Dist2D(Player->GetActorLocation(), GetActorLocation()) < 450.f)
+		{
+			bPayWarned = true;
+			const FRotator Face = (Player->GetActorLocation() - GetActorLocation()).Rotation();
+			SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));
+			FrownHold = 6.f;
+			SayLine(FString::Printf(TEXT("{EMP}. That's %d incidents on my log. Payroll's docking you. Every single one."), PayGI->CoworkersHit));
+		}
+	}
 	FaceFearHold = FMath::Max(0.f, FaceFearHold - DeltaSeconds);
 	FrownHold = FMath::Max(0.f, FrownHold - DeltaSeconds);
+	if (TheftHold > 0.f)
+	{
+		TheftHold -= DeltaSeconds;
+		if (Player && State == ETakeCoworkerState::Working)   // the glare: their eyes follow you until they give up
+		{
+			const FRotator Glare = (Player->GetActorLocation() - GetActorLocation()).Rotation();
+			SetActorRotation(FMath::RInterpTo(GetActorRotation(), FRotator(0.f, Glare.Yaw, 0.f), DeltaSeconds, 6.f));
+			FrownHold = FMath::Max(FrownHold, 0.5f);
+		}
+		if (TheftHold <= 0.f && State == ETakeCoworkerState::Working) { SetActorRotation(HomeRot); }   // fine. back to work.
+	}
+	if (bSkeletal) { GetMesh()->bPauseAnims = TheftHold > 0.f && State != ETakeCoworkerState::Watching; }   // hands off the keyboard
 	SetFace(State == ETakeCoworkerState::Watching || FaceFearHold > 0.f);
 
 	AAIController* AI = Cast<AAIController>(GetController());
@@ -667,7 +742,14 @@ void ATakeCoworker::Tick(float DeltaSeconds)
 			|| (AI && AI->GetMoveStatus() == EPathFollowingStatus::Idle && StuckTimer > 1.f);
 		StuckTimer += DeltaSeconds;
 		if (FVector::DistSquared2D(LastPos, GetActorLocation()) > 4.f) { LastPos = GetActorLocation(); }
-		const bool bGaveUp = StuckTimer > 20.f;
+		bool bGaveUp = StuckTimer > 20.f;
+		if (bGaveUp && !bArrived && Player && PlayerCanSee(Player) && FVector::Dist2D(Player->GetActorLocation(), GetActorLocation()) < 2500.f)
+		{
+			// Never pop home while you're looking (that read as "they disappeared after I talked to them"): try the path again
+			bGaveUp = false;
+			GoTo(Target, State);
+			StuckTimer = 14.f;
+		}
 		if (bArrived || bGaveUp)
 		{
 			if (State == ETakeCoworkerState::Walking)
@@ -706,6 +788,7 @@ void ATakeCoworker::ReactToTheft()
 		SetActorRotation(FRotator(0.f, Face.Yaw, 0.f));   // they stop and turn to look at you
 	}
 	FrownHold = 5.f;
+	TheftHold = 6.f;
 	CooldownLeft = 0.f;
 	static const TCHAR* Snark[] = {
 		TEXT("Excuse me. I was using that."), TEXT("That's company property. Specifically, mine."),
@@ -719,6 +802,7 @@ void ATakeCoworker::JoinParty(const FVector& Where, const FVector& LookAt)
 {
 	bAtParty = true;
 	bWanders = false;
+	bTalksWhenNear = false;   // the speeches: nobody talks over them
 	bVanished = false;
 	FrownHold = FaceFearHold = 0.f;
 	State = ETakeCoworkerState::Working;

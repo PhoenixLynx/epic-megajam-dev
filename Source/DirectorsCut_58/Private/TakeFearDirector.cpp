@@ -83,7 +83,16 @@ void ATakeFearDirector::BeginPlay()
 	{
 		if (APlayerCameraManager* PCM = UGameplayStatics::GetPlayerCameraManager(this, 0))
 		{
-			PCM->StartCameraFade(1.f, 0.f, 3.f, FLinearColor::Black, false, false);
+			const UTakeGameInstance* FadeGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+			if (FadeGI && !FadeGI->bTitleDone)
+			{
+				// The title screen comes first: stay fully black until START / CONTINUE clears it (no office peeking through)
+				PCM->SetManualCameraFade(1.f, FLinearColor::Black, false);
+			}
+			else
+			{
+				PCM->StartCameraFade(1.f, 0.f, 3.f, FLinearColor::Black, false, false);
+			}
 		}
 	}
 }
@@ -105,6 +114,12 @@ bool ATakeFearDirector::LoopAllowed(float& OutNeed) const
 
 void ATakeFearDirector::StartCreep(float Target, float Seconds)
 {
+	if (Target > TargetFear + 0.01f)
+	{
+		if (const UWorld* W = GetWorld()) { LastScareTime = W->GetTimeSeconds(); }
+		// Logged so a scare that comes "from nowhere" in a playtest can be traced to what was happening at that moment
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Fear rises: %.2f -> %.2f over %.1f s"), Fear, Target, Seconds);
+	}
 	TargetFear = FMath::Clamp(Target, 0.f, 1.f);
 	CreepSpeed = FMath::Abs(TargetFear - Fear) / FMath::Max(Seconds, 0.01f);
 }
@@ -123,8 +138,20 @@ void ATakeFearDirector::Tick(float DeltaSeconds)
 	const bool bPlaying = World && World->IsGameWorld();
 	if (bPlaying)
 	{
+		// Fear fades on its own when nothing is happening (not inside a sequence that needs it)
+		const UTakeGameInstance* DecayGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		const bool bSequence = !DecayGI || DecayGI->bDevForceLoop || DecayGI->Beat == ETakeBeat::Corridor
+			|| DecayGI->Beat == ETakeBeat::Ward || DecayGI->Beat == ETakeBeat::Wrap;
+		const float Floor = (DecayGI && DecayGI->bClocksFrozen) ? 0.15f : 0.f;   // after 2:14, it never quite leaves
+		if (!bSequence && World->GetTimeSeconds() - LastScareTime > DecayDelay && TargetFear > Floor && TargetFear <= Fear + 0.01f)
+		{
+			TargetFear = FMath::Max(Floor, TargetFear - DecayPerSecond * DeltaSeconds);
+			CreepSpeed = FMath::Max(CreepSpeed, DecayPerSecond);
+		}
 		Fear = FMath::FInterpConstantTo(Fear, TargetFear, DeltaSeconds, CreepSpeed);
 		BurstLeft = FMath::Max(0.f, BurstLeft - DeltaSeconds);
+		const bool bHunting = bForceRed || (Stalker && !Stalker->IsHidden());
+		RedAlert = FMath::FInterpConstantTo(RedAlert, bHunting ? 1.f : 0.f, DeltaSeconds, bHunting ? 1.5f : 0.5f);
 		UpdateStage();
 	}
 	FlickerClock += DeltaSeconds;
@@ -187,6 +214,11 @@ void ATakeFearDirector::ApplyFear()
 			if (N > Threshold) { Scale *= 0.15f; }
 		}
 		L->GetLightComponent()->SetIntensity(Base * Scale);
+		const FLinearColor& BaseC = BaseColor.FindOrAdd(L, L->GetLightComponent()->GetLightColor());
+		if (RedAlert > 0.001f || !L->GetLightComponent()->GetLightColor().Equals(BaseC, 0.002f))
+		{
+			L->GetLightComponent()->SetLightColor(FLinearColor::LerpUsingHSV(BaseC, FLinearColor(1.f, 0.08f, 0.05f), RedAlert * 0.85f));
+		}
 	}
 }
 

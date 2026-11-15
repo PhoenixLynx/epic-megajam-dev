@@ -46,6 +46,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stalker|Tuning") float MinHitSpeed = 400.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stalker|Tuning") bool bHiddenWhileDormant = true;
 
+	/** Upstairs in Act 3 (the foreshadowing): catching you doesn't rewind; it just sets bSoftCaught for the story to handle. */
+	bool bSoftCatch = false;
+	bool bSoftCaught = false;
 	UFUNCTION(BlueprintCallable, Category = "Stalker") void Activate();
 	UFUNCTION(BlueprintCallable, Category = "Stalker") void Deactivate();
 	UFUNCTION(BlueprintCallable, Category = "Stalker") void Stun(float Seconds);

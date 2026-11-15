@@ -230,6 +230,9 @@ void UTakeTerminalWidget::BuildMail(const UObject* WorldContext, TArray<FMail>& 
 			if (When == TEXT("HRIncident"))     { return GI->CoworkersHit >= 3; }
 			if (When == TEXT("HRIncident2"))    { return GI->CoworkersHit >= 6; }
 			if (When == TEXT("HRModuleDone"))   { return GI->HRModulesDone >= 1; }
+			if (When == TEXT("HotBeverage"))    { return GI->HotBeverageIncidents >= 1; }
+			if (When == TEXT("Act3Start"))      { return GI->CurrentAct() >= 3; }
+			if (When == TEXT("AfterKey3"))      { return GI->SoulBits >= 3; }
 			if (When == TEXT("AfterMeeting")) { return GI->bAttendedMeeting; }
 			if (When == TEXT("RepliedChairman")) { return GI->bRepliedChairman; }
 			if (When == TEXT("RepliedPhish"))  { return GI->bRepliedPhish; }

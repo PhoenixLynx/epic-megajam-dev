@@ -69,6 +69,11 @@ EMAILS = [
      "Hi again {EMP}!\n\nThe reports are still coming in. So are the staplers.\n\n"
      "Respectful Workplace Module 3 has been assigned to you. There is no Module 4.\n\nWarmly (less),\nPeople Team",
      False, False, "HRIncident2"),
+    ("A1_HRHotBeverage", 1, "HALCYON People Team", "Hot beverage safety :)",
+     "Hi {EMP}!\n\nA coworker has reported a hot beverage incident. HALCYON mugs are designed to be carried, "
+     "sipped and set down, in that order.\n\nYou have been enrolled in Hot Beverage Safety (it's a lid).\n\n"
+     "Each incident counts as two incidents. We didn't make the rules. Well. We did.\n\nWarmly,\nPeople Team",
+     False, False, "HotBeverage"),
     ("A1_HRCertificate", 1, "HALCYON Learning", "Certificate of Completion",
      "Congratulations, {EMP}!\n\nYou have completed RESPECTFUL WORKPLACE.\nThis certificate is valid for the rest of the day.\n\n"
      "Your coworkers have been notified and feel safer already.",
@@ -125,6 +130,20 @@ EMAILS = [
     ("A3_ChairmanMemo", 3, "The Chairman", "That's nearly a wrap",
      "{EMP},\n\nYou've been wonderful. One more scene.\n\nThe button you've been looking at will light up soon.\n\n- C",
      False, False, "AfterKey3"),
+    ("A3_Payroll", 3, "HALCYON Payroll", "Your pay stub is ready",
+     "Pay stub, period ending TODAY.\n\n"
+     "  NAME ............ {EMP}\n  ROLE ............ EMPLOYEE (LEAD)\n  RATE ............ DAY RATE + OVERTIME\n"
+     "  TAKES ........... {TAKE}\n  MEAL PENALTY .... 1 (lunch ran long)\n  NOTES ........... wardrobe to return badge at wrap\n\n"
+     "Questions? Please speak to Production.",
+     False, False, "Act3Start"),
+    ("A3_Facilities", 3, "Facilities", "Re: Re: the clocks",
+     "We've stopped trying to fix the clocks.\n\nThe man from upstairs says they're right where they need to be. "
+     "He says 2:14 is 'the golden hour'.\n\nWe asked golden for what. He laughed and told us to strike the coffee cart.",
+     False, False, "Act3Start"),
+    ("A3_Casting", 3, "casting@halcyon-pictures", "Fwd: callbacks for 4472",
+     "---------- Forwarded message ----------\n\nThanks all, great session. Callbacks for EMPLOYEE 4472 on Monday.\n"
+     "Same sides as last time. Same desk. Same mug.\n\n(Sorry {EMP}, this wasn't meant for you. Please delete.)",
+     False, False, "Act3Start"),
 ]
 
 # ---------------------------------------------------------------------------
@@ -363,11 +382,11 @@ ENDING = [
     ("E04", 4, "Off", "", "(The clock on the wall still reads 2:14.)", "All"),
     ("E05", 5, "Collector", "The Collector", "Congratulations, {EMP}. Really. Not many make it to the end of the take.", "All"),
     ("E06", 6, "Collector", "The Collector", "The Chairman watched every second. He thinks you've earned your director's cut.", "All"),
-    ("E07", 7, "Collector", "The Collector", "The astral realm is open now. You can build yourself any world you want. A palace. An afterlife. No more corridors.", "All"),
+    ("E07", 7, "Collector", "The Collector", "Sign off on this one and you never do another take. Same desk. Same mug. The perfect day, forever. That's the theatrical cut.", "All"),
     ("E08", 8, "Collector", "The Collector", "You just have to hand over your keys.", "All"),
     ("E09", 9, "Choice", "", "HAND OVER YOUR KEYS?   [ YES ]   [ NO ]", "All"),
-    ("E10", 10, "Yes", "The Collector", "Wonderful. Your world is being built as we speak. You'll love it. Everyone does.", "Yes"),
-    ("E11", 11, "Yes", "", "(A bright palace. Perfect lawns. A warm sun that never moves. Everyone you meet is smiling, a beat too long.)", "Yes"),
+    ("E10", 10, "Yes", "The Collector", "Wonderful. Places, everyone. From the top.", "Yes"),
+    ("E11", 11, "Yes", "", "(Somewhere, a new badge is printed. It has your face. It says 4472.)", "Yes"),
     ("E12", 12, "Yes", "", "THE THEATRICAL CUT", "Yes"),
     ("E13", 13, "No", "The Collector", "Of course. Of course. Take your time.", "No"),
     ("E14", 14, "No", "", "(The passes are no longer on your badge. You never felt them go.)", "No"),

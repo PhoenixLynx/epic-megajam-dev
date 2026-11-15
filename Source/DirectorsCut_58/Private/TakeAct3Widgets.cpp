@@ -91,7 +91,7 @@ TSharedRef<SWidget> UTakeTitleWidget::RebuildWidget()
 			B->OnIndexedClicked.AddDynamic(this, &UTakeTitleWidget::Pick);
 			Col->AddChildToVerticalBox(B)->SetPadding(FMargin(0.f, 0.f, 0.f, 10.f));
 		}
-		Col->AddChildToVerticalBox(Txt(WidgetTree, TEXT("Made with Unreal Engine  ·  Epic AI MegaJam 2026"), 12, FLinearColor(0.33f, 0.40f, 0.45f)))->SetPadding(FMargin(0.f, 18.f, 0.f, 0.f));
+		Col->AddChildToVerticalBox(Txt(WidgetTree, TEXT("Made with Unreal Engine  \u00B7  Epic AI MegaJam 2026"), 12, FLinearColor(0.33f, 0.40f, 0.45f)))->SetPadding(FMargin(0.f, 18.f, 0.f, 0.f));
 	}
 	return Super::RebuildWidget();
 }
@@ -152,9 +152,28 @@ TSharedRef<SWidget> UTakeCreditsWidget::RebuildWidget()
 		Add(TEXT("CODE, LEVEL, SOUND DESIGN"), 16, TMint, true, 34.f);   Add(TEXT("Claude (Anthropic), with PhoenixLynx"), 22, FLinearColor::White, false, 4.f);
 		Add(TEXT("ART AND FACES"), 16, TMint, true, 34.f);   Add(TEXT("Sol (ChatGPT), with PhoenixLynx"), 22, FLinearColor::White, false, 4.f);
 		Add(TEXT("Made with Unreal Engine for the Epic AI MegaJam 2026"), 18, Dim, false, 60.f);
-		Add(TEXT("Fonts: Poppins, Inter, Caveat (SIL OFL) · Permanent Marker (Apache 2.0)"), 14, Dim, false, 10.f);
-		Add(TEXT("DIRECTED BY"), 16, TMint, true, 120.f);   Add(TEXT("________________"), 26, FLinearColor::White, false, 8.f);
+		Add(TEXT("Fonts: Poppins, Inter, Caveat (SIL OFL) \u00B7 Permanent Marker (Apache 2.0)"), 14, Dim, false, 10.f);
+		Add(TEXT("DIRECTED BY"), 16, TMint, true, 120.f);   Add(DirectedBy, 26, FLinearColor::White, false, 8.f);
 		Add(TEXT("Thank you for your energy."), 20, Dim, false, 120.f);
+
+		// The end: play again (a new take) or back to the title
+		EndPanel = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+		UCanvasPanelSlot* EndSlot = Root->AddChildToCanvas(EndPanel);
+		EndSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+		EndSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+		EndSlot->SetAutoSize(true);
+		EndPanel->AddChildToVerticalBox(Txt(WidgetTree, TEXT("THAT'S A WRAP."), 40, FLinearColor::White, true, 200))->SetHorizontalAlignment(HAlign_Center);
+		UTakeIndexedButton* Again = Btn(WidgetTree, FString::Printf(TEXT("PLAY AGAIN  (TAKE %d)"), NextTake), 0, true);
+		Again->OnIndexedClicked.AddDynamic(this, &UTakeCreditsWidget::Pick);
+		UTakeIndexedButton* Title = Btn(WidgetTree, TEXT("TITLE SCREEN"), 1, false);
+		Title->OnIndexedClicked.AddDynamic(this, &UTakeCreditsWidget::Pick);
+		UVerticalBoxSlot* AgainSlot = EndPanel->AddChildToVerticalBox(Again);
+		AgainSlot->SetHorizontalAlignment(HAlign_Center);
+		AgainSlot->SetPadding(FMargin(0.f, 30.f, 0.f, 0.f));
+		UVerticalBoxSlot* TitleSlot = EndPanel->AddChildToVerticalBox(Title);
+		TitleSlot->SetHorizontalAlignment(HAlign_Center);
+		TitleSlot->SetPadding(FMargin(0.f, 14.f, 0.f, 0.f));
+		EndPanel->SetVisibility(ESlateVisibility::Collapsed);
 	}
 	return Super::RebuildWidget();
 }
@@ -175,13 +194,21 @@ FReply UTakeCreditsWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FK
 
 FReply UTakeCreditsWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (T > 3.f) { Finish(); }
-	return FReply::Handled();
+	if (T > 3.f && !bDone) { Finish(); return FReply::Handled(); }
+	return FReply::Unhandled();   // once the buttons are up, let the click reach them
 }
 
 void UTakeCreditsWidget::Finish()
 {
+	// The roll ends (or you skip it): the roll goes, the two buttons come up
 	if (bDone) { return; }
 	bDone = true;
-	OnChoice.Broadcast(0);
+	if (RollSlot && RollSlot->Content) { RollSlot->Content->SetVisibility(ESlateVisibility::Collapsed); }
+	if (EndPanel) { EndPanel->SetVisibility(ESlateVisibility::Visible); }
+	else { OnChoice.Broadcast(1); }
+}
+
+void UTakeCreditsWidget::Pick(int32 Index)
+{
+	OnChoice.Broadcast(Index);
 }

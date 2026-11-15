@@ -70,6 +70,16 @@ Respectful Workplace Module 3 has been assigned to you. There is no Module 4.
 
 Warmly (less),
 People Team","False","False","HRIncident2"
+"A1_HRHotBeverage","1","HALCYON People Team","Hot beverage safety :)","Hi {EMP}!
+
+A coworker has reported a hot beverage incident. HALCYON mugs are designed to be carried, sipped and set down, in that order.
+
+You have been enrolled in Hot Beverage Safety (it's a lid).
+
+Each incident counts as two incidents. We didn't make the rules. Well. We did.
+
+Warmly,
+People Team","False","False","HotBeverage"
 "A1_HRCertificate","1","HALCYON Learning","Certificate of Completion","Congratulations, {EMP}!
 
 You have completed RESPECTFUL WORKPLACE.
@@ -159,3 +169,24 @@ You've been wonderful. One more scene.
 The button you've been looking at will light up soon.
 
 - C","False","False","AfterKey3"
+"A3_Payroll","3","HALCYON Payroll","Your pay stub is ready","Pay stub, period ending TODAY.
+
+  NAME ............ {EMP}
+  ROLE ............ EMPLOYEE (LEAD)
+  RATE ............ DAY RATE + OVERTIME
+  TAKES ........... {TAKE}
+  MEAL PENALTY .... 1 (lunch ran long)
+  NOTES ........... wardrobe to return badge at wrap
+
+Questions? Please speak to Production.","False","False","Act3Start"
+"A3_Facilities","3","Facilities","Re: Re: the clocks","We've stopped trying to fix the clocks.
+
+The man from upstairs says they're right where they need to be. He says 2:14 is 'the golden hour'.
+
+We asked golden for what. He laughed and told us to strike the coffee cart.","False","False","Act3Start"
+"A3_Casting","3","casting@halcyon-pictures","Fwd: callbacks for 4472","---------- Forwarded message ----------
+
+Thanks all, great session. Callbacks for EMPLOYEE 4472 on Monday.
+Same sides as last time. Same desk. Same mug.
+
+(Sorry {EMP}, this wasn't meant for you. Please delete.)","False","False","Act3Start"

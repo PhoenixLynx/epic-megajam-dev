@@ -9,6 +9,7 @@
 //   Key Lock 2         : the "Employee 4471" login panel in the supply closet (signature hidden: use your notes)
 //   new mail           : a chime and a line when something new arrives (unread count)
 #include "TakeGrabComponent.h"
+#include "TakeCoworker.h"
 #include "DirectorsCut_58.h"
 #include "TakeGameInstance.h"
 #include "TakeFearDirector.h"
@@ -20,18 +21,48 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/TextRenderActor.h"
+#include "Engine/PointLight.h"
+#include "Components/PointLightComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "CollisionQueryParams.h"
 #include "Materials/MaterialInterface.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "TakeStalker.h"
+#include "TakeTypes.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 namespace
 {
+	// The water-cooler gossiper: a coworker who stands by the kitchen cooler all day (spawned at play, tag "Gossip")
+	ATakeCoworker* FindGossiper(UWorld* World)
+	{
+		for (TActorIterator<ATakeCoworker> It(World); It; ++It) { if (It->ActorHasTag(TEXT("Gossip"))) { return *It; } }
+		return nullptr;
+	}
+
+	void SpawnGossiper(UWorld* World)
+	{
+		if (!World || FindGossiper(World)) { return; }
+		FVector Where(3640.f, 1150.f, 92.f);   // beside the kitchen cooler (3730, 1250)
+		const FTransform T(FRotator(0.f, 180.f, 0.f), Where);
+		ATakeCoworker* G = World->SpawnActorDeferred<ATakeCoworker>(ATakeCoworker::StaticClass(), T, nullptr, nullptr,
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+		if (!G) { return; }
+		G->NPCRole = TEXT("Coworker");
+		G->bWanders = false;
+		G->bStoryNPC = false;
+		G->Tags = { FName(TEXT("NPC")), FName(TEXT("Gossip")) };
+		if (UStaticMesh* Body = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Props/Meshes/SM_Mannequin.SM_Mannequin"))) { G->BodyMesh = Body; }
+		G->FinishSpawning(T);
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Water-cooler gossiper by the kitchen cooler"));
+	}
+
 	bool IsFoodMesh(const FString& N)
 	{
 		return N.Contains(TEXT("Snack")) || N.Contains(TEXT("Fruit")) || N.Contains(TEXT("SodaCan")) || N.Contains(TEXT("WaterBottle"))
@@ -57,6 +88,8 @@ void UTakeGrabComponent::JoinCall()
 	GI->AddEnergy(-10.f);   // meetings are draining (that's the joke; it's also the mechanic)
 	GI->WorkdayMinutes = FMath::Max(GI->WorkdayMinutes, bCallIsMeeting ? 13.f * 60.f : 12.f * 60.f + 30.f);
 	PlaySfx2D(TEXT("sfx_badge_ok"), 0.5f);
+	StopMusic(3.f);   // the call: the music steps out of the room
+	PlaySfx2D(TEXT("sfx_phone_static"), 0.25f);   // a laptop speaker, someone's open mic
 
 	// The live captions don't transcribe words: they show Key 2's signature (a clue for the supply closet panel)
 	const FTakeKeyLock Lock2 = UTakeKeyLockLibrary::GenerateKeyLockForRun(this, 2, 0);
@@ -151,6 +184,7 @@ AActor* UTakeGrabComponent::SpawnProp(const TCHAR* MeshName, const FVector& Wher
 	SM->SetStaticMesh(Mesh);
 	SM->SetCollisionProfileName(TEXT("PhysicsActor"));
 	SM->SetSimulatePhysics(true);
+	SM->CanCharacterStepUpOn = ECB_No;
 	SM->SetNotifyRigidBodyCollision(true);
 	SM->OnComponentHit.AddUniqueDynamic(this, &UTakeGrabComponent::OnPropHit);
 	A->Tags.Add(TEXT("Throwable"));
@@ -204,6 +238,7 @@ void UTakeGrabComponent::PourCoffee()
 	}
 	else if (IsHoldingMug())
 	{
+		if (AActor* MugActor = Handle->GetGrabbedComponent()->GetOwner()) { MugActor->Tags.Remove(TEXT("Spilled")); }   // full again
 		static const TCHAR* Refills[] = {
 			TEXT("You fill your mug. It's exactly the right temperature. It always is."),
 			TEXT("You press DECAF. It pours coffee. You press TEA. It pours coffee."),
@@ -230,6 +265,7 @@ void UTakeGrabComponent::PourCoffee()
 	ShowSubtitle(TEXT(""), Line, 4.f);
 	if (GI)
 	{
+		if (!GI->bGotCoffee && !bMusicCoffeeDone) { bMusicCoffeeDone = true; PlayMusicCue(TEXT("first coffee")); }
 		GI->bGotCoffee = true;
 		++GI->CoffeesPoured;
 	}
@@ -300,6 +336,125 @@ void UTakeGrabComponent::CollectFunProps()
 	}
 	UE_LOG(LogTake, Log, TEXT("[TAKE 4471] %d bin(s) for the paper toss, %d food item(s) that come back"), Bins.Num(), Foods.Num());
 	MakeElevatorClock();
+	SpawnGossiper(GetWorld());
+	// 4470's polaroid was hanging off the edge of the moving box: lay it flat in the middle, on whatever is inside
+	AStaticMeshActor* Polaroid = nullptr;
+	AStaticMeshActor* MovingBox = nullptr;
+	for (TActorIterator<AStaticMeshActor> It(GetWorld()); It; ++It)
+	{
+		UStaticMeshComponent* SM = It->GetStaticMeshComponent();
+		if (!SM || !SM->GetStaticMesh()) { continue; }
+		if (SM->GetStaticMesh()->GetName().Contains(TEXT("MovingBox"))) { MovingBox = *It; }
+		const UMaterialInterface* M = SM->GetMaterial(0);
+		if (M && M->GetName().Contains(TEXT("Polaroid"))) { Polaroid = *It; }
+	}
+	if (Polaroid && MovingBox)
+	{
+		FVector Origin, Extent;
+		MovingBox->GetActorBounds(false, Origin, Extent);
+		FHitResult In;
+		FCollisionQueryParams PQ(SCENE_QUERY_STAT(TakePolaroid), true, Polaroid);   // complex: finds the inside of an open box
+		const FVector Top(Origin.X, Origin.Y, Origin.Z + Extent.Z + 30.f);
+		const FVector Rest = GetWorld()->LineTraceSingleByChannel(In, Top, Origin - FVector(0.f, 0.f, Extent.Z), ECC_Visibility, PQ)
+			? In.ImpactPoint : FVector(Origin.X, Origin.Y, Origin.Z + Extent.Z);
+		Polaroid->GetStaticMeshComponent()->SetMobility(EComponentMobility::Movable);
+		Polaroid->SetActorLocation(Rest + FVector(0.f, 0.f, 0.4f));
+		Polaroid->SetActorRotation(FRotator(0.f, MovingBox->GetActorRotation().Yaw + 12.f, 0.f));
+		UE_LOG(LogTake, Log, TEXT("[TAKE 4471] Polaroid placed in the moving box at %s"), *Rest.ToCompactString());
+	}
+}
+
+bool UTakeGrabComponent::SpillCoffee(UStaticMeshComponent* Mug, const FHitResult& Hit, AActor* OtherActor, float Speed)
+{
+	// Only a mug, only fast enough, only once until it's refilled at the machine
+	if (!Mug || !Mug->GetStaticMesh() || !Mug->GetStaticMesh()->GetName().Contains(TEXT("Mug"))) { return false; }
+	AActor* MugActor = Mug->GetOwner();
+	if (!MugActor || MugActor->ActorHasTag(TEXT("Spilled")) || Speed < 380.f) { return false; }
+	if (IsHolding() && Handle->GetGrabbedComponent() == Mug) { return false; }   // knocking it against the desk while you carry it
+	MugActor->Tags.Add(TEXT("Spilled"));
+	++CoffeeSplashes;
+	UWorld* World = GetWorld();
+	const FVector At = Hit.ImpactPoint;
+	PlaySfx(TEXT("sfx_coffee_pour"), At, 0.9f);
+
+	UMaterialInterface* Base = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+	UStaticMesh* Sphere = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+	UStaticMesh* Disc = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+	UMaterialInstanceDynamic* Brown = Base ? UMaterialInstanceDynamic::Create(Base, this) : nullptr;
+	if (Brown) { Brown->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.09f, 0.035f, 0.01f)); }
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	// Droplets: a burst of little brown spheres, thrown up and out from the impact, gone in a moment
+	const FVector Out = Hit.ImpactNormal.IsNearlyZero() ? FVector::UpVector : Hit.ImpactNormal;
+	const FVector Along = Mug->GetComponentVelocity().GetSafeNormal();
+	for (int32 I = 0; Sphere && I < 14; ++I)
+	{
+		AStaticMeshActor* D = World->SpawnActor<AStaticMeshActor>(At + Out * 6.f, FRotator::ZeroRotator, Params);
+		if (!D) { continue; }
+		UStaticMeshComponent* SM = D->GetStaticMeshComponent();
+		SM->SetMobility(EComponentMobility::Movable);
+		SM->SetStaticMesh(Sphere);
+		SM->SetWorldScale3D(FVector(FMath::FRandRange(0.025f, 0.06f)));   // 2.5 to 6 cm
+		if (Brown) { SM->SetMaterial(0, Brown); }
+		SM->SetCastShadow(false);
+		SM->SetCollisionProfileName(TEXT("PhysicsActor"));
+		SM->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		SM->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
+		SM->SetSimulatePhysics(true);
+		SM->SetMassOverrideInKg(NAME_None, 0.02f);
+		const FVector Dir = (Out * 0.9f + FVector::UpVector * 0.6f - Along * 0.3f + FMath::VRand() * 0.7f).GetSafeNormal();
+		SM->SetPhysicsLinearVelocity(Dir * FMath::FRandRange(180.f, 420.f));
+		D->SetLifeSpan(FMath::FRandRange(0.9f, 1.6f));
+	}
+	// The puddle: on the floor under the impact, stays for a while
+	FHitResult Floor;
+	FCollisionQueryParams Q(SCENE_QUERY_STAT(TakeCoffeePuddle), false, MugActor);
+	if (OtherActor) { Q.AddIgnoredActor(OtherActor); }
+	if (Disc && World->LineTraceSingleByChannel(Floor, At + FVector(0.f, 0.f, 20.f), At - FVector(0.f, 0.f, 400.f), ECC_Visibility, Q))
+	{
+		if (AStaticMeshActor* P = World->SpawnActor<AStaticMeshActor>(Floor.ImpactPoint + FVector(0.f, 0.f, 0.6f),
+			FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f), Params))
+		{
+			UStaticMeshComponent* SM = P->GetStaticMeshComponent();
+			SM->SetMobility(EComponentMobility::Movable);
+			SM->SetStaticMesh(Disc);
+			const float R = FMath::FRandRange(0.45f, 0.7f);
+			SM->SetWorldScale3D(FVector(R, R * FMath::FRandRange(0.6f, 0.9f), 0.004f));   // 45-70 cm across, paper thin
+			if (Brown) { SM->SetMaterial(0, Brown); }
+			SM->SetCastShadow(false);
+			SM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			P->Tags.Add(TEXT("CoffeePuddle"));
+			P->SetLifeSpan(25.f);
+		}
+	}
+
+	// Who got it
+	if (ATakeStalker* Stalker = Cast<ATakeStalker>(OtherActor))
+	{
+		Stalker->Stun(4.f);   // longer than any stapler
+		QueueSubtitle(TEXT(""), TEXT("It stops. It touches its face. Nobody has ever thrown coffee at it before."));
+		return true;
+	}
+	if (ATakeCoworker* Victim = Cast<ATakeCoworker>(OtherActor))
+	{
+		if (Victim->State == ETakeCoworkerState::Watching) { return true; }   // Fear: they don't even flinch
+		++HotBeverageIncidents;
+		if (UTakeGameInstance* GI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this))) { ++GI->HotBeverageIncidents; }   // HR mail
+		PlaySfx2D(TEXT("sfx_pa_chime"), 0.6f);
+		static const TCHAR* PA[] = {
+			TEXT("A reminder: hot beverages are to be carried, not thrown."),
+			TEXT("Hot beverage incident number two has been logged. Facilities is bringing lids."),
+			TEXT("All staff: please keep your mugs below shoulder height until further notice."),
+			TEXT("Employee {EMP}, put the mug down."),
+		};
+		const int32 N = FMath::Min(HotBeverageIncidents, int32(UE_ARRAY_COUNT(PA))) - 1;
+		QueueSubtitle(TEXT("PA"), TakeText::Fill(this, PA[N]));
+		if (HotBeverageIncidents == 4) { QueueSubtitle(TEXT(""), TEXT("They know your number. Of course they know your number.")); }
+		return true;
+	}
+	if (CoffeeSplashes == 1) { QueueSubtitle(TEXT(""), TEXT("Coffee everywhere. Somewhere, a custodian sighs without knowing why.")); }
+	return true;
 }
 
 void UTakeGrabComponent::MakeElevatorClock()
@@ -321,6 +476,61 @@ void UTakeGrabComponent::MakeElevatorClock()
 			SM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			if (UMaterialInterface* Steel = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/M_BrushedSteel.M_BrushedSteel"))) { SM->SetMaterial(0, Steel); }
 		}
+	}
+	// The doors: the doorway is x 1950-2250 in the south wall (y 500); each panel slides into the car, behind the wall
+	if (UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")))
+	{
+		UMaterialInterface* Steel = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Materials/M_BrushedSteel.M_BrushedSteel"));
+		for (int32 Side = 0; Side < 2; ++Side)
+		{
+			AStaticMeshActor* D = GetWorld()->SpawnActor<AStaticMeshActor>(FVector(Side == 0 ? 2025.f : 2175.f, 488.f, 150.f), FRotator::ZeroRotator, Params);
+			if (!D) { continue; }
+			UStaticMeshComponent* SM = D->GetStaticMeshComponent();
+			SM->SetMobility(EComponentMobility::Movable);
+			SM->SetStaticMesh(Cube);
+			SM->SetWorldScale3D(FVector(1.5f, 0.05f, 3.f));   // 150 x 5 x 300 cm
+			if (Steel) { SM->SetMaterial(0, Steel); }
+			SM->SetCollisionProfileName(TEXT("BlockAll"));
+			SM->CanCharacterStepUpOn = ECB_No;
+			D->Tags.Add(TEXT("ElevatorDoor"));
+			(Side == 0 ? ElevDoorL : ElevDoorR) = D;
+		}
+		// Inside the car: the steel walls stay, the floor and ceiling don't (playtest: "too chrome")
+		for (TActorIterator<AStaticMeshActor> It(GetWorld()); It; ++It)
+		{
+			UStaticMeshComponent* SM = It->GetStaticMeshComponent();
+			const FVector L = It->GetActorLocation();
+			if (SM && SM->GetStaticMesh() == Cube && FMath::Abs(L.X - 2100.f) < 20.f && FMath::Abs(L.Y - 250.f) < 20.f && L.Z < 5.f)
+			{
+				if (UMaterialInterface* Floor = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Fear/MI_Greybox_Floors.MI_Greybox_Floors"))) { SM->SetMaterial(0, Floor); }
+			}
+		}
+		auto Box = [&](const FVector& BoxAt, const FVector& SizeCm, UMaterialInterface* Mat)
+		{
+			if (AStaticMeshActor* B = GetWorld()->SpawnActor<AStaticMeshActor>(BoxAt, FRotator::ZeroRotator, Params))
+			{
+				UStaticMeshComponent* SM = B->GetStaticMeshComponent();
+				SM->SetMobility(EComponentMobility::Movable);
+				SM->SetStaticMesh(Cube);
+				SM->SetWorldScale3D(SizeCm / 100.f);
+				SM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				if (Mat) { SM->SetMaterial(0, Mat); }
+			}
+		};
+		UMaterialInterface* CeilingMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Fear/M_CeilingPanel.M_CeilingPanel"));
+		Box(FVector(2100.f, 256.f, 296.f), FVector(572.f, 484.f, 2.f), CeilingMat);              // ceiling panel
+		Box(FVector(1818.f, 256.f, 95.f), FVector(4.f, 420.f, 5.f), Steel);                      // west handrail
+		Box(FVector(2382.f, 256.f, 95.f), FVector(4.f, 420.f, 5.f), Steel);                      // east handrail
+		if (APointLight* Lamp = GetWorld()->SpawnActor<APointLight>(FVector(2100.f, 250.f, 270.f), FRotator::ZeroRotator, Params))
+		{
+			Lamp->PointLightComponent->SetMobility(EComponentMobility::Movable);
+			Lamp->PointLightComponent->SetIntensity(2500.f);
+			Lamp->PointLightComponent->SetAttenuationRadius(450.f);
+			Lamp->PointLightComponent->SetLightColor(FLinearColor(1.f, 0.88f, 0.72f));   // warm, a little old
+			Lamp->PointLightComponent->SetCastShadows(false);
+		}
+		ElevDoorOpen = 1.f;
+		bElevDoorWantOpen = true;   // they start open (you start in the car, the cold open looks out through them)
 	}
 	if (ATextRenderActor* T = GetWorld()->SpawnActor<ATextRenderActor>(At, FRotator(0.f, 90.f, 0.f), Params))   // text faces +Y (the lobby)
 	{
@@ -361,6 +571,25 @@ void UTakeGrabComponent::RevealAct2()
 
 void UTakeGrabComponent::FoodEaten(AActor* Food)
 {
+	// Lunch (Act 2): eat every dish on the island and the chef has something to say about it
+	const UTakeGameInstance* FoodGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+	const UStaticMeshComponent* FoodSM = Food ? Cast<UStaticMeshComponent>(Food->GetRootComponent()) : nullptr;
+	const FString FoodName = FoodSM && FoodSM->GetStaticMesh() ? FoodSM->GetStaticMesh()->GetName() : FString();
+	if (FoodGI && FoodGI->CurrentAct() == 2 && !bChefRemarked && Food && Food->ActorHasTag(TEXT("Act2Reveal"))
+	    && (FoodName.Contains(TEXT("Pizza")) || FoodName.Contains(TEXT("Sandwich")) || FoodName.Contains(TEXT("Salad")) || FoodName.Contains(TEXT("Donut"))))
+	{
+		LunchEaten.Add(Food);
+		if (LunchEaten.Num() >= 6)
+		{
+			bChefRemarked = true;
+			for (TActorIterator<ATakeCoworker> It(GetWorld()); It; ++It)
+			{
+				if (!It->ActorHasTag(TEXT("Chef")) || It->IsHidden()) { continue; }
+				It->SayLine(TEXT("All of it? That was for the whole floor, {EMP}. ...No. No, it's fine. I'll make more. I always make more."));
+				break;
+			}
+		}
+	}
 	for (FFood& F : Foods)
 	{
 		if (F.Actor.Get() == Food) { F.Back = FMath::FRandRange(40.f, 70.f); return; }
@@ -370,8 +599,36 @@ void UTakeGrabComponent::FoodEaten(AActor* Food)
 	if (Food) { Food->SetLifeSpan(0.5f); }
 }
 
+void UTakeGrabComponent::TickElevatorDoors(float DeltaTime)
+{
+	AStaticMeshActor* L = ElevDoorL.Get();
+	AStaticMeshActor* R = ElevDoorR.Get();
+	const APawn* Me = Cast<APawn>(GetOwner());
+	if (!L || !R || !Me) { return; }
+	// Open when you're near the doorway (either side), or anyone is standing in it; close when you've gone
+	const FVector Doorway(2100.f, 500.f, 0.f);
+	const FVector P = Me->GetActorLocation();
+	const bool bInCar = P.X > 1800.f && P.X < 2400.f && P.Y > 0.f && P.Y < 500.f && P.Z > -100.f && P.Z < 400.f;
+	bool bWant = bInCar || FVector::Dist2D(P, Doorway) < 260.f;   // in the car they stay open (you never get shut in)
+	for (TActorIterator<ACharacter> It(GetWorld()); It && !bWant; ++It)
+	{
+		if (FVector::Dist2D(It->GetActorLocation(), Doorway) < 170.f) { bWant = true; }
+	}
+	if (bWant != bElevDoorWantOpen)
+	{
+		bElevDoorWantOpen = bWant;
+		PlaySfx(bWant ? TEXT("sfx_badge_ok") : TEXT("sfx_door_close"), FVector(2100.f, 500.f, 150.f), 0.45f);   // ding / thunk
+	}
+	ElevDoorOpen = FMath::FInterpConstantTo(ElevDoorOpen, bWant ? 1.f : 0.f, DeltaTime, bWant ? 1.1f : 0.8f);
+	const float Ease = ElevDoorOpen * ElevDoorOpen * (3.f - 2.f * ElevDoorOpen);   // smoothstep: starts and stops gently
+	const float DoorSlide = 138.f * Ease;
+	L->SetActorLocation(FVector(2025.f - DoorSlide, 488.f, 150.f));
+	R->SetActorLocation(FVector(2175.f + DoorSlide, 488.f, 150.f));
+}
+
 void UTakeGrabComponent::TickFun(float DeltaTime)
 {
+	TickElevatorDoors(DeltaTime);
 	FVector Eye; FRotator View;
 	const bool bView = GetView(Eye, View);
 	// The elevator clock follows the game clock (h:mm, 12-hour, like an office clock)
@@ -551,6 +808,8 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 	const FVector Where = Thing->GetActorLocation() + FVector(0.f, 0.f, 80.f);
 	const float Fear = FindFearDirector() ? FindFearDirector()->Fear : 0.f;
 	auto Pick = [N](std::initializer_list<const TCHAR*> L) { return FString(*(L.begin() + FMath::Min<int32>(N, int32(L.size()) - 1))); };
+	if (Key == TEXT("Elevator") && EndStep == 11) { GoToPenthouse(); return; }   // YES: up to C
+	if (Key == TEXT("DirectorsChair")) { if (EndStep == 12) { SitDirector(); } return; }
 	if (Key == TEXT("Elevator"))
 	{
 		if (const UTakeGameInstance* EGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this)))
@@ -621,13 +880,32 @@ void UTakeGrabComponent::UseThing(AActor* Thing)
 		PlaySfx(TEXT("sfx_tap_water"), Where, 0.5f);
 		GI_AddEnergy(this, 5.f);
 		static const TCHAR* Gossip[] = {
-			TEXT("(by the cooler) ...did you hear about 4470? No? ...Nobody did."),
-			TEXT("(by the cooler) I heard the Chairman's never been in the building. I heard he's always in the building."),
-			TEXT("(by the cooler) Don't drink from the one in Corridor B. There isn't one in Corridor B."),
-			TEXT("(by the cooler) The new one's doing well. They always do well. Until the retake."),
-			TEXT("(by the cooler) ...shh. They're here."),
+			TEXT("...did you hear about 4470? No? ...Nobody did."),
+			TEXT("I heard the Chairman's never been in the building. I heard he's always in the building."),
+			TEXT("Don't drink from the one in Corridor B. There isn't one in Corridor B."),
+			TEXT("The new one's doing well. They always do well. Until the retake."),
+			TEXT("...shh. They're here."),
 		};
-		ShowSubtitle(TEXT("Coworker"), Gossip[N % int32(UE_ARRAY_COUNT(Gossip))], 4.f);
+		// Overtime: the gossip slips out of character, like actors waiting between setups
+		static const TCHAR* GossipAct3[] = {
+			TEXT("Is it a wrap yet? My call time was nine. Nine yesterday."),
+			TEXT("Overtime pays double. They said that last take too."),
+			TEXT("Don't look at me, I'm not in this scene. ...Am I in this scene?"),
+			TEXT("The tall one's a stunt double. Nobody knows whose."),
+			TEXT("...shh. Rolling. We're rolling."),
+		};
+		const UTakeGameInstance* CGI = Cast<UTakeGameInstance>(UGameplayStatics::GetGameInstance(this));
+		const bool bOvertime = CGI && CGI->CurrentAct() >= 3;
+		const FString Line = bOvertime ? GossipAct3[N % int32(UE_ARRAY_COUNT(GossipAct3))] : Gossip[N % int32(UE_ARRAY_COUNT(Gossip))];
+		ATakeCoworker* Gossiper = FindGossiper(GetWorld());
+		if (Gossiper && !Gossiper->IsHidden() && FVector::Dist(Gossiper->GetActorLocation(), Thing->GetActorLocation()) < 600.f)
+		{
+			Gossiper->SayLine(Line);   // the one by this cooler says it (as a subtitle and over their head)
+		}
+		else
+		{
+			ShowSubtitle(TEXT("Coworker"), TEXT("(by the cooler) ") + Line, 4.f);   // the other cooler: someone you can't see
+		}
 		QueueSubtitle(TEXT(""), TEXT("A paper cup of water. Cold. Exactly cold."));
 		return;
 	}

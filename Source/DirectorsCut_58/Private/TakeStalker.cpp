@@ -16,6 +16,7 @@
 #include "Engine/StaticMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 #include "Engine/World.h"
 
 ATakeStalker::ATakeStalker()
@@ -131,6 +132,7 @@ void ATakeStalker::Deactivate()
 void ATakeStalker::Stun(float Seconds)
 {
 	if (State == ETakeStalkerState::Dormant) { return; }
+	if (State == ETakeStalkerState::Stunned) { StunFor = FMath::Max(StunFor, StateTime + Seconds); return; }   // a stapler never shortens a coffee
 	StunFor = Seconds;
 	SetState(ETakeStalkerState::Stunned);
 }
@@ -179,6 +181,21 @@ void ATakeStalker::Tick(float DeltaSeconds)
 	}
 	else { StuckTime = 0.f; StuckCheckFrom = GetActorLocation(); }
 
+	// Footsteps: heavy, slow when it stalks, quicker when it runs, so you can hear where it is
+	{
+		const float Speed2D = GetVelocity().Size2D();
+		const float StepEvery = State == ETakeStalkerState::Chase ? 0.34f : 0.6f;
+		if (Speed2D > 60.f && FMath::FloorToInt32(StateTime / StepEvery) != FMath::FloorToInt32((StateTime - DeltaSeconds) / StepEvery))
+		{
+			static const TCHAR* Steps[] = { TEXT("sfx_step_1"), TEXT("sfx_step_2"), TEXT("sfx_step_3"), TEXT("sfx_step_4") };
+			const FString Name = Steps[FMath::RandRange(0, 3)];
+			if (USoundBase* Step = LoadObject<USoundBase>(nullptr, *FString::Printf(TEXT("/Game/Audio/Placeholder/%s.%s"), *Name, *Name)))
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, Step, GetActorLocation() - FVector(0.f, 0.f, 90.f),
+					State == ETakeStalkerState::Chase ? 1.2f : 0.9f, 0.7f, 0.f, TakeAudio::World3D());   // lower pitch: something heavier than you; louder as it nears
+			}
+		}
+	}
 	if (bRigged)
 	{
 		const bool bMoving = GetVelocity().SizeSquared2D() > 100.f;
@@ -266,6 +283,7 @@ void ATakeStalker::OnCatchOverlap(UPrimitiveComponent*, AActor* Other, UPrimitiv
 	if (State != ETakeStalkerState::Chase && State != ETakeStalkerState::Stalk) { return; }
 	const APawn* Pawn = Cast<APawn>(Other);
 	if (!Pawn || !Pawn->IsPlayerControlled()) { return; }
+	if (bSoftCatch) { bSoftCaught = true; return; }
 	if (UTakeRewindSubsystem* Rewind = GetWorld()->GetSubsystem<UTakeRewindSubsystem>())
 	{
 		Rewind->Rewind();

@@ -31,6 +31,8 @@ class DIRECTORSCUT_58_API UTakeGameInstance : public UGameInstance
 
 public:
 	virtual void Init() override;
+	/** The world isn't drawn until the title screen's START / CONTINUE (no office showing through before it). */
+	void HideWorldUntilTitle(bool bHide);
 
 	/** Unique per run, never shown. Drives puzzles, NPC agents, clue placement. */
 	UPROPERTY(BlueprintReadOnly, Category = "Take") int32 RunSeed = 0;
@@ -41,7 +43,7 @@ public:
 	/** Goes up every time the stalker catches you ("CUT. AGAIN."). */
 	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 TakeNumber = 1;
 
-	/** Recovered soul bits (0..3). Each one = an access pass, stronger Soul Sight, more astral logic. */
+	/** Recovered soul bits (0..3). Each one = an access pass, stronger Soul Sight. */
 	UPROPERTY(BlueprintReadOnly, Category = "Take") int32 SoulBits = 0;
 
 	UPROPERTY(BlueprintAssignable, Category = "Take") FTakeSoulBitsChanged OnSoulBitsChanged;
@@ -61,6 +63,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Take") bool bGotCoffee = false;
 	/** Things you threw at people (Security and HR keep count). */
 	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 CoworkersHit = 0;
+	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 HotBeverageIncidents = 0;
+	/** How the last run ended (0 none yet, 1 handed over the keys, 2 kept them). Survives PLAY AGAIN: the next take remembers. */
+	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 LastEnding = 0;   // a full mug, thrown at a coworker
 	UPROPERTY(BlueprintReadWrite, Category = "Take") int32 GuardComplaints = 0;
 	UFUNCTION(BlueprintPure, Category = "Take") bool MorningTasksDone() const { return bReadEmail && bGotCoffee && bTrainingComplete; }
 
