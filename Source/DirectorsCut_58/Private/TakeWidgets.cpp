@@ -232,6 +232,7 @@ void UTakeTerminalWidget::BuildMail(const UObject* WorldContext, TArray<FMail>& 
 			if (When == TEXT("HRModuleDone"))   { return GI->HRModulesDone >= 1; }
 			if (When == TEXT("HotBeverage"))    { return GI->HotBeverageIncidents >= 1; }
 			if (When == TEXT("Act3Start"))      { return GI->CurrentAct() >= 3; }
+			if (When == TEXT("WrapParty"))      { return GI->Beat == ETakeBeat::Wrap; }   // the party's thank-you note
 			if (When == TEXT("AfterKey3"))      { return GI->SoulBits >= 3; }
 			if (When == TEXT("AfterMeeting")) { return GI->bAttendedMeeting; }
 			if (When == TEXT("RepliedChairman")) { return GI->bRepliedChairman; }

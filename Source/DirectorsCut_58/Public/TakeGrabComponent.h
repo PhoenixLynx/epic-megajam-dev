@@ -434,6 +434,7 @@ private:
 	int32 CakeLaterTries = 0;
 	int32 SlicesEaten = 0;
 	bool bPartyCakeCut = false;
+	bool b4472Called = false;   // the new hire leaves a voicemail during the party
 	// Coworkers talking to each other (TakeGrabComponent.cpp): a short exchange between two standing near each other, near you
 	TWeakObjectPtr<class ATakeCoworker> ChatA, ChatB;
 	TArray<FString> ChatLines;

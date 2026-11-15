@@ -1121,6 +1121,7 @@ void UTakeGrabComponent::Inspect(AActor* Target)
 		{ TEXT("Printout_1"), TEXT("FROM THE PRINTER"), TEXT("A memo you didn't send: \"Continuity is everyone's responsibility.\"\nIt's signed by you."), 0 },
 		{ TEXT("Printout_2"), TEXT("PRINT JOB 4470"), TEXT("Queued a long time ago. The page is blank except for a row of squares."), 0 },
 		{ TEXT("Printout_3"), TEXT("YOUR PERFORMANCE"), TEXT("\"YOUR PERFORMANCE: 99%. Please give the remaining 1%.\""), 0 },
+		{ TEXT("StickyLater"), TEXT("FOR LATER"), TEXT("FOR LATER. DON'T TOUCH. - Craft Services\nUnderneath, smaller, in your handwriting: \"later is now. it was always now.\""), 0 },
 		{ TEXT("PartyFlier"), TEXT("WRAP PARTY!"), TEXT("Tonight, the lobby. Doors at 2:14. Cake. Attendance is celebration.\nSomeone has written underneath: you're the guest of honour."), 0 },
 		{ TEXT("OfficeArt"), TEXT("SUNRISE No. 4471"), TEXT("Corporate art. A sun, rising over a horizon of mint stripes.\nThere are 4470 more in the series. They all look exactly like this one."), 0 },
 		{ TEXT("FridgeNote_Yogurt"), TEXT("KITCHEN"), TEXT("Someone has strong feelings about yogurt."), 0 },

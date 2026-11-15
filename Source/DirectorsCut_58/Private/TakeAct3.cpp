@@ -333,9 +333,14 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		const FVector IslandTop(3355.f, 830.f, 90.5f);   // the east end of the island (top 90 cm)
 		// the lettering reads from the kitchen side, where you stand at the island (playtest: "rotate cake to face the person")
 		OvertimeCake = SpawnCake(IslandTop, -90.f, 24.f, 14.f, 0, TEXT("CakeLater"));
-		// the sticky note, stuck to the side you see: FOR LATER
-		SpawnSetPiece(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")), IslandTop + FVector(0.f, 24.6f, 8.f), FRotator(0.f, 0.f, 0.f),
-			FVector(0.075f, 0.002f, 0.075f), LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Yellow.M_Yellow")), false);
+		// the sticky note, flat on the island in front of the cake: E to read it (playtest: "have it be on the table with
+		// some final little easter egg")
+		UMaterialInterface* NoteArt = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Ending/MI_StickyLater.MI_StickyLater"));
+		if (AStaticMeshActor* Note = SpawnSetPiece(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")), IslandTop + FVector(-6.f, 40.f, 0.3f),
+			FRotator(0.f, -78.f, 0.f), FVector(0.11f, 0.11f, 0.004f), NoteArt ? NoteArt : LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Props/Meshes/M_Yellow.M_Yellow")), true))
+		{
+			Note->Tags.Add(TEXT("Inspectable"));
+		}
 	}
 
 	// Playtest: straight to an ending (F5 / F6 / TakeEnding): once the party is there, answer for you
@@ -562,6 +567,16 @@ void UTakeGrabComponent::TickAct3(float DeltaTime)
 		break;
 	case 30:   // mingling: talk to people, have cake; when you've been sociable enough, the Collector wants a word
 		MingleT += DeltaTime;
+		if (!b4472Called && MingleT > 30.f && SubQueue.Num() == 0 && SubtitleLeft <= 0.f)   // playtest: "4472 should call during the party"
+		{
+			b4472Called = true;
+			PlaySfx2D(TEXT("sfx_phone_ring"), 0.5f);
+			QueueSubtitle(TEXT(""), TEXT("(Your phone buzzes. Unknown number. It goes to voicemail.)"));
+			QueueSubtitle(TEXT("4472"), TEXT("Hi! Is this... 4471? They gave me your number. I start tomorrow."));
+			QueueSubtitle(TEXT("4472"), TEXT("They said you'd show me the ropes. Where's the coffee? Which mug is mine?"));
+			QueueSubtitle(TEXT("4472"), TEXT("...They said it's the one with my number on it. Is that a joke?"));
+			QueueSubtitle(TEXT("4472"), TEXT("Okay! See you at nine. ...Will I see you at nine?"));
+		}
 		if (!bCollectorReady && (PartyChats >= 3 || (bAteCake && PartyChats >= 1) || MingleT > 150.f))
 		{
 			bCollectorReady = true;

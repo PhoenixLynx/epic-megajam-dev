@@ -378,7 +378,16 @@ def windowview():
     return (W, H, svg_page(W, H, "".join(g)))
 
 
+# ------------------------------------------------------------------ the FOR LATER sticky on the overtime cake
+def stickylater():
+    return (512, 512, '''<div style="position:relative;width:512px;height:512px;background:linear-gradient(170deg,#fff6a8,#f6e27a);font-family:Caveat,cursive;overflow:hidden">
+      <div style="position:absolute;left:40px;right:30px;top:40px;font:'Permanent Marker';font-family:'Permanent Marker';font-size:62px;line-height:1.05;color:#1e2a6b">FOR LATER.<br>DON'T TOUCH.</div>
+      <div style="position:absolute;left:44px;top:262px;font-size:44px;color:#1e2a6b">- Craft Services</div>
+      <div style="position:absolute;left:40px;right:30px;top:345px;font-size:40px;line-height:1.05;color:#7a2f2f;transform:rotate(-4deg)">later is now.<br>it was always now.</div></div>''')
+
+
 PAGES = {
+    "T_StickyLater": stickylater,
     "T_WindowView": windowview,
     "T_Screen_CallWaiting": callwaiting,
     "T_PartyFlier": flier,
