@@ -5,7 +5,7 @@ Draft for the director to edit. All of this is suggestion; change anything.
 **Title:** TAKE 4471
 **Tagline:** *The perfect workday. Again. From the top.*
 
-**Cover:** Sol's itch cover art (v02, 630×500 and the 315×250 thumbnail), from `epicjam-creative-assets`.
+**Cover:** `Builds\ItchArt\itch_cover_630x500.png` (in-game party shot + title), or Sol's v02 cover.
 **Screenshots (5):**
 - the bright office in the morning
 - a coworker staring in Fear
@@ -76,7 +76,7 @@ At the end of every take, someone will ask for your keys. **Director's cut, or t
 ## Page settings
 
 - **Kind:** Downloadable. **Platform:** Windows.
-- **Upload:** `TAKE4471_Windows.zip`, marked as Windows executable.
+- **Upload:** `PhoenixLynx_Take4471.zip` (Epic: TeamName_GameName), marked as Windows executable.
 - **Genre:** Horror. **Tags:** first-person, psychological-horror, office, surreal, unreal-engine, short, atmospheric, game-jam.
 - **Visibility:** Public (required) before submitting.
 - **Content:** Teen or below. Mild horror, no gore.
