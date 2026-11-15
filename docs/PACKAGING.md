@@ -8,7 +8,7 @@ Read on Sun Nov 15, 04:10, from the PC's `Config/DefaultGame.ini` and `Config/De
 - **Game instance:** `TakeGameInstance`. **Build configuration:** Development.
 - **Cooked by path already:** `/Game/Data`, `/Game/UI`, `/Game/Props`, `/Game/Audio` (music included), `/Game/Fear`, `/Game/Characters`, plus `L_Campus_Greybox` under `MapsToCook`.
 
-## What's missing, and why it matters
+## Always-cook folders (status at 10:35: the first three were added to the PC's config at 8:45 AM)
 
 The game loads a lot of assets by name from C++ (`LoadObject`). The cooker can't see those references, so any folder not on the list below is **left out of the packaged build**. In the game that means grey grids, missing art or silence.
 
@@ -19,14 +19,11 @@ The game loads a lot of assets by name from C++ (`LoadObject`). The cooker can't
 | `/Engine/BasicShapes` | Cube / Cylinder / Sphere / BasicShapeMaterial: the party, the penthouse, the city, plates, balloons | parts of the ending can vanish if the level itself doesn't happen to use those shapes |
 | `/Game/FirstPerson`, `/Game/Input` | the player (`BP_FirstPersonGameMode`, character, Enhanced Input) | usually cooked through the map/config anyway; listed so it's certain |
 
-### The lines to add
+### Optional extra lines
 
-Add these under `[/Script/UnrealEd.ProjectPackagingSettings]` in `Config/DefaultGame.ini`, next to the existing `+DirectoriesToAlwaysCook` lines (Unreal closed):
+`/Game/Ending`, `/Game/Memorial` and `/Engine/BasicShapes` are already on the PC (8:45 AM). If the packaged build's player feels wrong (no movement or input), add these two lines under `[/Script/UnrealEd.ProjectPackagingSettings]` in `Config/DefaultGame.ini`, with Unreal closed:
 
 ```ini
-+DirectoriesToAlwaysCook=(Path="/Game/Ending")
-+DirectoriesToAlwaysCook=(Path="/Game/Memorial")
-+DirectoriesToAlwaysCook=(Path="/Engine/BasicShapes")
 +DirectoriesToAlwaysCook=(Path="/Game/FirstPerson")
 +DirectoriesToAlwaysCook=(Path="/Game/Input")
 ```

@@ -7,7 +7,7 @@
 
 - [ ] Windows development build packaged (zipped, tested by launching it on a clean run)
   - Fri Nov 13, 21:47: first test package OK (`Builds/FridayNight`, 1.1 GB, Development, exit code 0). Still to do: the final build Sunday, zip it, test on a clean run.
-  - **Before packaging:** add the 5 missing always-cook folders (`/Game/Ending`, `/Game/Memorial`, `/Engine/BasicShapes`, `/Game/FirstPerson`, `/Game/Input`). See [PACKAGING.md](PACKAGING.md) for the steps and the .exe test.
+  - Always-cook folders: `/Game/Ending`, `/Game/Memorial` and `/Engine/BasicShapes` were added at 8:45 AM. `/Game/FirstPerson` and `/Game/Input` are optional extras. See [PACKAGING.md](PACKAGING.md) for the steps and the .exe test.
 - [ ] **Gameplay video, 30–60 s, 1920×1080 or higher** (rules sections 1 and 7(c)): shot list in [VIDEO_SHOTLIST.md](VIDEO_SHOTLIST.md)
 - [ ] itch.io game page set to **public**
 - [ ] Devlog linked from the itch page (GitHub repo starts **private**: switch it to **public** before linking, or post the devlog on itch instead)
@@ -34,7 +34,7 @@
 |------------|--------|
 | 2026-11-12 19:17 | Checklist created. Nothing ticked yet. |
 | 2026-11-12 19:40 | Added rule items found while checking the asset rules: pre-jam declaration, human submits, rating/IP, Glass Box dev log. |
-| 2026-11-15 04:20 | Moved the gameplay video into Required. Packaging gaps found (5 always-cook folders) → PACKAGING.md. itch page + video shot list drafted. Plan for today: playtest pass, my title background, feature freeze ~noon, package + .exe test, video, itch page, submit by ~5 PM. |
+| 2026-11-15 04:20 | Moved the gameplay video into Required. Packaging review → PACKAGING.md. itch page + video shot list drafted. Plan for today: playtest pass, my title background, feature freeze ~noon, package + .exe test, video, itch page, submit by ~5 PM. |
 
 - Note (Sat 12:10): rebuild with `Rebuild.bat` (project folder) after C++ changes; package again after this batch compiles and at end of Saturday.
 
