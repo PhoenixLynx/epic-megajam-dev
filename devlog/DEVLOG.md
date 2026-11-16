@@ -1114,3 +1114,4 @@ A running record of every AI tool used and what it did.
 - Also trimmed a half-second leftover "THAT'S A WRAP" screen at the very start.
 - The video link is updated on the itch page and the jam entry.
 - **AI tools used:** Claude (frame contact sheets to find shots, ffmpeg editing).
+- **22:49:** Sol's review caught that the itch page had **no download section** for logged-out visitors. Claude confirmed it from a logged-out cloud browser. Fixed at 22:54, a few minutes before the 11 PM deadline: `PhoenixLynx_Take4471.zip` (564 MB) is now public, with install instructions and the playtime (25–40 min). Lesson for next time: check the public page logged out right after uploading.
