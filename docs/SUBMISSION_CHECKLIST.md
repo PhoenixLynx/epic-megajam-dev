@@ -39,6 +39,7 @@
 |------------|--------|
 | 2026-11-12 19:17 | Checklist created. Nothing ticked yet. |
 | 2026-11-12 19:40 | Added rule items found while checking the asset rules: pre-jam declaration, human submits, rating/IP, Glass Box dev log. |
+| 2026-11-15 21:58 | Deadline extended to 10 PM PST. Final 59 s video (title screen → TAKE 2 → morning PA → email login → stalker ×2 → coffee throw → Collector → both endings → 18 s of credits music) cut from my captures; link swapped on the itch page and the jam entry. |
 | 2026-11-15 16:48 | **SUBMITTED.** Entry: https://itch.io/jam/2026-epic-ai-megajam/rate/5375494 · Game page: https://phoenixlynx999.itch.io/take-4471 · Video channel: https://www.youtube.com/@PhoenixLynxDev. Categories: Solo Driver, Glass Box. |
 | 2026-11-15 16:32 | Video cut from my .exe captures (57 s, 1080p) and uploaded: https://youtu.be/Yd4DKz2yuZ8. Cover + YouTube thumbnail from the reception shot. itch page going public. |
 | 2026-11-15 15:12 | FinalBuild packaged OK (1.1 GB, exit 0) and tested: both endings, save/continue by act. Epic's final-day email: zip as TeamName_GameName, video as a link, devlog link optional (Glass Box). Itch art made from in-game screenshots (Builds/ItchArt). |

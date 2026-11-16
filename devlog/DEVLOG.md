@@ -1099,3 +1099,18 @@ A running record of every AI tool used and what it did.
   - entered in Solo Driver and Glass Box (this devlog)
 - **AI tools used:** Claude (packaging-log review, art compositing, video editing with ffmpeg on my PC, itch and submission copy, a privacy check of the repo before making it public). This session's disclosure on itch: Graphics, Sounds, Text & Dialog and Code are all AI-assisted. The music is mine.
 - **That's a wrap.** 72 hours, solo, from an empty folder to a submitted game.
+
+### Session 68: Sun Nov 15, 2026, 21:39–21:58 MST: Final video re-cut (deadline extended)
+
+- Epic extended the deadline to 10 PM PST, so I asked for a better video: an intro, the email login, more of the stalker, a throw, and more of the credits song.
+- Claude found the title screen in my second recording (after the first playthrough) and re-cut four versions from my Game Bar captures with ffmpeg on my PC. Final: **59.3 s**, the full game frame at 1080p:
+  - title screen → TAKE 2 → morning PA → "Welcome back, 4471" email
+  - the guard and the custodian
+  - the grey office and the stalker (twice)
+  - Corridor B, the Wellness circle, the party
+  - the coffee mug thrown at the Collector, "HAND OVER YOUR KEYS?"
+  - the director's chair and the NO ending
+  - 18½ s of credits music
+- Also trimmed a half-second leftover "THAT'S A WRAP" screen at the very start.
+- The video link is updated on the itch page and the jam entry.
+- **AI tools used:** Claude (frame contact sheets to find shots, ffmpeg editing).
